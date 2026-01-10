@@ -25,7 +25,7 @@ const formSchema = z.object({
 	password: z.string().min(1, { message: "Password is required." }),
 });
 
-export default function LoginForm() {
+export default function VerifyLoginForm() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -77,8 +77,11 @@ export default function LoginForm() {
 			<div className="px-10 py-12">
 				<div className="mb-10 text-center">
 					<h1 className="text-lg font-semibold uppercase tracking-widest text-[#17110A]">
-						Log in to your account
+						Enter OTP Code
 					</h1>
+					<p className="mt-2 text-sm text-gray-600">
+						Check for your email for the OTP code and enter it.
+					</p>
 				</div>
 
 				<Form {...form}>
@@ -89,54 +92,13 @@ export default function LoginForm() {
 							name="email"
 							render={({ field }) => (
 								<FormItem className="space-y-1.5">
-									<FormLabel className="ml-1 text-sm font-semibold text-[#17110A]">
-										Email
-									</FormLabel>
 									<FormControl>
 										<div className="group relative">
-											<Mail className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-400 transition-colors duration-200 group-focus-within:text-[#17110A]" />
 											<Input
-												placeholder="victor@gohiveadmin.info"
-												className="h-[52px] rounded-xl border border-[#E2E8F0] !bg-white pl-12 text-[15px] shadow-sm placeholder:text-gray-400 focus-visible:border-[#FDB900] focus-visible:ring-[#FDB900]"
+												placeholder="XXXXX"
+												className="h-[52px] text-center rounded-xl border border-[#E2E8F0] !bg-white pl-12 text-lg shadow-sm placeholder:text-gray-400 focus-visible:border-[#FDB900] focus-visible:ring-[#FDB900] font-semibold"
 												{...field}
 											/>
-										</div>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{/* Password Field */}
-						<FormField
-							control={form.control}
-							name="password"
-							render={({ field }) => (
-								<FormItem className="space-y-1.5">
-									<FormLabel className="ml-1 text-sm font-semibold text-[#17110A]">
-										Password
-									</FormLabel>
-									<FormControl>
-										<div className="group relative">
-											<Lock className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-400 transition-colors duration-200 group-focus-within:text-[#17110A]" />
-											<Input
-												type={showPassword ? "text" : "password"}
-												placeholder="••••••••"
-												className="h-[52px] rounded-xl border border-[#E2E8F0] !bg-white px-12 text-[15px] shadow-sm placeholder:text-gray-400 focus-visible:border-[#FDB900] focus-visible:ring-[#FDB900]"
-												{...field}
-											/>
-											<button
-												type="button"
-												onClick={() => setShowPassword(!showPassword)}
-												className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 transition-colors hover:text-[#17110A] focus:outline-none"
-												tabIndex={-1}
-											>
-												{showPassword ? (
-													<Eye className="size-5" />
-												) : (
-													<EyeOff className="size-5" />
-												)}
-											</button>
 										</div>
 									</FormControl>
 									<FormMessage />
@@ -151,18 +113,10 @@ export default function LoginForm() {
 							disabled={isLoading}
 						>
 							{isLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
-							Log in
+							Verify
 						</Button>
 
-						{/* Forgot Password */}
-						<div className="pt-2 text-center">
-							<Link
-								href="/forgot-password"
-								className="text-xs font-bold uppercase tracking-wide text-[#17110A] transition-colors hover:text-[#FDB900] hover:underline"
-							>
-								Forgot your password?
-							</Link>
-						</div>
+						<div className="pt-2 text-center">Resend OTP Code [15 secs]</div>
 					</form>
 				</Form>
 			</div>
