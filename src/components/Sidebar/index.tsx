@@ -55,13 +55,15 @@ export default function Sidebar({ className }: { className?: string }) {
 			{/* Logo Section */}
 			<div className="h-20 flex items-center px-6 border-b border-border">
 				<div className="relative w-24 h-24">
-					<Image
-						src="/assets/logo_gohive_dark.png"
-						alt="GoHive"
-						fill
-						className="object-contain object-left"
-						priority
-					/>
+					<Link href="/dashboard">
+						<Image
+							src="/assets/logo_gohive_dark.png"
+							alt="GoHive"
+							fill
+							className="object-contain object-left"
+							priority
+						/>
+					</Link>
 				</div>
 			</div>
 
@@ -78,9 +80,9 @@ export default function Sidebar({ className }: { className?: string }) {
 					{BOTTOM_MENU_ITEMS.map((item) => (
 						<NavItem key={item.href} item={item} />
 					))}
-          		<NavItem item={LOGOUT_ITEM} isLogout />
+					<NavItem item={LOGOUT_ITEM} isLogout />
 				</div>
-			</div>			
+			</div>
 		</aside>
 	);
 }
