@@ -1,3 +1,4 @@
+//src/components/Tables/columns/columnFactory.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { BaseColumnSchema } from "../types";
 

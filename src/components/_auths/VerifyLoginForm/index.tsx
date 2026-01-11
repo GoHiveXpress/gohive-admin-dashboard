@@ -10,7 +10,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
 // Standardized imports using default imports where applicable
 import {Button} from "@/components/ui/button";
-import Input from "@/components/ui/input";
+import {Input} from "@/components/ui/input";
 import {
 	Form,
 	FormControl,
