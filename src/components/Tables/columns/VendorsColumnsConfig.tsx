@@ -1,3 +1,4 @@
+//src/components/Tables/columns/VendorsColumnsConfig.tsx
 import { BaseColumnSchema } from "../types";
 import { Icon } from "@iconify/react";
 import { Badge } from "@/components/ui/badge";

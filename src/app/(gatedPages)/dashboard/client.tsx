@@ -4,7 +4,7 @@
 import RouteWrapper from "@/layouts/RouteWrapper";
 import TopCustomers from "@/components/_widgets/TopCustomers";
 import TotalRiders from "@/components/_widgets/TotalRiders";
-import TopVendors from "@/components/_widgets/TopVendors";
+import TotalVendors from "@/components/_widgets/TotalVendors";
 import TotalOrders from "@/components/_widgets/TotalOrders";
 import OrderVolume from "@/components/_widgets/OrderVolume";
 import TotalUsers from "@/components/_widgets/TotalUsers";
@@ -18,7 +18,7 @@ export default function DashboardClient() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <TopCustomers />
                 <TotalRiders />
-                <TopVendors />
+                <TotalVendors />
                 <TotalOrders />
             </div>
 

@@ -1,5 +1,9 @@
+//src/components/_widgets/TotalRiders/index.tsx
 "use client";
+
 import { Icon } from "@iconify/react";
+import Link from "next/link";
+import { ROUTES, getRoute } from "@/constants/routes";
 
 export default function TotalRiders() {
   return (
@@ -18,7 +22,16 @@ export default function TotalRiders() {
             <span className="text-xs font-medium text-secondary flex items-center gap-1">
                 450 <span className="text-muted-foreground font-normal">Online</span>
             </span>
-            <Icon icon="ph:dots-three-vertical-bold" className="text-muted-foreground" />
+            
+            {/* LINK WRAPPER START */}
+            <Link 
+              href={getRoute(ROUTES.ACTIVE_USERS, { tab: 'riders' })} 
+              className="cursor-pointer hover:bg-muted/50 p-1 rounded-full transition-colors"
+            >
+              <Icon icon="ph:dots-three-vertical-bold" className="text-muted-foreground" width="20" />
+            </Link>
+            {/* LINK WRAPPER END */}
+
         </div>
       </div>
     </div>

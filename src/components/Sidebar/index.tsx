@@ -11,9 +11,9 @@ export default function Sidebar({ className }: { className?: string }) {
 	const pathname = usePathname();
 
 	const NavItem = ({ item, isLogout = false }: { item: any; isLogout?: boolean }) => {
-		const isActive = pathname === item.href;
-
-		const isDashboard = item.href === "/dashboard";
+		const isActive =
+			pathname === item.href ||
+			(pathname.startsWith(item.href) && item.href !== "/dashboard");
 
 		return (
 			<Link
@@ -23,12 +23,11 @@ export default function Sidebar({ className }: { className?: string }) {
 
 					"text-muted-foreground hover:bg-muted hover:text-foreground",
 
-					isActive && !isDashboard && "bg-muted text-foreground",
-
-					isDashboard && "bg-muted text-primary",
+					isActive && !isLogout && "bg-muted text-primary",
 
 					isLogout &&
 						"text-destructive hover:bg-destructive/10 hover:text-destructive mt-4",
+
 					className,
 				)}
 			>
@@ -36,7 +35,8 @@ export default function Sidebar({ className }: { className?: string }) {
 					className={cn(
 						"h-5 w-5",
 
-						isDashboard ? "text-primary" : "text-currentColor",
+						isActive && !isLogout ? "text-primary" : "text-currentColor",
+
 						isLogout && "text-destructive",
 					)}
 				/>
@@ -52,7 +52,6 @@ export default function Sidebar({ className }: { className?: string }) {
 				className,
 			)}
 		>
-			{/* Logo Section */}
 			<div className="h-20 flex items-center px-6 border-b border-border">
 				<div className="relative w-24 h-24">
 					<Image
@@ -65,7 +64,6 @@ export default function Sidebar({ className }: { className?: string }) {
 				</div>
 			</div>
 
-			{/* Scrollable Menu Area */}
 			<div className="flex-1 overflow-y-auto py-6 px-4 space-y-1 scrollbar-none">
 				{MENU_ITEMS.map((item) => (
 					<NavItem key={item.href} item={item} />
@@ -78,9 +76,9 @@ export default function Sidebar({ className }: { className?: string }) {
 					{BOTTOM_MENU_ITEMS.map((item) => (
 						<NavItem key={item.href} item={item} />
 					))}
-          		<NavItem item={LOGOUT_ITEM} isLogout />
+					<NavItem item={LOGOUT_ITEM} isLogout />
 				</div>
-			</div>			
+			</div>
 		</aside>
 	);
 }

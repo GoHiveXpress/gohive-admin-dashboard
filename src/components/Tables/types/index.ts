@@ -1,3 +1,4 @@
+//src/components/Tables/types/index.ts
 import { ReactNode } from "react";
 
 export type ColumnType =

@@ -7,115 +7,82 @@ import {
   LogOut,
 } from "lucide-react";
 import { Icon } from "@iconify/react"; 
+import { ROUTES } from "@/constants/routes"; 
 
-const CustomerIcon = ({ className }: { className?: string }) => {
-  return (
-    <Icon 
-      icon="lineicons:emoji-smile-tongue" 
-      className={className} 
-    />
-  );
-};
+const CustomerIcon = ({ className }: { className?: string }) => (
+  <Icon icon="lineicons:emoji-smile-tongue" className={className} />
+);
 
-const BikeIcon = ({ className }: { className?: string }) => {
-  return (
-    <Icon 
-      icon="mingcute:ebike-line"
-      className={className} 
-    />
-  );
-};
-const MessageSquareIcon = ({ className }: { className?: string }) => {
-  return (
-    <Icon 
-      icon="icon-park-outline:message"
-      className={className} 
-    />
-  );
-};
+const BikeIcon = ({ className }: { className?: string }) => (
+  <Icon icon="mingcute:ebike-line" className={className} />
+);
 
-const FinanceStatsIcon = ({ className }: { className?: string }) => {
-  return (
-    <Icon 
-      icon="material-symbols:finance-mode"
-      className={className} 
-    />
-  );
-};
+const MessageSquareIcon = ({ className }: { className?: string }) => (
+  <Icon icon="icon-park-outline:message" className={className} />
+);
 
-const BarChart3Icon = ({ className }: { className?: string }) => {
-  return (
-    <Icon 
-      icon="material-symbols:finance-sharp"
-      className={className} 
-    />
-  );
-};
+const FinanceStatsIcon = ({ className }: { className?: string }) => (
+  <Icon icon="material-symbols:finance-mode" className={className} />
+);
 
-const UsersIcon = ({ className }: { className?: string }) => {
-  return (
-    <Icon 
-      icon="fa7-solid:users"
-      className={className} 
-    />
-  );
-};
+const BarChart3Icon = ({ className }: { className?: string }) => (
+  <Icon icon="material-symbols:finance-sharp" className={className} />
+);
 
-const SettingsIcon = ({ className }: { className?: string }) => {
-  return (
-    <Icon 
-      icon="streamline-plump:cog"
-      className={className} 
-    />
-  );
-};
+const UsersIcon = ({ className }: { className?: string }) => (
+  <Icon icon="fa7-solid:users" className={className} />
+);
+
+const SettingsIcon = ({ className }: { className?: string }) => (
+  <Icon icon="streamline-plump:cog" className={className} />
+);
 
 export const MENU_ITEMS = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
-    href: "/dashboard",
+    href: ROUTES.DASHBOARD, // Updated
     variant: "default", 
   },
   {
     label: "Customer Management",
     icon: CustomerIcon, 
-    href: "/customers",
+    href: ROUTES.CUSTOMERS, // Updated
   },
   {
     label: "Vendor Management",
     icon: Store,
-    href: "/vendors",
+    href: ROUTES.VENDORS, // Updated
   },
   {
     label: "Rider Management",
     icon: BikeIcon,
-    href: "/riders",
+    href: ROUTES.RIDERS, // Updated
   },
   {
     label: "Order Lifecycle Management",
     icon: ClipboardList,
-    href: "/orders",
+    href: ROUTES.ORDERS, // Updated
   },
   {
     label: "Support & Communication",
     icon: MessageSquareIcon,
-    href: "/support",
+    href: ROUTES.SUPPORT, // Updated
   },
   {
     label: "Finance & Settlements",
     icon: FinanceStatsIcon,
-    href: "/finance",
+    href: ROUTES.FINANCE, // Updated
   },
   {
     label: "Analytics & Reports",
     icon: BarChart3Icon,
-    href: "/analytics",
+    href: ROUTES.ANALYTICS, // Updated
   },
   {
     label: "User Management",
     icon: UsersIcon,
-    href: "/users",
+    href: ROUTES.USERS, // Updated
   },
 ];
 
@@ -123,18 +90,17 @@ export const BOTTOM_MENU_ITEMS = [
   {
     label: "Settings",
     icon: SettingsIcon,
-    href: "/settings",
+    href: ROUTES.SETTINGS, // Updated
   },
   {
     label: "Help",
     icon: HelpCircle,
-    href: "/help",
+    href: ROUTES.HELP, // Updated
   },
 ];
 
-export const LOGOUT_ITEM = 
-{
+export const LOGOUT_ITEM = {
   label: "Logout",
   icon: LogOut,
-  href: "/logout",
-}
+  href: ROUTES.LOGOUT, // Updated
+};
