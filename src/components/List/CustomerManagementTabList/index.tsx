@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
-import { customerColumnsConfig, CustomerData } from "@/components/Tables/columns/customerManagementColumns";
+import { customerColumnsConfig, CustomerData } from "@/components/Tables/columns/CustomerColumns";
 
 const CUSTOMER_DATA: CustomerData[] = [
     { id: "1", name: "Victor Kenny", email: "designbyprose@gmail.com", phone: "+2349056113019", status: "Active", orders: 12 },
