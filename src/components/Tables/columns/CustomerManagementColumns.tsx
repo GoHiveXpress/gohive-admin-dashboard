@@ -1,11 +1,10 @@
-import { BaseColumnSchema } from "../types";
+import { BaseColumnSchema } from "@/components/Tables/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
-import {Button} from "@/components/ui/button";
-import { ROUTES } from "@/constants/routes";
 import Link from "next/link";
+import { ROUTES } from "@/constants/routes"; 
 
-// --- Types ---
 export type CustomerData = {
     id: string;
     name: string;
@@ -15,21 +14,10 @@ export type CustomerData = {
     orders: number;
 };
 
-export type OrderData = {
-    id: string;
-    orderId: string;
-    customer: string;
-    vendor: string;
-    rider: string;
-    status: "Delivered" | "Picked up" | "Canceled" | "Placed" | "Prepared";
-};
-
-// --- Customer Columns ---
 export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
     {
         key: "name",
         header: "Name",
-        // UPDATED: Just text, no link here anymore
         render: (row) => <span className="text-foreground font-medium">{row.name}</span>,
     },
     {
@@ -84,8 +72,7 @@ export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
         key: "action",
         header: "",
         render: (row) => (
-            // UPDATED: Link moved here, Icon changed to Eye
-            <Link href={ROUTES.CUSTOMER_DETAILS(row.id)}>
+            <Link href={`/customer-management/${row.id}`}>
                 <Button 
                     variant="ghost" 
                     size="icon" 
@@ -95,74 +82,5 @@ export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
                 </Button>
             </Link>
         ),
-    },
-];
-
-// --- Order Columns ---
-export const orderColumnsConfig: BaseColumnSchema<OrderData>[] = [
-    {
-        key: "orderId",
-        header: "Order ID",
-        render: (row) => <span className="text-foreground font-medium">{row.orderId}</span>,
-    },
-    {
-        key: "customer",
-        header: "Customer",
-        render: (row) => <span className="text-foreground">{row.customer}</span>,
-    },
-    {
-        key: "vendor",
-        header: "Vendor",
-        render: (row) => (
-            <div className="flex flex-col">
-                <span className="text-foreground">{row.vendor}</span>
-            </div>
-        ),
-    },
-    {
-        key: "rider",
-        header: "Rider",
-        render: (row) => <span className="text-foreground">{row.rider}</span>,
-    },
-    {
-        key: "status",
-        header: "Status",
-        render: (row) => {
-            let variantClass = "";
-            let dotClass = "";
-
-            switch (row.status) {
-                case "Delivered":
-                    variantClass = "bg-secondary/10 text-secondary";
-                    dotClass = "bg-secondary";
-                    break;
-                case "Picked up":
-                    variantClass = "bg-[#FDB900]/10 text-[#FDB900]";
-                    dotClass = "bg-[#FDB900]";
-                    break;
-                case "Canceled":
-                    variantClass = "bg-destructive/10 text-destructive";
-                    dotClass = "bg-destructive";
-                    break;
-                case "Placed":
-                    variantClass = "bg-green-500/10 text-green-500";
-                    dotClass = "bg-green-500";
-                    break;
-                case "Prepared":
-                    variantClass = "bg-blue-500/10 text-blue-500";
-                    dotClass = "bg-blue-500";
-                    break;
-            }
-
-            return (
-                <Badge
-                    variant="outline"
-                    className={`border-none px-3 py-1 rounded-full font-medium ${variantClass}`}
-                >
-                    <div className={`w-2 h-2 rounded-full mr-2 ${dotClass}`} />
-                    {row.status}
-                </Badge>
-            );
-        },
     },
 ];

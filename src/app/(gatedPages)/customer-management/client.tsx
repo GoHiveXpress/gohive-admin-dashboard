@@ -1,15 +1,14 @@
-//src/app/(gatedPages)/customer-management/client.tsx
 "use client";
 
 import RouteWrapper from "@/layouts/RouteWrapper";
-import CustomerManagementList from "@/components/List/CustomerManagementList";
+import CustomerManagementTab from "@/components/CustomerManagementTab";
 
 export default function CustomerManagementClient() {
     return (
         <RouteWrapper 
             middleSlot={
                 <div className="w-full">
-                   <CustomerManagementList />
+                   <CustomerManagementTab />
                 </div>
             } 
         />

@@ -3,4 +3,4 @@ import CustomerManagementClient from "./client";
 
 export default function CustomerManagementPage() {
     return <CustomerManagementClient />;
-}
+} 

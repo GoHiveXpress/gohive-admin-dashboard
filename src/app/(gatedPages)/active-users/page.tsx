@@ -1,4 +1,4 @@
-//src/app/%28gatedPages%29/ActiveUsers/page.tsx
+//src/app/(gatedPages)/active-users/page.tsx
 import ActiveUsersClient from "./client";
 
 export default function ActiveUsersPage() {

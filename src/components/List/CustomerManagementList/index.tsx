@@ -1,4 +1,4 @@
-//src/COmponents/List/CustomerManagementList/index.tsx
+//src/Components/List/CustomerManagementList/index.tsx
 "use client";
 
 import { useState } from "react";
@@ -13,7 +13,7 @@ import {
 	orderColumnsConfig,
 	CustomerData,
 	OrderData,
-} from "@/components/Tables/columns/CustomerManagementColumns";
+} from "@/components/Tables/columns/CustomerColumns";
 import { Badge } from "@/components/ui/badge";
 
 // --- Mock Data: Customers ---
