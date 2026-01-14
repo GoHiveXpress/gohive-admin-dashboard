@@ -1,3 +1,4 @@
+//src/components/Vendor/index.tsx
 "use client";
 
 import { useState } from "react";
@@ -36,14 +37,7 @@ export default function VendorIndex() {
             <div className="bg-white p-6 rounded-[20px] shadow-sm border border-border/50 min-h-[600px]">
                 
                 {/* Tab Switcher */}
-                {/* 
-                   Note: The screenshot shows a secondary/green active state, but your global CSS 
-                   defines primary as yellow. To match the screenshot visually while using your
-                   CustomTabs, we allow CustomTabs to use its default behavior (Primary/Yellow)
-                   OR we wrap it in a class to override if strictly needed. 
-                   Below assumes standard usage of your component. 
-                   To create the pill container effect seen in screenshot:
-                */}
+               
                 <div className="bg-muted/30 p-1.5 rounded-full w-fit mb-8">
                     <CustomTabs
                         items={TAB_ITEMS}

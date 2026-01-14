@@ -1,7 +1,9 @@
+//src/components/Tables/columns/VendorManagementColumns.tsx
 import { BaseColumnSchema } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export type VendorData = {
     id: string;
@@ -92,10 +94,12 @@ export const vendorColumnsConfig: BaseColumnSchema<VendorData>[] = [
     {
         key: "action",
         header: "",
-        render: () => (
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground">
-                <Icon icon="ph:dots-three-vertical-bold" width="20" />
-            </Button>
+        render: (row) => (
+            <Link href={`/vendor-management/${row.id}`}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground">
+                   <Icon icon="ph:eye" width="20" />
+                </Button>
+            </Link>
         ),
     },
 ];

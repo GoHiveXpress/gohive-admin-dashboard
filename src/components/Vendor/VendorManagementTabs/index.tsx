@@ -1,3 +1,4 @@
+//src/components/Vendor/VendorManagementTabs/index.tsx
 "use client";
 
 import VendorList from "@/components/List/VendorList";
