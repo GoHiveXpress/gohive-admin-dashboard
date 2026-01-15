@@ -3,14 +3,16 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Added for redirection
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "sonner"; // Added for toast notifications
 
 // Standardized imports using default imports where applicable
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
 	Form,
 	FormControl,
@@ -20,12 +22,17 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 
+// Dummy Credentials Constants
+const DUMMY_EMAIL = "mustaKen@aol.com";
+const DUMMY_PASSWORD = "Gohive001";
+
 const formSchema = z.object({
 	email: z.string().email({ message: "Please enter a valid email address." }),
 	password: z.string().min(1, { message: "Password is required." }),
 });
 
 export default function LoginForm() {
+	const router = useRouter(); // Initialize router
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -37,10 +44,25 @@ export default function LoginForm() {
 		},
 	});
 
-	async function onSubmit(_values: z.infer<typeof formSchema>) {
+	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsLoading(true);
-		// console.log(_values); // Unused log removed
-		setTimeout(() => setIsLoading(false), 2000);
+
+		// Simulate a short network delay for better UX
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+
+		if (values.email === DUMMY_EMAIL && values.password === DUMMY_PASSWORD) {
+			toast.success("Login Successful", {
+				description: "Welcome back to GoHive Admin.",
+			});
+			router.push("/dashboard");
+			// We don't set isLoading(false) here to prevent the button form flashing 
+			// before the page redirects
+		} else {
+			toast.error("Invalid Credentials", {
+				description: "Please check your email and password.",
+			});
+			setIsLoading(false);
+		}
 	}
 
 	return (
