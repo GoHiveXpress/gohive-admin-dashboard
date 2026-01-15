@@ -1,7 +1,9 @@
+//src/components/Tables/columns/RiderManagementColumns.tsx
 import { BaseColumnSchema } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link"; // Import Link
 
 export type RiderData = {
     id: string;
@@ -14,6 +16,7 @@ export type RiderData = {
 };
 
 export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
+    // ... (Keep existing columns: Name, Email, Phone, Status, KYC, Rating)
     {
         key: "name",
         header: "Name",
@@ -72,10 +75,12 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
     {
         key: "action",
         header: "",
-        render: () => (
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground">
-                <Icon icon="ph:dots-three-vertical-bold" width="20" />
-            </Button>
+        render: (row) => (
+            <Link href={`/rider-management/${row.id}`}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-muted">
+                    <Icon icon="ph:eye" width="20" />
+                </Button>
+            </Link>
         ),
     },
 ];

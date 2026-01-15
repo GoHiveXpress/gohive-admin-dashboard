@@ -1,6 +1,7 @@
 //src/app/(gatedPages)/rider-management/[id]/client.tsx
 "use client";
 
+import RiderProfileIndex from "@/components/Rider/RiderManagementTab/RiderProfile";
 import RouteWrapper from "@/layouts/RouteWrapper";
 
 
@@ -11,7 +12,7 @@ interface ClientProps {
 export default function RiderDetailsClient({ id }: ClientProps) {
   return (
     <RouteWrapper 
-      middleSlot={<div className="text-2xl font-semibold">Rider Details</div>} 
+      middleSlot={<RiderProfileIndex riderId={id} />} 
     />
   );
 }
