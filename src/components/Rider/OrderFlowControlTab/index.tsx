@@ -31,7 +31,7 @@ export default function OrderFlowControlTab() {
 							className={`rounded-lg px-6 h-10 text-sm font-medium transition-all ${
 								isActive
 									? "bg-primary text-primary-foreground hover:bg-primary/90"
-									: "bg-transparent border border-border text-foreground hover:bg-muted"
+									: "bg-transparent border border-border text-foreground hover:bg-accent"
 							}`}
 						>
 							{tab.label}

@@ -29,8 +29,8 @@ export default function CustomTabs({ items, activeTab, onTabChange, className }:
             className={cn(
               "rounded-full px-6 h-12 text-base font-medium transition-all duration-200",
               isActive 
-                ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
-                : "bg-transparent text-foreground hover:bg-muted"
+                ? "bg-secondary text-white hover:bg-secondary/90 shadow-sm" 
+                : "bg-transparent text-foreground hover:bg-accent"
             )}
           >
             {item.label}

@@ -22,7 +22,7 @@ export default function RiderEarningTab() {
                   className={`rounded-full px-6 h-9 text-sm font-medium transition-all ${
                      activeSubTab === tab 
                      ? "bg-secondary text-white hover:bg-secondary/90 shadow-sm" 
-                     : "text-foreground hover:bg-background/50"
+                     : "text-foreground hover:bg-accent"
                   }`}
                >
                   {tab}

@@ -37,7 +37,7 @@ export default function UsersManagement() {
                         "rounded-full px-8 h-12 text-base font-medium transition-all duration-200",
                         isActive 
                             ? "bg-secondary text-white hover:bg-secondary/90 shadow-sm" 
-                            : "bg-transparent text-foreground hover:bg-muted"
+                            : "bg-transparent text-foreground hover:bg-accent"
                     )}
                 >
                     {tab.label}
