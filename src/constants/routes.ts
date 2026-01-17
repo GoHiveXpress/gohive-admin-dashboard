@@ -14,7 +14,7 @@ export const ROUTES = {
   SUPPORT: "/support",
   FINANCE: "/finance-management",
   ANALYTICS: "/report-analytics",
-  USERS: "/users-management",
+  USERS: "/user-management",
   
   SETTINGS: "/settings",
   HELP: "/help",
