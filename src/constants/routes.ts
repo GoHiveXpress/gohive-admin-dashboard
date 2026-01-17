@@ -12,9 +12,9 @@ export const ROUTES = {
   RIDERS: "/rider-management",
   ORDERS: "/order-management",
   SUPPORT: "/support",
-  FINANCE: "/finance",
+  FINANCE: "/finance-management",
   ANALYTICS: "/analytics",
-  USERS: "/users",
+  USERS: "/users-management",
   
   SETTINGS: "/settings",
   HELP: "/help",
