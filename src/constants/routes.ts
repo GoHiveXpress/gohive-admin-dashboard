@@ -17,7 +17,7 @@ export const ROUTES = {
   USERS: "/user-management",
   
   SETTINGS: "/settings",
-  HELP: "/help",
+  HELP: "#",
   LOGOUT: "/logout",
 } as const;
 
