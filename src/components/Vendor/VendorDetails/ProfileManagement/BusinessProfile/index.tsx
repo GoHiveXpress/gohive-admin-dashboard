@@ -1,3 +1,4 @@
+//src/components/Vendor/VendorDetails/ProfileManagement/BusinessProfile/index.tsx
 "use client";
 
 import { useState } from "react";
@@ -6,21 +7,36 @@ import { Icon } from "@iconify/react";
 import FloatingInput from "@/components/FormElements/FloatingInput";
 import FloatingSelect from "@/components/FormElements/FloatingSelect";
 import { SelectItem } from "@/components/ui/select";
+import { VendorUser, OperatingHours } from "@/types/vendorManagement";
 
-export default function BusinessProfile() {
+interface BusinessProfileProps {
+    vendor: VendorUser;
+}
+
+export default function BusinessProfile({ vendor }: BusinessProfileProps) {
+    const profile = vendor.vendorProfile;
+    const hours = profile.operatingHours || [];
+
+    // Helper to find specific day hours or default
+    const getDayHours = (day: string) => {
+        return hours.find(h => h.day === day) || { day, isOpen: false, openTime: "09:00 AM", closeTime: "09:00 PM", is24Hours: false };
+    };
+
+    const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
     return (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
             {/* Left Column: Form Fields */}
             <div className="space-y-6">
                 <FloatingInput
                     label="Business Name"
-                    defaultValue="Item7 Go"
+                    defaultValue={profile.businessName}
                     icon="ph:storefront"
                 />
 
                 <FloatingSelect 
                     label="Business Type" 
-                    defaultValue="restaurant"
+                    defaultValue={profile.businessType || "restaurant"} // Default fallback
                     icon="ph:storefront"
                 >
                     <SelectItem value="restaurant">Restaurant</SelectItem>
@@ -30,13 +46,13 @@ export default function BusinessProfile() {
 
                 <FloatingInput
                     label="Business Registration Number"
-                    defaultValue="VGHV0923"
-                    icon="ph:storefront" // Screenshot uses store icon, or use ph:hash
+                    defaultValue={profile.cacNumber}
+                    icon="ph:hash" 
                 />
 
                 <FloatingInput
                     label="Business Address"
-                    defaultValue="No 5 Alatise LA Offa"
+                    defaultValue={profile.businessAddress}
                     icon="ph:map-pin-fill"
                 />
             </div>
@@ -49,21 +65,26 @@ export default function BusinessProfile() {
                 </div>
 
                 <div className="space-y-3">
-                    <OperatingHourRow day="Monday" isOpen={true} />
-                    <OperatingHourRow day="Tuesday" isOpen={true} />
-                    <OperatingHourRow day="Wednesday" isOpen={true} />
-                    <OperatingHourRow day="Thursday" isOpen={true} />
-                    <OperatingHourRow day="Friday" isOpen={true} />
-                    <OperatingHourRow day="Saturday" isOpen={true} />
-                    <OperatingHourRow day="Sunday" isOpen={true} />
+                    {daysOfWeek.map(day => (
+                        <OperatingHourRow key={day} data={getDayHours(day)} />
+                    ))}
                 </div>
             </div>
         </div>
     );
 }
 
-function OperatingHourRow({ day, isOpen: initialIsOpen }: { day: string, isOpen: boolean }) {
-    const [isOpen, setIsOpen] = useState(initialIsOpen);
+function OperatingHourRow({ data }: { data: OperatingHours }) {
+    const [isOpen, setIsOpen] = useState(data.isOpen);
+
+    // Parse time for display (Assuming format "HH:mm AM")
+    const parseTime = (timeStr: string) => {
+        const [time, period] = timeStr.split(' ');
+        return { time, period };
+    };
+
+    const start = parseTime(data.openTime);
+    const end = parseTime(data.closeTime);
 
     return (
         <div className="flex items-center justify-between py-1 bg-white">
@@ -73,19 +94,19 @@ function OperatingHourRow({ day, isOpen: initialIsOpen }: { day: string, isOpen:
                     onCheckedChange={setIsOpen}
                     className="data-[state=checked]:bg-secondary scale-90"
                 />
-                <span className="text-sm font-medium text-foreground">{day}</span>
+                <span className="text-sm font-medium text-foreground">{data.day}</span>
             </div>
 
             <div className="flex items-center gap-2 flex-1 justify-end">
                 <div className="bg-[#123614] text-white rounded px-3 py-1.5 text-xs font-medium min-w-[60px] text-center">
-                    8:00
+                    {start.time}
                 </div>
-                <span className="text-xs font-semibold text-muted-foreground uppercase">AM</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase">{start.period}</span>
                 <span className="text-foreground font-bold mx-1">-</span>
                 <div className="bg-[#123614] text-white rounded px-3 py-1.5 text-xs font-medium min-w-[60px] text-center">
-                    12:00
+                    {end.time}
                 </div>
-                <span className="text-xs font-semibold text-muted-foreground uppercase">PM</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase">{end.period}</span>
             </div>
         </div>
     );

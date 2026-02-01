@@ -13,7 +13,7 @@ export function useToast() {
       toast.error(message, { ...options }),
 
     info: (message: string, options?: Record<string, any>) =>
-      toast(message, { ...options }), // Use default toast for info
+      toast.info(message, { ...options }), // Use default toast for info
 
     warning: (message: string, options?: Record<string, any>) =>
       toast.warning(message, { ...options }), // Use warning toast for warning

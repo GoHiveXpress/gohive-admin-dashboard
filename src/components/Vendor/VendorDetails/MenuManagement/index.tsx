@@ -1,3 +1,4 @@
+//src/components/Vendor/VendorDetails/MenuManagement/index.tsx
 "use client";
 
 import { useState } from "react";

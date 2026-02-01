@@ -5,67 +5,69 @@ import axios from "axios";
 import env from "@src/env"; 
 
 export const nextAuthOptions: NextAuthConfig = {
-
   secret: env.NEXTAUTH_SECRET,
-
-  session: {
-    strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-  },
-
+  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text", placeholder: "email@example.com" },
+        // Standard Login
+        email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
+        // OTP Login Flow
+        otp: { label: "OTP", type: "text" },
+        isOtpFlow: { label: "isOtpFlow", type: "text" }
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Please enter both email and password.");
+          let data;
+
+          // --- CASE 1: VERIFY OTP (Admin) ---
+          if (credentials?.isOtpFlow === "true" && credentials?.otp && credentials?.email) {
+             const response = await axios.post(
+                `${env.NEXT_PUBLIC_ADMIN_API_BASE_URL}/auth/verify-otp`,
+                { email: credentials.email, otp: credentials.otp }
+             );
+             data = response.data;
+          } 
+          // --- CASE 2: STANDARD LOGIN (or initial Admin check) ---
+          else if (credentials?.email && credentials?.password) {
+             const response = await axios.post(
+                `${env.NEXT_PUBLIC_ADMIN_API_BASE_URL}/auth/login`,
+                { email: credentials.email, password: credentials.password }
+             );
+             data = response.data;
+          } else {
+             throw new Error("Missing credentials");
           }
-      
-          // Direct Axios call to your Backend
-          const response = await axios.post(
-            `${env.NEXT_PUBLIC_ADMIN_API_BASE_URL}/auth/login`,
-            {
-              email: credentials.email,
-              password: credentials.password,
-            }
-          );
-      
-          const data = response.data;
-      
-          // ✅ FIX: Check data.token directly (not data.data.token)
-          // Your backend returns: { success: true, token: "...", user: {...} }
-          if (!data.success || !data.token) {
-            console.warn("Login failed:", data.message);
-            return null;
+
+          if (!data.success) throw new Error(data.message || "Login failed");
+
+          // NOTE: If the backend says "requireOtp", authorize() will technically succeed 
+          // if we return an object, but we won't have a token. 
+          // *However*, we are handling the "first step" of admin login via 
+          // the React Hook (useAdminLogin) in the UI, so authorize() is only 
+          // called when we actually have a token to give (OTP verify or Standard login).
+          
+          if (!data.token) {
+              return null; // Don't create session if no token
           }
-      
-          // ✅ FIX: Map fields directly from root object
+
           return {
-            id: data.user?._id,
-            name: `${data.user?.firstName ?? ""} ${data.user?.lastName ?? ""}`,
+            id: data.user?._id || data.user?.id,
+            name: data.user?.name,
             email: data.user?.email,
             role: data.user?.role, 
             backendToken: data.token,
           };
+
         } catch (error: any) {
-          const backendMessage =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Unable to sign in. Please try again.";
-      
-          console.error("Login authorize() error:", backendMessage);
+          console.error("Auth Error:", error?.response?.data || error.message);
           return null;
         }
       }
-      
     }),
   ],
-
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -74,7 +76,6 @@ export const nextAuthOptions: NextAuthConfig = {
       }
       return token;
     },
-
     async session({ session, token }) {
       session.user = {
         ...session.user,
@@ -84,8 +85,5 @@ export const nextAuthOptions: NextAuthConfig = {
       return session;
     },
   },
-
-  pages: {
-    signIn: "/login",
-  },
+  pages: { signIn: "/login" },
 };

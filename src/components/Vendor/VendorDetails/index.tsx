@@ -1,3 +1,4 @@
+//src/components/Vendor/VendorDetails/index.tsx
 "use client";
 
 import { useState } from "react";
@@ -11,6 +12,8 @@ import MenuManagementTab from "./MenuManagement";
 import KycVerificationTab from "./KycVerification"; 
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
+import { useSingleVendor } from "@/hooks/vendorManagement";
+import { Loader2 } from "lucide-react";
 
 interface VendorDetailsProps {
     vendorId: string;
@@ -25,6 +28,21 @@ const TAB_ITEMS: TabItem[] = [
 export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
     const [activeTab, setActiveTab] = useState("profile_management");
     const [isActive, setIsActive] = useState(true);
+
+    const { data: vendorResponse, isLoading } = useSingleVendor(vendorId);
+    const vendor = vendorResponse?.data;
+
+    if (isLoading) {
+         return (
+            <div className="flex items-center justify-center min-h-[600px]">
+                <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+            </div>
+        );
+    }
+
+    if (!vendor) {
+        return <div className="p-6">Vendor not found</div>;
+    }
 
     return (
         <div className="w-full space-y-6">
@@ -41,21 +59,32 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
               
                 <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                     {/* Avatar */}
-                    <div className="w-24 h-24 rounded-full bg-[#E8E6D9] flex items-center justify-center text-[#8E8B7B]">
-                        {/* Placeholder for Vendor Logo */}
-                        <div className="w-20 h-20 rounded-full bg-[#D9D7C8]" />
+                    <div className="w-24 h-24 rounded-full bg-[#E8E6D9] flex items-center justify-center text-[#8E8B7B] overflow-hidden">
+                        {vendor.profilePicture || vendor.vendorProfile.passportPhoto ? (
+                            <img 
+                                src={vendor.profilePicture || vendor.vendorProfile.passportPhoto} 
+                                alt="Vendor" 
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-20 h-20 rounded-full bg-[#D9D7C8]" />
+                        )}
                     </div>
 
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-foreground">Item7 Go</h1>
+                            <h1 className="text-2xl font-bold text-foreground">
+                                {vendor.vendorProfile?.businessName || vendor.name}
+                            </h1>
                             <Badge variant="outline" className="text-xs font-normal text-muted-foreground border-border">
-                                Vendor I.D Number : VGHV0923
+                                Vendor I.D : {vendor._id.slice(-6).toUpperCase()}
                             </Badge>
                         </div>
                         <div className="flex items-center gap-2">
-                             <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-secondary' : 'bg-muted'}`} />
-                             <span className="text-sm font-medium text-secondary">Active</span>
+                             <div className={`w-2 h-2 rounded-full ${vendor.vendorProfile?.isApproved ? 'bg-secondary' : 'bg-muted'}`} />
+                             <span className="text-sm font-medium text-secondary">
+                                {vendor.vendorProfile?.isApproved ? 'Active' : 'Pending'}
+                             </span>
                         </div>
                     </div>
                     
@@ -85,9 +114,9 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 
             {/* Tab Content Area */}
             <div className="min-h-[500px] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                {activeTab === "profile_management" && <ProfileManagementTab />}
+                {activeTab === "profile_management" && <ProfileManagementTab vendor={vendor} />}
                 {activeTab === "menu_management" && <MenuManagementTab />}
-                {activeTab === "kyc_verification" && <KycVerificationTab />}
+                {activeTab === "kyc_verification" && <KycVerificationTab vendor={vendor} />}
             </div>
         </div>
     );

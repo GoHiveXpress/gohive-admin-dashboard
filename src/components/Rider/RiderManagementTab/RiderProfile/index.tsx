@@ -1,3 +1,4 @@
+//src/components/Rider/RiderManagementTab/RiderProfile/index.tsx
 "use client";
 
 import { useState } from "react";
@@ -11,6 +12,8 @@ import ProfileTab from "./ProfileTab";
 import RiderKycTab from "./RiderKycTab";
 import { ROUTES } from "@/constants/routes";
 import Link from "next/link";
+import { useRiders } from "@/hooks/riderManagement"; // Assuming you use the same hook or a single rider hook
+import { Loader2 } from "lucide-react";
 
 interface RiderProfileProps {
 	riderId: string;
@@ -26,6 +29,29 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState("profile");
 
+    // Fetching the rider data. 
+    // If you have a useRider(riderId) hook, use that. 
+    // Otherwise, we find the rider from the list:
+    const { data: response, isLoading, isError } = useRiders();
+    const rider = response?.data?.find((r: any) => r._id === riderId);
+
+    if (isLoading) {
+        return (
+            <div className="flex h-96 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-secondary" />
+            </div>
+        );
+    }
+
+    if (isError || !rider) {
+        return (
+            <div className="p-8 text-center">
+                <p className="text-red-500">Rider not found or error loading data.</p>
+                <Link href={ROUTES.RIDERS} className="text-secondary underline mt-4 block">Back to Management</Link>
+            </div>
+        );
+    }
+
 	return (
 		<div className="w-full space-y-6">
 			{/* Header / Title */}
@@ -40,7 +66,6 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 						variant="ghost"
 						size="icon"
 						className="absolute top-6 right-6 hover:bg-muted rounded-full"
-						onClick={() => router.back()}
 					>
 						<Icon icon="ph:arrow-u-up-left-bold" width="20" />
 					</Button>
@@ -50,17 +75,18 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 				<div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-8">
 					{/* Avatar */}
 					<div className="w-24 h-24 rounded-full bg-[#E8E6D9] flex items-center justify-center text-[#8E8B7B]">
-						{/* Placeholder */}
-						<div className="w-20 h-20 rounded-full bg-[#D9D7C8]" />
+						<div className="w-20 h-20 rounded-full bg-[#D9D7C8] flex items-center justify-center">
+                            <Icon icon="ph:user-fill" width="40" />
+                        </div>
 					</div>
 
 					<div className="space-y-1">
-						<h1 className="text-2xl font-bold text-foreground">James James</h1>
+						<h1 className="text-2xl font-bold text-foreground">{rider.name}</h1>
 						<Badge
 							variant="outline"
 							className="text-xs font-normal text-muted-foreground border-border bg-[#F5F5F4] rounded-md px-2 py-0.5"
 						>
-							Rider's ID Number: RGHV0923
+							Rider's ID Number: {rider._id.slice(-8).toUpperCase()}
 						</Badge>
 					</div>
 				</div>
@@ -72,14 +98,13 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 							items={TAB_ITEMS}
 							activeTab={activeTab}
 							onTabChange={setActiveTab}
-							// Styling to match screenshot: Active is Green (Secondary), Text is small
 							className="[&_button]:h-9 [&_button]:text-xs [&_button]:px-5 [&_button[data-state=active]]:bg-secondary [&_button[data-state=active]]:text-white"
 						/>
 					</div>
 
 					<div className="bg-[#E8F5E9] text-[#22C55E] px-4 py-1.5 rounded-full flex items-center gap-2 text-sm font-medium">
 						<div className="w-2 h-2 rounded-full bg-[#22C55E]" />
-						Active
+						{rider.riderProfile?.availabilityStatus || "Active"}
 					</div>
 				</div>
 
@@ -87,8 +112,9 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 
 				{/* Tab Content */}
 				<div className="animate-in fade-in zoom-in-95 duration-200">
-					{activeTab === "profile" && <ProfileTab />}
-					{activeTab === "kyc_verification" && <RiderKycTab />}
+                    {/* FIXED: Passing the rider prop to the components */}
+					{activeTab === "profile" && <ProfileTab rider={rider} />}
+					{activeTab === "kyc_verification" && <RiderKycTab rider={rider} />}
 					{activeTab === "performance_metrics" && <RiderPerformanceTab />}
 				</div>
 			</div>

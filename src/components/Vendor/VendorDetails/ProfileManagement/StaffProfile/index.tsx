@@ -1,3 +1,4 @@
+//src/components/Vendor/VendorDetails/ProfileManagement/StaffProfile/index.tsx
 "use client";
 
 import { Badge } from "@/components/ui/badge";

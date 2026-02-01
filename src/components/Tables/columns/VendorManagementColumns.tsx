@@ -21,8 +21,8 @@ export const vendorColumnsConfig: BaseColumnSchema<VendorData>[] = [
         header: "Name",
         render: (row) => (
             <div className="flex items-center gap-2">
-                {/* Green online dot as seen in screenshot */}
-                <div className="w-2 h-2 rounded-full bg-secondary" />
+                {/* Green online dot */}
+                <div className={`w-2 h-2 rounded-full ${row.status === "Active" ? "bg-secondary" : "bg-muted"}`} />
                 <span className="text-foreground font-medium">{row.name}</span>
             </div>
         ),

@@ -3,20 +3,20 @@ import { BaseColumnSchema } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link"; // Import Link
+import Link from "next/link"; 
+
 
 export type RiderData = {
     id: string;
     name: string;
     email: string;
     phone: string;
-    status: "Active" | "Inactive";
-    kyc: "Verified" | "Unverified";
+    status: string; 
+    kyc: string; 
     rating: number;
 };
 
 export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
-    // ... (Keep existing columns: Name, Email, Phone, Status, KYC, Rating)
     {
         key: "name",
         header: "Name",
@@ -46,6 +46,7 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
                 className="border-none px-3 py-1 rounded-full font-medium bg-secondary/10 text-secondary"
             >
                 <div className="w-2 h-2 rounded-full mr-2 bg-secondary" />
+                {/* This will now display 'Online', 'Offline', etc. */}
                 {row.status}
             </Badge>
         ),
@@ -58,6 +59,7 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
                 className="border-none px-4 py-1 rounded-[6px] font-medium bg-secondary text-white hover:bg-secondary/90"
             >
                 <div className="w-2 h-2 rounded-full mr-2 bg-white" />
+                {/* This will now display 'Approved', 'Pending', etc. */}
                 {row.kyc}
             </Badge>
         ),

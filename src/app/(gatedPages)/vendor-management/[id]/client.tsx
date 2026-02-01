@@ -1,3 +1,4 @@
+//src/app/(gatedPages)/vendor-management/[id]/client.tsx
 "use client";
 
 import RouteWrapper from "@/layouts/RouteWrapper";

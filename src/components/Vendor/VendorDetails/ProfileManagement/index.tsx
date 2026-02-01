@@ -6,11 +6,16 @@ import { Button } from "@/components/ui/button";
 import BusinessProfile from "./BusinessProfile";
 import OwnersProfile from "./OwnersProfile";
 import StaffProfile from "./StaffProfile";
+import { VendorUser } from "@/types/vendorManagement";
 
 // Sub-tabs for the Profile Section
 const PROFILE_SUB_TABS = ["Business Profile", "Owners Profile", "Staff Profile"];
 
-export default function ProfileManagementTab() {
+interface ProfileManagementTabProps {
+    vendor: VendorUser;
+}
+
+export default function ProfileManagementTab({ vendor }: ProfileManagementTabProps) {
     const [activeSubTab, setActiveSubTab] = useState("Business Profile");
 
     return (
@@ -46,8 +51,8 @@ export default function ProfileManagementTab() {
 
             {/* Content Render */}
             <div className="animate-in fade-in zoom-in-95 duration-200">
-                {activeSubTab === "Business Profile" && <BusinessProfile />}
-                {activeSubTab === "Owners Profile" && <OwnersProfile />}
+                {activeSubTab === "Business Profile" && <BusinessProfile vendor={vendor} />}
+                {activeSubTab === "Owners Profile" && <OwnersProfile vendor={vendor} />}
                 {activeSubTab === "Staff Profile" && <StaffProfile />}
             </div>
         </div>

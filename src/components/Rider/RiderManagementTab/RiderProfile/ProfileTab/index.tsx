@@ -1,9 +1,18 @@
+//src/components/Rider/RiderManagementTab/RiderProfile/ProfileTab/index.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
 import FloatingInput from "@/components/FormElements/FloatingInput";
+import { RiderUser } from "@/types/riderManagement";
 
-export default function ProfileTab() {
+interface ProfileTabProps {
+    rider: RiderUser;
+}
+
+export default function ProfileTab({ rider }: ProfileTabProps) {
+    // Safety check
+    if (!rider) return null;
+
     return (
         <div className="space-y-6">
             <div className="flex justify-end items-center">
@@ -16,35 +25,36 @@ export default function ProfileTab() {
                 {/* Full Name */}
                 <FloatingInput
                     label="Full Name"
-                    defaultValue="Victor Kenny"
+                    defaultValue={rider.name || ""}
                     icon="ph:user-fill"
                 />
 
                 {/* Phone Number */}
                 <FloatingInput
                     label="Phone Number"
-                    defaultValue="09056113019"
+                    defaultValue={rider.phone || ""}
                     icon="ph:phone-fill"
                 />
 
                 {/* Email */}
                 <FloatingInput
                     label="Email"
-                    defaultValue="victorkenny@gmail.com"
+                    defaultValue={rider.email || ""}
                     icon="ph:envelope-simple-fill"
+                    readOnly 
                 />
 
                  {/* Address */}
-                 <FloatingInput
+                 {/* <FloatingInput
                     label="Address"
-                    defaultValue="No 5 Alatise LA Offa"
+                    defaultValue={rider.riderProfile?.address || "N/A"} 
                     icon="ph:map-pin-fill"
-                />
+                /> */}
 
-                 {/* Birth Date (Using generic input for styling match) */}
+                 {/* Birth Date */}
                  <FloatingInput
                     label="Birth Date"
-                    defaultValue="Nov 2"
+                    defaultValue="N/A"
                     icon="ph:calendar-blank-fill"
                 />
             </div>

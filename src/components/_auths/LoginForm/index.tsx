@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation"; // Added for redirection
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import { toast } from "sonner"; // Added for toast notifications
+import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 
-// Standardized imports using default imports where applicable
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,10 +20,8 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-
-// Dummy Credentials Constants
-const DUMMY_EMAIL = "mustaKen@aol.com";
-const DUMMY_PASSWORD = "Gohive001";
+import { useAdminLogin } from "@/hooks/authManagement";
+import Link from "next/link";
 
 const formSchema = z.object({
 	email: z.string().email({ message: "Please enter a valid email address." }),
@@ -32,44 +29,49 @@ const formSchema = z.object({
 });
 
 export default function LoginForm() {
-	const router = useRouter(); // Initialize router
+	const router = useRouter();
 	const [showPassword, setShowPassword] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
+
+	// Use our custom hook to handle the API call first
+	const { mutate: login, isPending } = useAdminLogin();
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
-		defaultValues: {
-			email: "",
-			password: "",
-		},
+		defaultValues: { email: "", password: "" },
 	});
 
-	async function onSubmit(values: z.infer<typeof formSchema>) {
-		setIsLoading(true);
-
-		// Simulate a short network delay for better UX
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
-		if (values.email === DUMMY_EMAIL && values.password === DUMMY_PASSWORD) {
-			toast.success("Login Successful", {
-				description: "Welcome back to GoHive Admin.",
-			});
-			router.push("/dashboard");
-			// We don't set isLoading(false) here to prevent the button form flashing 
-			// before the page redirects
-		} else {
-			toast.error("Invalid Credentials", {
-				description: "Please check your email and password.",
-			});
-			setIsLoading(false);
-		}
+	function onSubmit(values: z.infer<typeof formSchema>) {
+		login(values, {
+			onSuccess: (data) => {
+				if (data.requireOtp) {
+					// Admin Flow: Store email for next step and redirect
+					if (typeof window !== "undefined") {
+						sessionStorage.setItem("admin_login_email", values.email);
+					}
+					router.push("/login-verify");
+				} else if (data.token) {
+					// Standard User Flow: Manually set session via NextAuth
+					// We call signIn with the same credentials to let NextAuth finalize the session
+					// strictly because NextAuth needs to own the session cookie.
+					signIn("credentials", {
+						email: values.email,
+						password: values.password,
+						redirect: false,
+					}).then((result) => {
+						if (result?.ok) {
+							router.push("/dashboard");
+						} else {
+							toast.error("Session creation failed");
+						}
+					});
+				}
+			},
+		});
 	}
 
 	return (
 		<div className="w-full overflow-hidden rounded-[32px] border border-gray-100 bg-white font-sans shadow-2xl">
-			{/* --- Custom Header Section --- */}
 			<div className="relative flex h-40 items-center justify-center overflow-hidden bg-[#17110A]">
-				{/* Hot Plate Icon */}
 				<div className="absolute -left-4 top-2 size-24">
 					<Image
 						src="/assets/hot_plate.png"
@@ -79,8 +81,6 @@ export default function LoginForm() {
 						sizes="96px"
 					/>
 				</div>
-
-				{/* Brand Logo */}
 				<div className="relative z-10 size-40">
 					<Image
 						src="/assets/logo_gohive.png"
@@ -91,11 +91,9 @@ export default function LoginForm() {
 						priority
 					/>
 				</div>
-
 				<div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 to-transparent" />
 			</div>
 
-			{/* --- Form Body --- */}
 			<div className="px-10 py-12">
 				<div className="mb-10 text-center">
 					<h1 className="text-lg font-semibold uppercase tracking-widest text-[#17110A]">
@@ -105,7 +103,6 @@ export default function LoginForm() {
 
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-						{/* Email Field */}
 						<FormField
 							control={form.control}
 							name="email"
@@ -129,7 +126,6 @@ export default function LoginForm() {
 							)}
 						/>
 
-						{/* Password Field */}
 						<FormField
 							control={form.control}
 							name="password"
@@ -166,17 +162,15 @@ export default function LoginForm() {
 							)}
 						/>
 
-						{/* Submit Button */}
 						<Button
 							type="submit"
 							className="mt-4 h-[52px] w-full rounded-xl bg-[#FDB900] text-[15px] font-bold uppercase tracking-wide text-[#17110A] shadow-md transition-all duration-200 ease-in-out hover:bg-[#E5A800] hover:shadow-lg"
-							disabled={isLoading}
+							disabled={isPending}
 						>
-							{isLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
+							{isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
 							Log in
 						</Button>
 
-						{/* Forgot Password */}
 						<div className="pt-2 text-center">
 							<Link
 								href="/forgot-password"

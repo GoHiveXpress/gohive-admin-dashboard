@@ -6,23 +6,43 @@ import { Input } from "@/components/ui/input";
 import { Icon } from "@iconify/react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
-import { riderColumnsConfig, RiderData } from "@/components/Tables/columns/RiderManagementColumns";
-
-
-const RIDER_DATA: RiderData[] = [
-    {
-        id: "1",
-        name: "Victor Kenny",
-        email: "designbyprose@gmail.com",
-        phone: "+2349056113019",
-        status: "Active",
-        kyc: "Verified",
-        rating: 5.0,
-    },
-    // Add more mock data if needed
-];
+import { riderColumnsConfig } from "@/components/Tables/columns/RiderManagementColumns";
+import { useRiders } from "@/hooks/riderManagement";
+import { RiderUser } from "@/types/riderManagement";
+import { Loader2 } from "lucide-react";
 
 export default function RiderManagementList() {
+    const { data: response, isLoading, isError } = useRiders();
+    const riders = response?.data || [];
+
+    // Map API data to the format your Table expects
+    // We strictly assume riderColumnsConfig expects keys like: id, name, email, phone, status, kyc
+    const formattedData = riders.map((rider: RiderUser) => ({
+        id: rider._id,
+        name: rider.name,
+        email: rider.email,
+        phone: rider.phone || "N/A",
+        // Capitalize first letter for UI consistency
+        status: rider.riderProfile.availabilityStatus.charAt(0).toUpperCase() + rider.riderProfile.availabilityStatus.slice(1), 
+        kyc: rider.riderProfile.verificationStatus.charAt(0).toUpperCase() + rider.riderProfile.verificationStatus.slice(1),
+        // Default rating to 0 or 5.0 as it's not in the current RiderUser type
+        rating: 5.0, 
+        // Pass the full object if needed for actions
+        original: rider 
+    }));
+
+    if (isLoading) {
+        return (
+            <div className="flex h-96 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-secondary" />
+            </div>
+        );
+    }
+
+    if (isError) {
+        return <div className="text-red-500">Failed to load riders.</div>;
+    }
+
     return (
         <div className="space-y-6">
             {/* Filters Row */}
@@ -72,7 +92,7 @@ export default function RiderManagementList() {
             {/* Table */}
             <DataTable
                 columns={getColumns(riderColumnsConfig)}
-                data={RIDER_DATA}
+                data={formattedData}
                 title=""
             />
         </div>

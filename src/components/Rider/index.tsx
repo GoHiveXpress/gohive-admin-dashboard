@@ -1,3 +1,4 @@
+//src/components/Rider/index.tsx
 "use client";
 
 import { useState } from "react";

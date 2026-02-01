@@ -7,31 +7,33 @@ import { Icon } from "@iconify/react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { vendorColumnsConfig, VendorData } from "@/components/Tables/columns/VendorManagementColumns";
-
-// Mock Data matching Screenshot 1
-const VENDOR_DATA: VendorData[] = [
-    {
-        id: "1",
-        name: "Victor Kenny",
-        email: "designbyprose@gmail.com",
-        phone: "+2349056113019",
-        status: "Active",
-        kyc: "Verified",
-        rating: 5.0,
-    },
-    // Adding a few more to populate table
-    {
-        id: "2",
-        name: "Chicken Republic",
-        email: "cr@gmail.com",
-        phone: "+2348000000000",
-        status: "Active",
-        kyc: "Verified",
-        rating: 4.8,
-    },
-];
+import { useVendors } from "@/hooks/vendorManagement";
+import { Loader2 } from "lucide-react";
 
 export default function VendorList() {
+    const { data, isLoading } = useVendors();
+
+    // Map backend data to table format
+    const vendorTableData: VendorData[] = data?.data?.map((vendor) => ({
+        id: vendor._id,
+        name: vendor.vendorProfile?.businessName || vendor.name, // Prefer Business Name
+        email: vendor.email,
+        phone: vendor.phone || "N/A",
+        // Logic: Verified email = Active status for now (customize as needed)
+        status: vendor.vendorProfile?.isApproved ? "Active" : "Inactive", 
+        // Logic: Approved profile = Verified KYC
+        kyc: vendor.vendorProfile?.isApproved ? "Verified" : "Unverified",
+        rating: 0.0, // Backend doesn't provide rating yet, defaulting to 0
+    })) || [];
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Filters Row */}
@@ -91,7 +93,7 @@ export default function VendorList() {
             {/* Table */}
             <DataTable
                 columns={getColumns(vendorColumnsConfig)}
-                data={VENDOR_DATA}
+                data={vendorTableData}
                 title=""
             />
         </div>

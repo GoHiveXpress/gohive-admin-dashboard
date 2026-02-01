@@ -1,3 +1,4 @@
+//src/app/(authPages)/login-verify/page.tsx
 import Image from "next/image";
 import VerifyLoginForm from "@/components/_auths/VerifyLoginForm";
 
