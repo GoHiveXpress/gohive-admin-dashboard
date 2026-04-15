@@ -1,15 +1,16 @@
 // src/components/List/ActiveUserList/index.tsx
+
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
-import CustomTabs, { TabItem } from "@/components/Tabs";
+import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { DataTable } from "@/components/Tables";
 import {
 	activeUsersColumnConfig,
-	ActiveUserData,
+	type ActiveUserData,
 } from "@/components/Tables/columns/ActiveUsersColumnsConfig";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { ROUTES } from "@/constants/routes";
@@ -91,7 +92,7 @@ export default function ActiveUserList() {
 		<div className="w-full space-y-6">
 			{/* Header / Title Section */}
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold text-foreground transition-all duration-300 ease-in-out">
+				<h1 className="text-foreground text-2xl font-bold transition-all duration-300 ease-in-out">
 					{pageTitle}
 				</h1>
 
@@ -100,7 +101,7 @@ export default function ActiveUserList() {
 					<Button
 						variant="ghost"
 						size="icon"
-						className="rounded-full bg-white hover:bg-muted shadow-sm border border-border"
+						className="hover:bg-muted border-border rounded-full border bg-white shadow-sm"
 					>
 						<Icon icon="ph:arrow-u-up-left-bold" width="20" />
 					</Button>
@@ -108,9 +109,9 @@ export default function ActiveUserList() {
 			</div>
 
 			{/* Tabs & Filters Container */}
-			<div className="bg-white p-6 rounded-[20px] shadow-sm border border-border/50 space-y-6">
+			<div className="border-border/50 space-y-6 rounded-[20px] border bg-white p-6 shadow-sm">
 				{/* Tabs */}
-				<div className="bg-muted/30 p-1.5 rounded-full w-fit">
+				<div className="bg-muted/30 w-fit rounded-full p-1.5">
 					<CustomTabs
 						items={TAB_ITEMS}
 						activeTab={activeTab}
@@ -122,7 +123,7 @@ export default function ActiveUserList() {
 				<div className="flex flex-wrap gap-3">
 					<Button
 						variant="outline"
-						className="h-10 w-10 p-0 rounded-lg border-border bg-white"
+						className="border-border size-10 rounded-lg bg-white p-0"
 					>
 						<Icon icon="ph:sliders-horizontal" width="20" />
 					</Button>
@@ -132,10 +133,10 @@ export default function ActiveUserList() {
 						<Button
 							key={label}
 							variant="outline"
-							className="h-10 rounded-lg border-border bg-white px-4 text-sm font-medium justify-between min-w-[100px]"
+							className="border-border h-10 min-w-[100px] justify-between rounded-lg bg-white px-4 text-sm font-medium"
 						>
 							{label}
-							<Icon icon="ph:caret-down" className="ml-2 text-muted-foreground" />
+							<Icon icon="ph:caret-down" className="text-muted-foreground ml-2" />
 						</Button>
 					))}
 				</div>

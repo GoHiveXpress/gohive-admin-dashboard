@@ -1,4 +1,5 @@
-//src/components/FormElements/FloatingInput/index.tsx
+// src/components/FormElements/FloatingInput/index.tsx
+
 "use client";
 
 import * as React from "react";
@@ -29,7 +30,7 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
 
 				{/* Icon */}
 				{icon && (
-					<div className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/70 pointer-events-none">
+					<div className="text-foreground/70 pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
 						<Icon icon={icon} width="24" height="24" />
 					</div>
 				)}

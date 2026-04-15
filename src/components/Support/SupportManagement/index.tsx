@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import CustomTabs, { TabItem } from "@/components/Tabs";
+import CustomTabs, { type TabItem } from "@/components/Tabs";
 import LiveChatTab from "./LiveChatTab";
 import TicketTab from "./TicketTab";
 import BroadcastTab from "./BroadcastTab";
@@ -19,9 +19,9 @@ export default function SupportManagement() {
 
 	return (
 		// We use h-full and flex-col to ensure it fills the RouteWrapper's children slot
-		<div className="flex flex-col h-full w-full gap-6">
+		<div className="flex size-full flex-col gap-6">
 			{/* Tabs Container - Muted background pill */}
-			<div className="bg-muted/50 rounded-full p-1 w-fit">
+			<div className="bg-muted/50 w-fit rounded-full p-1">
 				<CustomTabs
 					items={TABS}
 					activeTab={activeTab}
@@ -31,7 +31,7 @@ export default function SupportManagement() {
 			</div>
 
 			{/* Tab Content Area - flex-1 allows it to take remaining height */}
-			<div className="flex-1 min-h-0">
+			<div className="min-h-0 flex-1">
 				{activeTab === "live-chat" && <LiveChatTab />}
 				{activeTab === "tickets" && <TicketTab />}
 				{activeTab === "broadcasts" && <BroadcastTab />}

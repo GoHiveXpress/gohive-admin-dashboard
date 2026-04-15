@@ -1,17 +1,14 @@
-//src/app/(gatedPages)/vendor-management/[id]/client.tsx
+// src/app/(gatedPages)/vendor-management/[id]/client.tsx
+
 "use client";
 
 import RouteWrapper from "@/layouts/RouteWrapper";
 import VendorDetailsIndex from "@/components/Vendor/VendorDetails";
 
 interface ClientProps {
-  id: string;
+	id: string;
 }
 
 export default function VendorDetailsClient({ id }: ClientProps) {
-  return (
-    <RouteWrapper 
-      middleSlot={<VendorDetailsIndex vendorId={id} />} 
-    />
-  );
+	return <RouteWrapper middleSlot={<VendorDetailsIndex vendorId={id} />} />;
 }

@@ -28,10 +28,10 @@ export default function OrderFlowControlTab() {
 							key={tab.id}
 							onClick={() => setActiveSubTab(tab.id)}
 							variant="ghost"
-							className={`rounded-lg px-6 h-10 text-sm font-medium transition-all ${
+							className={`h-10 rounded-lg px-6 text-sm font-medium transition-all ${
 								isActive
 									? "bg-primary text-primary-foreground hover:bg-primary/90"
-									: "bg-transparent border border-border text-foreground hover:bg-accent"
+									: "border-border text-foreground hover:bg-accent border bg-transparent"
 							}`}
 						>
 							{tab.label}

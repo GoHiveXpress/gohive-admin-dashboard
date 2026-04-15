@@ -1,18 +1,25 @@
+/* eslint-disable @next/next/no-img-element, @typescript-eslint/prefer-nullish-coalescing, jsx-a11y/alt-text, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, no-nested-ternary */
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-	useAllChats, 
-	useChatHistory, 
-	useSendMessage, 
-	useSupportSocket 
+import {
+	useAllChats,
+	useChatHistory,
+	useSendMessage,
+	useSupportSocket,
 } from "@/hooks/supportManagement";
 import { format, formatDistanceToNow } from "date-fns";
-import { ISupportChat, ISupportMessage, ISupportUser } from "@/types/supportManagement";
+import {
+	type ISupportChat,
+	type ISupportMessage,
+	type ISupportUser,
+} from "@/types/supportManagement";
 
 export default function TicketTab() {
-	const [activeCategory, setActiveCategory] = useState<"customer" | "vendor" | "rider" | "all">("customer");
+	const [activeCategory, setActiveCategory] = useState<"customer" | "vendor" | "rider" | "all">(
+		"customer",
+	);
 	const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">("all");
 	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -26,11 +33,12 @@ export default function TicketTab() {
 
 	// 2. Filter chats for the category
 	const filteredChats = useMemo(() => {
-		let result = chats.filter(chat => {
+		const result = chats.filter((chat) => {
 			const matchesCategory = activeCategory === "all" || chat.role === activeCategory;
 			const matchesStatus = statusFilter === "all" || chat.status === statusFilter;
-			const matchesSearch = chat.user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-								 chat._id.toLowerCase().includes(searchQuery.toLowerCase());
+			const matchesSearch =
+				chat.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				chat._id.toLowerCase().includes(searchQuery.toLowerCase());
 			return matchesCategory && matchesStatus && matchesSearch;
 		});
 
@@ -42,9 +50,9 @@ export default function TicketTab() {
 	}, [chats, activeCategory, searchQuery, statusFilter, sortOrder]);
 
 	// 3. Selected Chat
-	const selectedChat = useMemo(() => 
-		chats.find(c => c._id === selectedChatId), 
-		[chats, selectedChatId]
+	const selectedChat = useMemo(
+		() => chats.find((c) => c._id === selectedChatId),
+		[chats, selectedChatId],
 	);
 
 	// 4. Fetch History
@@ -64,7 +72,7 @@ export default function TicketTab() {
 		if (socket) {
 			socket.on("new_support_message", (newMessage: ISupportMessage) => {
 				if (newMessage.chat === selectedChatId) {
-					setMessages(prev => [...prev, newMessage]);
+					setMessages((prev) => [...prev, newMessage]);
 				}
 			});
 		}
@@ -85,12 +93,15 @@ export default function TicketTab() {
 
 	const handleSendMessage = () => {
 		if (!messageText.trim() || !selectedChatId) return;
-		sendMessage({
-			chatId: selectedChatId,
-			content: messageText,
-		}, {
-			onSuccess: () => setMessageText("")
-		});
+		sendMessage(
+			{
+				chatId: selectedChatId,
+				content: messageText,
+			},
+			{
+				onSuccess: () => setMessageText(""),
+			},
+		);
 	};
 
 	const formatUserId = (chat: ISupportChat) => {
@@ -100,7 +111,8 @@ export default function TicketTab() {
 
 	// Helper for Dynamic Avatars
 	const getUserAvatar = (user: ISupportUser) => {
-		if (user.role === "vendor") return user.vendorProfile?.personalAvatar || user.profilePicture;
+		if (user.role === "vendor")
+			return user.vendorProfile?.personalAvatar || user.profilePicture;
 		if (user.role === "rider") return user.riderProfile?.personalAvatar || user.profilePicture;
 		return user.profilePicture;
 	};
@@ -108,25 +120,25 @@ export default function TicketTab() {
 	// Ensure fresh interface when switching chats
 	useEffect(() => {
 		if (selectedChatId) {
-			setMessages([]); 
+			setMessages([]);
 		}
 	}, [selectedChatId]);
 
 	return (
-		<div className="flex flex-col gap-6 h-full">
+		<div className="flex h-full flex-col gap-6">
 			{/* Top Filter Bar */}
 			<div className="flex flex-wrap items-center gap-4">
 				<div className="flex gap-2">
 					{(["customer", "vendor", "rider"] as const).map((role) => {
-						const count = chats.filter(c => c.role === role).length;
+						const count = chats.filter((c) => c.role === role).length;
 						return (
-							<Button 
+							<Button
 								key={role}
 								onClick={() => setActiveCategory(role)}
 								className={`h-10 px-6 ${
-									activeCategory === role 
-										? "bg-primary text-primary-foreground hover:bg-primary/90" 
-										: "bg-transparent border border-border text-foreground hover:bg-muted"
+									activeCategory === role
+										? "bg-primary text-primary-foreground hover:bg-primary/90"
+										: "border-border text-foreground hover:bg-muted border bg-transparent"
 								}`}
 							>
 								{role.charAt(0).toUpperCase() + role.slice(1)} ({count})
@@ -138,55 +150,61 @@ export default function TicketTab() {
 				<div className="relative w-64">
 					<Icon
 						icon="lucide:search"
-						className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4"
+						className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2"
 					/>
-					<Input 
-						placeholder="Search by name or ID" 
+					<Input
+						placeholder="Search by name or ID"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="pl-9 h-10 bg-transparent" 
+						className="h-10 bg-transparent pl-9"
 					/>
 				</div>
 
-				<Button variant="outline" size="icon" className="h-10 w-10">
-					<Icon icon="lucide:sliders-horizontal" className="w-4 h-4" />
+				<Button variant="outline" size="icon" className="size-10">
+					<Icon icon="lucide:sliders-horizontal" className="size-4" />
 				</Button>
 
-				<Button 
+				<Button
 					onClick={() => {
 						setActiveCategory("all");
 						setStatusFilter("all");
 						setSearchQuery("");
 					}}
 					className={`h-10 px-6 ${
-						activeCategory === "all" ? "bg-accent text-white" : "bg-muted text-foreground"
+						activeCategory === "all"
+							? "bg-accent text-white"
+							: "bg-muted text-foreground"
 					} hover:bg-accent/90`}
 				>
 					All
 				</Button>
 
-				<Button 
-					variant="outline" 
-					onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
-					className={`h-10 bg-transparent flex items-center gap-2 ${sortOrder !== "desc" ? "border-primary text-primary" : ""}`}
+				<Button
+					variant="outline"
+					onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+					className={`flex h-10 items-center gap-2 bg-transparent ${sortOrder !== "desc" ? "border-primary text-primary" : ""}`}
 				>
-					ID <Icon icon={sortOrder === "asc" ? "lucide:arrow-up" : "lucide:arrow-down"} className="w-3 h-3" />
+					ID{" "}
+					<Icon
+						icon={sortOrder === "asc" ? "lucide:arrow-up" : "lucide:arrow-down"}
+						className="size-3"
+					/>
 				</Button>
 
-				<div className="flex items-center gap-2 border border-border rounded-md p-1">
-					<Button 
-						variant="ghost" 
+				<div className="border-border flex items-center gap-2 rounded-md border p-1">
+					<Button
+						variant="ghost"
 						size="sm"
 						onClick={() => setStatusFilter("active")}
-						className={`h-8 text-xs px-3 ${statusFilter === "active" ? "bg-secondary text-secondary-foreground" : ""}`}
+						className={`h-8 px-3 text-xs ${statusFilter === "active" ? "bg-secondary text-secondary-foreground" : ""}`}
 					>
 						Open
 					</Button>
-					<Button 
-						variant="ghost" 
+					<Button
+						variant="ghost"
 						size="sm"
 						onClick={() => setStatusFilter("closed")}
-						className={`h-8 text-xs px-3 ${statusFilter === "closed" ? "bg-destructive/10 text-destructive" : ""}`}
+						className={`h-8 px-3 text-xs ${statusFilter === "closed" ? "bg-destructive/10 text-destructive" : ""}`}
 					>
 						Closed
 					</Button>
@@ -195,62 +213,84 @@ export default function TicketTab() {
 
 			<div className="flex items-center gap-2">
 				<h2 className="text-2xl font-medium">
-					{activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Support Tickets ({filteredChats.length})
+					{activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Support
+					Tickets ({filteredChats.length})
 				</h2>
 			</div>
 
-			<div className="grid grid-cols-12 gap-6 h-full min-h-[600px]">
+			<div className="grid h-full min-h-[600px] grid-cols-12 gap-6">
 				{/* === LEFT: Ticket Grid === */}
-				<div className="col-span-5 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+				<div className="custom-scrollbar col-span-5 space-y-4 overflow-y-auto pr-2">
 					{chatsLoading ? (
-						<div className="py-10 text-center text-muted-foreground">Loading tickets...</div>
+						<div className="text-muted-foreground py-10 text-center">
+							Loading tickets...
+						</div>
 					) : filteredChats.length === 0 ? (
-						<div className="py-10 text-center text-muted-foreground">No tickets found</div>
+						<div className="text-muted-foreground py-10 text-center">
+							No tickets found
+						</div>
 					) : (
 						filteredChats.map((chat) => (
-							<div 
+							<div
 								key={chat._id}
 								onClick={() => setSelectedChatId(chat._id)}
-								className={`bg-card border rounded-xl p-5 shadow-sm space-y-3 cursor-pointer transition ${
-									selectedChatId === chat._id ? "border-primary" : "border-border hover:border-primary/50"
+								className={`bg-card cursor-pointer space-y-3 rounded-xl border p-5 shadow-sm transition ${
+									selectedChatId === chat._id
+										? "border-primary"
+										: "border-border hover:border-primary/50"
 								}`}
 							>
-								<div className="flex justify-between items-start">
-									<span className="text-xs border border-border rounded-full px-3 py-1 bg-background">
+								<div className="flex items-start justify-between">
+									<span className="border-border bg-background rounded-full border px-3 py-1 text-xs">
 										{formatUserId(chat)}
 									</span>
-									<span className="text-xs text-muted-foreground">
-										{formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true })}
+									<span className="text-muted-foreground text-xs">
+										{formatDistanceToNow(new Date(chat.updatedAt), {
+											addSuffix: true,
+										})}
 									</span>
 								</div>
-								
-								<h3 className="text-lg font-medium leading-tight line-clamp-2">
+
+								<h3 className="line-clamp-2 text-lg font-medium leading-tight">
 									{chat.lastMessage || "New Support Request"}
 								</h3>
 
 								<div className="flex items-center justify-between pt-2">
 									<div className="flex items-center gap-2">
-										<div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200">
+										<div className="size-6 overflow-hidden rounded-full bg-gray-200">
 											{getUserAvatar(chat.user) ? (
-												<img src={getUserAvatar(chat.user)} className="w-full h-full object-cover" />
+												<img
+													src={getUserAvatar(chat.user)}
+													className="size-full object-cover"
+												/>
 											) : (
-												<div className="w-full h-full flex items-center justify-center bg-muted text-[10px] font-bold">
+												<div className="bg-muted flex size-full items-center justify-center text-[10px] font-bold">
 													{chat.user.name.charAt(0)}
 												</div>
 											)}
 										</div>
-										<span className="text-xs font-medium">{chat.user.name}</span>
-										<span className={`w-2 h-2 rounded-full ${chat.status === "active" ? "bg-secondary" : "bg-muted"}`}></span>
+										<span className="text-xs font-medium">
+											{chat.user.name}
+										</span>
+										<span
+											className={`size-2 rounded-full ${chat.status === "active" ? "bg-secondary" : "bg-muted"}`}
+										/>
 									</div>
 									<div className="flex items-center gap-2">
-										<span className={`text-xs px-3 py-1 rounded-full font-medium ${
-											chat.status === "active" 
-												? "bg-secondary/10 text-secondary" 
-												: "bg-red-100 text-destructive"
-										}`}>
-											{chat.status.charAt(0).toUpperCase() + chat.status.slice(1)}
+										<span
+											className={`rounded-full px-3 py-1 text-xs font-medium ${
+												chat.status === "active"
+													? "bg-secondary/10 text-secondary"
+													: "text-destructive bg-red-100"
+											}`}
+										>
+											{chat.status.charAt(0).toUpperCase() +
+												chat.status.slice(1)}
 										</span>
-										<Icon icon="lucide:more-horizontal" className="text-muted-foreground" />
+										<Icon
+											icon="lucide:more-horizontal"
+											className="text-muted-foreground"
+										/>
 									</div>
 								</div>
 							</div>
@@ -259,19 +299,23 @@ export default function TicketTab() {
 				</div>
 
 				{/* === RIGHT: Chat Details === */}
-				<div className="col-span-7 bg-card border border-border rounded-xl flex flex-col h-full overflow-hidden">
+				<div className="bg-card border-border col-span-7 flex h-full flex-col overflow-hidden rounded-xl border">
 					{selectedChatId ? (
 						<>
-							<div className="p-4 border-b border-border flex items-center justify-between">
+							<div className="border-border flex items-center justify-between border-b p-4">
 								<div className="flex items-center gap-2">
-									<div className="w-4 h-4 rounded-full border-[3px] border-primary" />
+									<div className="border-primary size-4 rounded-full border-[3px]" />
 									<div>
-										<h3 className="font-semibold text-lg">Support Conversation</h3>
-										<div className="flex items-center gap-2 text-xs text-muted-foreground">
+										<h3 className="text-lg font-semibold">
+											Support Conversation
+										</h3>
+										<div className="text-muted-foreground flex items-center gap-2 text-xs">
 											<span>{selectedChat?.user.name}</span>
-											<span className={`w-1.5 h-1.5 rounded-full ${selectedChat?.status === 'active' ? 'bg-secondary' : 'bg-muted'}`}></span>
+											<span
+												className={`size-1.5 rounded-full ${selectedChat?.status === "active" ? "bg-secondary" : "bg-muted"}`}
+											/>
 											{selectedChat?.admin && (
-												<span className="text-secondary font-medium px-2 py-0.5 bg-secondary/10 rounded ml-2">
+												<span className="text-secondary bg-secondary/10 ml-2 rounded px-2 py-0.5 font-medium">
 													Connected with Gohive admin
 												</span>
 											)}
@@ -282,10 +326,12 @@ export default function TicketTab() {
 									<Button
 										variant="outline"
 										size="sm"
-										className={`text-xs ${selectedChat?.status === 'closed' ? 'opacity-50 cursor-not-allowed' : 'text-destructive border-destructive/20 hover:bg-destructive/5'}`}
-										disabled={selectedChat?.status === 'closed'}
+										className={`text-xs ${selectedChat?.status === "closed" ? "cursor-not-allowed opacity-50" : "text-destructive border-destructive/20 hover:bg-destructive/5"}`}
+										disabled={selectedChat?.status === "closed"}
 									>
-										{selectedChat?.status === 'closed' ? 'Session Ended' : 'Active Session'}
+										{selectedChat?.status === "closed"
+											? "Session Ended"
+											: "Active Session"}
 									</Button>
 									<Button variant="ghost" size="icon">
 										<Icon icon="lucide:more-vertical" />
@@ -293,41 +339,55 @@ export default function TicketTab() {
 								</div>
 							</div>
 
-							<div 
+							<div
 								ref={scrollRef}
-								className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar"
+								className="custom-scrollbar flex-1 space-y-6 overflow-y-auto p-4"
 							>
 								{historyLoading ? (
-									<div className="h-full flex items-center justify-center text-muted-foreground">Loading history...</div>
+									<div className="text-muted-foreground flex h-full items-center justify-center">
+										Loading history...
+									</div>
 								) : (
 									messages.map((msg) => (
-										<div key={msg._id} className={`flex gap-3 ${msg.isSupportResponse ? "justify-end" : ""}`}>
+										<div
+											key={msg._id}
+											className={`flex gap-3 ${msg.isSupportResponse ? "justify-end" : ""}`}
+										>
 											{!msg.isSupportResponse && (
-												<div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+												<div className="size-8 shrink-0 overflow-hidden rounded-full bg-gray-200">
 													{getUserAvatar(selectedChat!.user) ? (
-														<img src={getUserAvatar(selectedChat!.user)} className="w-full h-full object-cover" />
+														<img
+															src={getUserAvatar(selectedChat!.user)}
+															className="size-full object-cover"
+														/>
 													) : (
-														<div className="w-full h-full flex items-center justify-center bg-muted text-xs font-bold">
+														<div className="bg-muted flex size-full items-center justify-center text-xs font-bold">
 															{selectedChat?.user.name.charAt(0)}
 														</div>
 													)}
 												</div>
 											)}
 											<div>
-												<div className={`px-4 py-2 rounded-2xl text-sm max-w-sm ${
-													msg.isSupportResponse 
-														? "bg-primary text-primary-foreground rounded-br-none" 
-														: "bg-muted text-foreground rounded-tl-none"
-												}`}>
+												<div
+													className={`max-w-sm rounded-2xl px-4 py-2 text-sm ${
+														msg.isSupportResponse
+															? "bg-primary text-primary-foreground rounded-br-none"
+															: "bg-muted text-foreground rounded-tl-none"
+													}`}
+												>
 													{msg.content}
 												</div>
-												<span className={`text-[10px] text-muted-foreground mt-1 block ${msg.isSupportResponse ? "text-right" : ""}`}>
+												<span
+													className={`text-muted-foreground mt-1 block text-[10px] ${msg.isSupportResponse ? "text-right" : ""}`}
+												>
 													{format(new Date(msg.createdAt), "h:mm a")}
 												</span>
 											</div>
 											{msg.isSupportResponse && (
-												<div className="w-8 h-8 rounded-full bg-gray-800 overflow-hidden flex-shrink-0">
-													<div className="w-full h-full flex items-center justify-center bg-gray-700 text-white text-[10px] font-bold">YOU</div>
+												<div className="size-8 shrink-0 overflow-hidden rounded-full bg-gray-800">
+													<div className="flex size-full items-center justify-center bg-gray-700 text-[10px] font-bold text-white">
+														YOU
+													</div>
 												</div>
 											)}
 										</div>
@@ -335,34 +395,42 @@ export default function TicketTab() {
 								)}
 							</div>
 
-							<div className="p-4 border-t border-border flex items-center gap-3">
+							<div className="border-border flex items-center gap-3 border-t p-4">
 								<button className="text-muted-foreground">
-									<Icon icon="lucide:camera" className="w-6 h-6" />
+									<Icon icon="lucide:camera" className="size-6" />
 								</button>
-								<div className="flex-1 relative">
+								<div className="relative flex-1">
 									<Input
-										placeholder={selectedChat?.status === 'closed' ? "This chat session has ended" : "Type a message"}
+										placeholder={
+											selectedChat?.status === "closed"
+												? "This chat session has ended"
+												: "Type a message"
+										}
 										value={messageText}
 										onChange={(e) => setMessageText(e.target.value)}
 										onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
 										disabled={selectedChat?.status === "closed"}
-										className="pr-10 rounded-full border-border bg-transparent disabled:opacity-50"
+										className="border-border rounded-full bg-transparent pr-10 disabled:opacity-50"
 									/>
-									<button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-										<Icon icon="lucide:smile" className="w-5 h-5" />
+									<button className="text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2">
+										<Icon icon="lucide:smile" className="size-5" />
 									</button>
 								</div>
-								<button 
+								<button
 									onClick={handleSendMessage}
-									disabled={isSending || !messageText.trim() || selectedChat?.status === "closed"}
-									className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white shadow-md hover:bg-accent/90 disabled:opacity-50"
+									disabled={
+										isSending ||
+										!messageText.trim() ||
+										selectedChat?.status === "closed"
+									}
+									className="bg-accent hover:bg-accent/90 flex size-10 items-center justify-center rounded-full text-white shadow-md disabled:opacity-50"
 								>
-									<Icon icon="lucide:send" className="w-5 h-5 ml-0.5" />
+									<Icon icon="lucide:send" className="ml-0.5 size-5" />
 								</button>
 							</div>
 						</>
 					) : (
-						<div className="h-full flex items-center justify-center text-muted-foreground">
+						<div className="text-muted-foreground flex h-full items-center justify-center">
 							Select a ticket to view details
 						</div>
 					)}
@@ -371,3 +439,5 @@ export default function TicketTab() {
 		</div>
 	);
 }
+
+/* eslint-enable */

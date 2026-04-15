@@ -8,26 +8,26 @@ import CustomerComparisonWidget from "@/components/_widgets/CustomerComparisonWi
 import CustomerRetentionReport from "@/components/_widgets/CustomerRetentionReport";
 
 export default function CustomerReportTab() {
-  return (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[400px]">
-            <div className="lg:col-span-8 h-full">
-                <CustomerOrderVolumeReport />
-            </div>
-            <div className="lg:col-span-4 h-full">
-                <CustomerComparisonWidget />
-            </div>
-        </div>
+	return (
+		<div className="space-y-6">
+			<div className="grid h-[400px] grid-cols-1 gap-6 lg:grid-cols-12">
+				<div className="h-full lg:col-span-8">
+					<CustomerOrderVolumeReport />
+				</div>
+				<div className="h-full lg:col-span-4">
+					<CustomerComparisonWidget />
+				</div>
+			</div>
 
-        <div>
-             <Button className="bg-secondary hover:bg-secondary/90 text-white h-10 px-6 rounded-lg flex items-center gap-2 mb-6">
-                <Icon icon="lucide:download" /> Export
-             </Button>
-            <CustomerRetentionReport />
-            <Button className="bg-secondary hover:bg-secondary/90 text-white h-10 px-6 rounded-lg flex items-center gap-2 mt-6">
-                <Icon icon="lucide:download" /> Export
-             </Button>
-        </div>
-    </div>
-  );
+			<div>
+				<Button className="bg-secondary hover:bg-secondary/90 mb-6 flex h-10 items-center gap-2 rounded-lg px-6 text-white">
+					<Icon icon="lucide:download" /> Export
+				</Button>
+				<CustomerRetentionReport />
+				<Button className="bg-secondary hover:bg-secondary/90 mt-6 flex h-10 items-center gap-2 rounded-lg px-6 text-white">
+					<Icon icon="lucide:download" /> Export
+				</Button>
+			</div>
+		</div>
+	);
 }

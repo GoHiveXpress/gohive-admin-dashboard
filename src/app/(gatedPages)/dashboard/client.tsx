@@ -1,4 +1,5 @@
-//src/app/(gatedPages)/dashboard/client.tsx
+// src/app/(gatedPages)/dashboard/client.tsx
+
 "use client";
 
 import RouteWrapper from "@/layouts/RouteWrapper";
@@ -12,50 +13,43 @@ import TodaysOrders from "@/components/_widgets/TodaysOrders";
 import TopVendorsList from "@/components/List/TopVendorsList";
 
 export default function DashboardClient() {
-    return (
-        <div className="flex flex-col gap-6">
+	return (
+		<div className="flex flex-col gap-6">
+			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+				<TopCustomers />
+				<TotalRiders />
+				<TotalVendors />
+				<TotalOrders />
+			</div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <TopCustomers />
-                <TotalRiders />
-                <TotalVendors />
-                <TotalOrders />
-            </div>
+			<RouteWrapper
+				middleSlot={
+					<div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
+						<div className="h-[400px] lg:col-span-2">
+							<OrderVolume />
+						</div>
+						<div className="h-[400px]">
+							<TotalUsers />
+						</div>
+					</div>
+				}
+			/>
 
-           
-            <RouteWrapper 
-                middleSlot={
-                    <>
-                      
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
-                            <div className="lg:col-span-2 h-[400px]">
-                                <OrderVolume />
-                            </div>
-                            <div className="h-[400px]">
-                                <TotalUsers />
-                            </div>
-                        </div>
-                    </>
-                } 
-            />
+			<RouteWrapper
+				middleSlot={
+					<div className="w-full">
+						<TodaysOrders />
+					</div>
+				}
+			/>
 
-           
-            <RouteWrapper 
-                middleSlot={
-                    <div className="w-full">
-                        <TodaysOrders />
-                    </div>
-                } 
-            />
-
-         
-            <RouteWrapper 
-                middleSlot={
-                    <div className="w-full">
-                        <TopVendorsList />
-                    </div>
-                } 
-            />
-        </div>
-    );
+			<RouteWrapper
+				middleSlot={
+					<div className="w-full">
+						<TopVendorsList />
+					</div>
+				}
+			/>
+		</div>
+	);
 }

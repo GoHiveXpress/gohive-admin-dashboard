@@ -1,5 +1,5 @@
 // src/layouts/RouteWrapper.tsx
-import { cn } from "@/lib/utils"; 
+import { cn } from "@/lib/utils";
 import { type ReactNode } from "react";
 
 interface RouteWrapperProps {

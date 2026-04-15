@@ -1,37 +1,38 @@
-//src/hooks/useBaseStatsQuery.ts
+// src/hooks/useBaseStatsQuery.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import {
-  useQuery,
-  type UseQueryOptions,
-  type QueryObserverResult,
-  type RefetchOptions,
+	useQuery,
+	type UseQueryOptions,
+	type QueryObserverResult,
+	type RefetchOptions,
 } from "@tanstack/react-query";
 
 // Export this type so it can be referenced in other files if needed
-export type CustomQueryOptions<TData> = Omit<
-  UseQueryOptions<TData, Error>,
-  "queryKey" | "queryFn"
->;
+export type CustomQueryOptions<TData> = Omit<UseQueryOptions<TData, Error>, "queryKey" | "queryFn">;
 
 export default function useBaseStatsQuery<TData>(
-  queryKey: any[],
-  queryFn: () => Promise<TData>,
-  defaultData?: TData,
-  queryOptions?: CustomQueryOptions<TData>
+	queryKey: any[],
+	queryFn: () => Promise<TData>,
+	defaultData?: TData,
+	queryOptions?: CustomQueryOptions<TData>,
 ) {
-  const query = useQuery<TData, Error>({
-    queryKey,
-    queryFn,
-    ...queryOptions,
-  });
+	const query = useQuery<TData, Error>({
+		queryKey,
+		queryFn,
+		...queryOptions,
+	});
 
-  return {
-    ...query,
-    // If query.data is undefined (loading/error), fallback to defaultData
-    data: query.data ?? defaultData,
-    refresh: query.refetch as (
-      options?: RefetchOptions
-    ) => Promise<QueryObserverResult<TData, Error>>,
-  };
+	return {
+		...query,
+		// If query.data is undefined (loading/error), fallback to defaultData
+		data: query.data ?? defaultData,
+		refresh: query.refetch as (
+			options?: RefetchOptions,
+		) => Promise<QueryObserverResult<TData, Error>>,
+	};
 }
+
+/* eslint-enable */

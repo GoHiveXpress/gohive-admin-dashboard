@@ -1,4 +1,5 @@
-//src/app/(gatedPages)/support/client.tsx
+// src/app/(gatedPages)/support/client.tsx
+
 "use client";
 
 import RouteWrapper from "@/layouts/RouteWrapper";
@@ -8,7 +9,7 @@ export default function SupportClient() {
 	return (
 		<RouteWrapper
 			middleSlot={
-				<h1 className="text-2xl font-semibold text-foreground">
+				<h1 className="text-foreground text-2xl font-semibold">
 					Support And Communication
 				</h1>
 			}

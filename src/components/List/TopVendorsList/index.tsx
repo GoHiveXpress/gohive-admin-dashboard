@@ -1,8 +1,13 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { useState } from "react";
 import { DataTable } from "@/components/Tables";
-import { vendorsColumnConfig, VendorData } from "@/components/Tables/columns/VendorsColumnsConfig";
+import {
+	vendorsColumnConfig,
+	type VendorData,
+} from "@/components/Tables/columns/VendorsColumnsConfig";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
@@ -64,41 +69,41 @@ export default function TopVendorsList() {
 
 	return (
 		<div className="w-full">
-			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-				<h2 className="text-xl font-bold text-foreground">Top Vendors</h2>
+			<div className="mb-4 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+				<h2 className="text-foreground text-xl font-bold">Top Vendors</h2>
 				<div className="flex gap-2">
 					<Button
 						variant="outline"
 						size="sm"
-						className="h-9 w-9 p-0 bg-white border-border"
+						className="border-border size-9 bg-white p-0"
 					>
 						<Icon icon="ph:sliders-horizontal" />
 					</Button>
 					<Button
 						variant="outline"
 						size="sm"
-						className="h-9 bg-primary text-foreground border-none hover:bg-primary/90"
+						className="bg-primary text-foreground hover:bg-primary/90 h-9 border-none"
 					>
 						All
 					</Button>
 					<Button
 						variant="outline"
 						size="sm"
-						className="h-9 bg-white border-border justify-between min-w-[90px]"
+						className="border-border h-9 min-w-[90px] justify-between bg-white"
 					>
 						Region <Icon icon="ph:caret-down" />
 					</Button>
 					<Button
 						variant="outline"
 						size="sm"
-						className="h-9 bg-white border-border justify-between min-w-[100px]"
+						className="border-border h-9 min-w-[100px] justify-between bg-white"
 					>
 						Categories <Icon icon="ph:caret-down" />
 					</Button>
 					<Button
 						variant="outline"
 						size="sm"
-						className="h-9 bg-white border-border justify-between min-w-[90px]"
+						className="border-border h-9 min-w-[90px] justify-between bg-white"
 					>
 						Trends <Icon icon="ph:caret-down" />
 					</Button>
@@ -109,3 +114,5 @@ export default function TopVendorsList() {
 		</div>
 	);
 }
+
+/* eslint-enable */

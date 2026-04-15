@@ -7,39 +7,39 @@ import { Textarea } from "@/components/ui/textarea";
 // This is structurally similar to Broadcast but with specific field changes (Email selector)
 export default function CampaignTab() {
 	return (
-		<div className="grid grid-cols-12 gap-6 items-start h-full">
+		<div className="grid h-full grid-cols-12 items-start gap-6">
 			{/* === LEFT: SMS/Email Campaigns === */}
 			<div className="col-span-8 space-y-6">
-				<div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-					<div className="flex items-center gap-2 mb-6">
-						<div className="w-4 h-4 rounded-full border-[3px] border-primary" />
-						<h3 className="font-semibold text-xl">SMS/Email Campaigns</h3>
+				<div className="bg-card border-border rounded-xl border p-6 shadow-sm">
+					<div className="mb-6 flex items-center gap-2">
+						<div className="border-primary size-4 rounded-full border-[3px]" />
+						<h3 className="text-xl font-semibold">SMS/Email Campaigns</h3>
 					</div>
 
 					{/* Form */}
 					<div className="space-y-6">
 						<div className="space-y-2">
 							<label className="text-lg font-medium">Subject</label>
-							<Input placeholder="Subject" className="bg-transparent h-12" />
+							<Input placeholder="Subject" className="h-12 bg-transparent" />
 						</div>
 
 						<div className="space-y-2">
 							<label className="text-lg font-medium">Message</label>
 							<Textarea
 								placeholder="Type Message"
-								className="bg-transparent min-h-[160px] resize-none p-4"
+								className="min-h-[160px] resize-none bg-transparent p-4"
 							/>
 						</div>
 
 						<div className="space-y-2">
 							<label className="text-lg font-medium">Target Audience/User</label>
 							<div className="relative">
-								<select className="w-full h-12 bg-transparent border border-border rounded-md px-3 appearance-none">
+								<select className="border-border h-12 w-full appearance-none rounded-md border bg-transparent px-3">
 									<option>All Riders</option>
 								</select>
 								<Icon
 									icon="lucide:chevron-down"
-									className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
 								/>
 							</div>
 						</div>
@@ -47,13 +47,13 @@ export default function CampaignTab() {
 						{/* Additional Field for Campaigns: Type (Email) */}
 						<div className="space-y-2">
 							<div className="relative">
-								<select className="w-full h-12 bg-transparent border border-border rounded-md px-3 appearance-none text-muted-foreground">
+								<select className="border-border text-muted-foreground h-12 w-full appearance-none rounded-md border bg-transparent px-3">
 									<option>Email</option>
 									<option>SMS</option>
 								</select>
 								<Icon
 									icon="lucide:chevron-down"
-									className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
 								/>
 							</div>
 						</div>
@@ -62,25 +62,25 @@ export default function CampaignTab() {
 							<div className="flex gap-2">
 								<Button
 									size="icon"
-									className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+									className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
 								>
 									<Icon icon="lucide:image" />
 								</Button>
 								<Button
 									size="icon"
-									className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+									className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
 								>
 									<Icon icon="lucide:link" />
 								</Button>
 							</div>
 
-							<div className="flex items-center gap-4 flex-1 justify-center">
-								<Button className="h-12 px-8 bg-secondary hover:bg-secondary/90 text-white w-48 text-base">
+							<div className="flex flex-1 items-center justify-center gap-4">
+								<Button className="bg-secondary hover:bg-secondary/90 h-12 w-48 px-8 text-base text-white">
 									Send Now
 								</Button>
 								<Button
 									variant="secondary"
-									className="h-12 px-8 bg-muted text-foreground hover:bg-muted/80 w-48 text-base"
+									className="bg-muted text-foreground hover:bg-muted/80 h-12 w-48 px-8 text-base"
 								>
 									Schedule Campaign
 								</Button>
@@ -91,11 +91,11 @@ export default function CampaignTab() {
 
 				{/* Analytics */}
 				<div className="bg-transparent p-4">
-					<div className="flex items-center gap-2 mb-4">
-						<div className="w-4 h-4 rounded-full border-[3px] border-primary" />
-						<h3 className="font-semibold text-xl">Analytics</h3>
+					<div className="mb-4 flex items-center gap-2">
+						<div className="border-primary size-4 rounded-full border-[3px]" />
+						<h3 className="text-xl font-semibold">Analytics</h3>
 					</div>
-					<div className="space-y-2 max-w-md">
+					<div className="max-w-md space-y-2">
 						<div className="flex justify-between text-base">
 							<span className="font-medium">Delivery success rate</span>
 							<span className="text-muted-foreground text-sm">
@@ -120,11 +120,11 @@ export default function CampaignTab() {
 
 			{/* === RIGHT: Quick Notification (Same as Broadcast) === */}
 			<div className="col-span-4">
-				<div className="bg-card border border-border rounded-xl p-6 shadow-sm h-fit">
-					<div className="flex items-center justify-between mb-6">
+				<div className="bg-card border-border h-fit rounded-xl border p-6 shadow-sm">
+					<div className="mb-6 flex items-center justify-between">
 						<div className="flex items-center gap-2">
-							<div className="w-4 h-4 rounded-full border-[3px] border-primary" />
-							<h3 className="font-semibold text-xl">Quick Notification</h3>
+							<div className="border-primary size-4 rounded-full border-[3px]" />
+							<h3 className="text-xl font-semibold">Quick Notification</h3>
 						</div>
 						<Icon icon="lucide:more-vertical" className="cursor-pointer" />
 					</div>
@@ -133,12 +133,12 @@ export default function CampaignTab() {
 						<div className="space-y-2">
 							<label className="text-base font-medium">Template</label>
 							<div className="relative">
-								<select className="w-full h-12 bg-transparent border border-border rounded-md px-3 appearance-none text-sm">
+								<select className="border-border h-12 w-full appearance-none rounded-md border bg-transparent px-3 text-sm">
 									<option>System Outage</option>
 								</select>
 								<Icon
 									icon="lucide:chevron-down"
-									className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
 								/>
 							</div>
 						</div>
@@ -146,17 +146,17 @@ export default function CampaignTab() {
 						<div className="space-y-2">
 							<label className="text-base font-medium">Target Audience</label>
 							<div className="relative">
-								<select className="w-full h-12 bg-transparent border border-border rounded-md px-3 appearance-none text-sm">
+								<select className="border-border h-12 w-full appearance-none rounded-md border bg-transparent px-3 text-sm">
 									<option>All Riders</option>
 								</select>
 								<Icon
 									icon="lucide:chevron-down"
-									className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
 								/>
 							</div>
 						</div>
 
-						<Button className="w-full h-12 bg-secondary hover:bg-secondary/90 text-white text-base font-medium">
+						<Button className="bg-secondary hover:bg-secondary/90 h-12 w-full text-base font-medium text-white">
 							Send Notification
 						</Button>
 					</div>

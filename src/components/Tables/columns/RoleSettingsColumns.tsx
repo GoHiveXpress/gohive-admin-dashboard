@@ -1,10 +1,12 @@
 "use client";
 
-import { BaseColumnSchema } from "../types";
+/* eslint-disable @next/next/no-img-element, no-nested-ternary */
+
 import { Icon } from "@iconify/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import RoleActionCell from "@/components/Tables/cells/RoleActionCell";
+import { type BaseColumnSchema } from "../types";
 
 export type RoleSettingsData = {
 	id: string;
@@ -22,16 +24,16 @@ export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
 		render: (row) => (
 			<div className="flex items-center gap-3">
 				<div className="relative">
-					<div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+					<div className="size-10 overflow-hidden rounded-full bg-gray-200">
 						<img
 							src={`https://i.pravatar.cc/150?u=${row.id}`}
 							alt={row.name}
-							className="w-full h-full object-cover"
+							className="size-full object-cover"
 						/>
 					</div>
 					{/* Status Dot on Avatar */}
 					<span
-						className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+						className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${
 							row.status === "Active"
 								? "bg-secondary"
 								: row.status === "Suspend"
@@ -41,10 +43,10 @@ export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
 					/>
 				</div>
 				<div className="flex flex-col">
-					<span className="font-semibold text-foreground text-sm">{row.name}</span>
+					<span className="text-foreground text-sm font-semibold">{row.name}</span>
 					<div className="flex items-center gap-1">
-						<span className="text-[10px] text-muted-foreground">Admin ID Number:</span>
-						<span className="text-[10px] border border-border rounded px-1.5 py-0.5 bg-muted/20">
+						<span className="text-muted-foreground text-[10px]">Admin ID Number:</span>
+						<span className="border-border bg-muted/20 rounded border px-1.5 py-0.5 text-[10px]">
 							{row.adminId}
 						</span>
 					</div>
@@ -58,7 +60,7 @@ export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
 		render: (row) => {
 			let badgeClass = "";
 			let iconClass = "";
-			let text = row.status;
+			const text = row.status;
 
 			if (row.status === "Active") {
 				badgeClass = "bg-secondary/10 text-secondary";
@@ -73,9 +75,9 @@ export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
 
 			return (
 				<Badge
-					className={`border-none px-3 py-1 rounded-full font-medium shadow-none ${badgeClass} hover:${badgeClass}`}
+					className={`rounded-full border-none px-3 py-1 font-medium shadow-none ${badgeClass} hover:${badgeClass}`}
 				>
-					<Icon icon="ph:circle-fill" className={`w-2 h-2 mr-2 ${iconClass}`} />
+					<Icon icon="ph:circle-fill" className={`mr-2 size-2 ${iconClass}`} />
 					{text}
 				</Badge>
 			);
@@ -84,15 +86,15 @@ export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
 	{
 		key: "phone",
 		header: "Phone",
-		render: (row) => <span className="text-sm font-medium text-foreground">{row.phone}</span>,
+		render: (row) => <span className="text-foreground text-sm font-medium">{row.phone}</span>,
 	},
 	{
 		key: "role",
 		header: "Role",
 		render: (row) => (
-			<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 text-secondary text-sm font-medium">
+			<div className="text-secondary inline-flex items-center gap-2 rounded-lg bg-green-50 px-3 py-1.5 text-sm font-medium">
 				{row.role}
-				<Icon icon="lucide:chevron-down" className="w-4 h-4" />
+				<Icon icon="lucide:chevron-down" className="size-4" />
 			</div>
 		),
 	},
@@ -109,10 +111,12 @@ export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
 			<Button
 				variant="ghost"
 				size="icon"
-				className="h-9 w-9 rounded-full bg-red-50 hover:bg-red-100"
+				className="size-9 rounded-full bg-red-50 hover:bg-red-100"
 			>
-				<Icon icon="lucide:trash-2" className="w-5 h-5 text-destructive" />
+				<Icon icon="lucide:trash-2" className="text-destructive size-5" />
 			</Button>
 		),
 	},
 ];
+
+/* eslint-enable */

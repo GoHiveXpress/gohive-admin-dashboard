@@ -1,174 +1,183 @@
-//src/components/Vendor/VendorDetails/KycVerification/index.tsx
+// src/components/Vendor/VendorDetails/KycVerification/index.tsx
+/* eslint-disable no-use-before-define */
+
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { VendorUser } from "@/types/vendorManagement";
+import { type VendorUser } from "@/types/vendorManagement";
 import { useUpdateVendorStatus } from "@/hooks/vendorManagement";
 import { Loader2 } from "lucide-react";
 
 interface KycVerificationTabProps {
-    vendor: VendorUser;
+	vendor: VendorUser;
 }
 
 export default function KycVerificationTab({ vendor }: KycVerificationTabProps) {
-    const [status, setStatus] = useState<string>(
-        vendor.vendorProfile.verificationStatus || 
-        (vendor.vendorProfile.isApproved ? "approved" : "pending")
-    );
-    
-    const [comment, setComment] = useState("");
-    
-    // UPDATED: Use the new hook
-    const { mutate: updateVendorStatus, isPending } = useUpdateVendorStatus();
+	const [status, setStatus] = useState<string>(
+		vendor.vendorProfile.verificationStatus ||
+			(vendor.vendorProfile.isApproved ? "approved" : "pending"),
+	);
 
-    const handleSave = () => {
-        // UPDATED: Now handles all status types, not just approved
-        updateVendorStatus({
-            id: vendor._id,
-            status: status as "pending" | "approved" | "rejected"
-        });
-        
-        // You can handle the comment submission here later if you add backend support for it
-    };
+	const [comment, setComment] = useState("");
 
-    const hasNIN = !!vendor.vendorProfile.govtIdImage; 
-    const hasPassport = !!vendor.vendorProfile.passportPhoto;
-    const hasLicense = !!vendor.vendorProfile.cacNumber; 
+	// UPDATED: Use the new hook
+	const { mutate: updateVendorStatus, isPending } = useUpdateVendorStatus();
 
-    return (
-        <div className="bg-white p-6 rounded-[20px] shadow-sm border border-border/50 min-h-[600px]">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-                
-                {/* Left Column: Document Upload */}
-                <div className="border border-border/60 rounded-[20px] p-6 h-fit">
-                    <h3 className="font-medium text-base text-foreground mb-6">Document Upload</h3>
-                    
-                    <div className="space-y-1">
-                        <DocumentRow 
-                            number="1" 
-                            label="Government ID / NIN" 
-                            status={hasNIN ? "view" : "missing"}
-                            viewLink={vendor.vendorProfile.govtIdImage}
-                        />
-                        <DocumentRow 
-                            number="2" 
-                            label="Passport" 
-                            status={hasPassport ? "view" : "missing"}
-                            viewLink={vendor.vendorProfile.passportPhoto}
-                        />
-                        <DocumentRow 
-                            number="3" 
-                            label="Business License (CAC)" 
-                            status={hasLicense ? "view" : "missing"} 
-                            viewLink="#"
-                        />
-                        <DocumentRow 
-                            number="4" 
-                            label="Tax Information" 
-                            status="missing" 
-                            isLast
-                        />
-                    </div>
-                </div>
+	const handleSave = () => {
+		// UPDATED: Now handles all status types, not just approved
+		updateVendorStatus({
+			id: vendor._id,
+			status: status as "pending" | "approved" | "rejected",
+		});
 
-                {/* Right Column: Access Panel */}
-                <div className="border border-border/60 rounded-[20px] p-6 h-fit">
-                    <h3 className="font-medium text-base text-foreground mb-6">Access Panel</h3>
-                    
-                    <div className="space-y-6">
-                        {/* Status Dropdown */}
-                        <div className="space-y-3">
-                            <Label className="text-sm font-medium text-foreground">Set Status</Label>
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="h-12 rounded-xl border-border bg-white">
-                                    <SelectValue placeholder="Select Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="approved">Approved</SelectItem>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="rejected">Rejected</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+		// You can handle the comment submission here later if you add backend support for it
+	};
 
-                        {/* Comment Box */}
-                        <div className="space-y-3">
-                            <Label className="text-sm font-medium text-foreground">Comment</Label>
-                            <Textarea 
-                                placeholder="Input comment" 
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                className="min-h-[140px] rounded-xl border-border bg-white resize-none p-4"
-                            />
-                        </div>
+	const hasNIN = !!vendor.vendorProfile.govtIdImage;
+	const hasPassport = !!vendor.vendorProfile.passportPhoto;
+	const hasLicense = !!vendor.vendorProfile.cacNumber;
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-4 pt-4">
-                            <Button 
-                                variant="outline" 
-                                className="flex-1 h-12 rounded-full border-border bg-[#F9FAFB] hover:bg-[#F3F4F6] text-foreground font-medium"
-                            >
-                                Cancel
-                            </Button>
-                            <Button 
-                                onClick={handleSave}
-                                // UPDATED: Removed `|| status !== "approved"` so you can click save when rejected/pending
-                                disabled={isPending}
-                                className="flex-1 h-12 rounded-full bg-[#419A44] hover:bg-[#419A44]/90 text-white font-medium"
-                            >
-                                {isPending ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
-                                Save
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+	return (
+		<div className="border-border/50 min-h-[600px] rounded-[20px] border bg-white p-6 shadow-sm">
+			<div className="grid h-full grid-cols-1 gap-8 lg:grid-cols-2">
+				{/* Left Column: Document Upload */}
+				<div className="border-border/60 h-fit rounded-[20px] border p-6">
+					<h3 className="text-foreground mb-6 text-base font-medium">Document Upload</h3>
 
-            </div>
-        </div>
-    );
+					<div className="space-y-1">
+						<DocumentRow
+							number="1"
+							label="Government ID / NIN"
+							status={hasNIN ? "view" : "missing"}
+							viewLink={vendor.vendorProfile.govtIdImage}
+						/>
+						<DocumentRow
+							number="2"
+							label="Passport"
+							status={hasPassport ? "view" : "missing"}
+							viewLink={vendor.vendorProfile.passportPhoto}
+						/>
+						<DocumentRow
+							number="3"
+							label="Business License (CAC)"
+							status={hasLicense ? "view" : "missing"}
+							viewLink="#"
+						/>
+						<DocumentRow number="4" label="Tax Information" status="missing" isLast />
+					</div>
+				</div>
+
+				{/* Right Column: Access Panel */}
+				<div className="border-border/60 h-fit rounded-[20px] border p-6">
+					<h3 className="text-foreground mb-6 text-base font-medium">Access Panel</h3>
+
+					<div className="space-y-6">
+						{/* Status Dropdown */}
+						<div className="space-y-3">
+							<Label className="text-foreground text-sm font-medium">
+								Set Status
+							</Label>
+							<Select value={status} onValueChange={setStatus}>
+								<SelectTrigger className="border-border h-12 rounded-xl bg-white">
+									<SelectValue placeholder="Select Status" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="approved">Approved</SelectItem>
+									<SelectItem value="pending">Pending</SelectItem>
+									<SelectItem value="rejected">Rejected</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						{/* Comment Box */}
+						<div className="space-y-3">
+							<Label className="text-foreground text-sm font-medium">Comment</Label>
+							<Textarea
+								placeholder="Input comment"
+								value={comment}
+								onChange={(e) => setComment(e.target.value)}
+								className="border-border min-h-[140px] resize-none rounded-xl bg-white p-4"
+							/>
+						</div>
+
+						{/* Action Buttons */}
+						<div className="flex gap-4 pt-4">
+							<Button
+								variant="outline"
+								className="border-border text-foreground h-12 flex-1 rounded-full bg-[#F9FAFB] font-medium hover:bg-[#F3F4F6]"
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={handleSave}
+								// UPDATED: Removed `|| status !== "approved"` so you can click save when rejected/pending
+								disabled={isPending}
+								className="h-12 flex-1 rounded-full bg-[#419A44] font-medium text-white hover:bg-[#419A44]/90"
+							>
+								{isPending ? (
+									<Loader2 className="mr-2 size-4 animate-spin" />
+								) : null}
+								Save
+							</Button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 // Helper Component for Document Row
 interface DocumentRowProps {
-    number: string;
-    label: string;
-    status: "view" | "missing";
-    isLast?: boolean;
-    viewLink?: string;
+	number: string;
+	label: string;
+	status: "view" | "missing";
+	isLast?: boolean;
+	viewLink?: string;
 }
 
 function DocumentRow({ number, label, status, isLast, viewLink }: DocumentRowProps) {
-    return (
-        <div className={`flex items-center justify-between py-5 ${!isLast ? 'border-b border-border/40' : ''}`}>
-            <div className="flex items-center gap-4">
-                {/* Number Circle */}
-                <div className="w-8 h-8 rounded-full border border-foreground/80 flex items-center justify-center text-sm font-medium text-foreground">
-                    {number}
-                </div>
-                <span className="font-medium text-sm text-foreground">{label}</span>
-            </div>
+	return (
+		<div
+			className={`flex items-center justify-between py-5 ${!isLast ? "border-border/40 border-b" : ""}`}
+		>
+			<div className="flex items-center gap-4">
+				{/* Number Circle */}
+				<div className="border-foreground/80 text-foreground flex size-8 items-center justify-center rounded-full border text-sm font-medium">
+					{number}
+				</div>
+				<span className="text-foreground text-sm font-medium">{label}</span>
+			</div>
 
-            {status === "view" ? (
-                <a href={viewLink !== "#" ? viewLink : undefined} target="_blank" rel="noreferrer">
-                    <Button 
-                        variant="outline" 
-                        className="h-9 px-4 rounded-full border-border text-foreground hover:bg-muted gap-2 text-sm font-normal"
-                        disabled={!viewLink || viewLink === "#"} 
-                    >
-                        <Icon icon="ph:eye" className="w-4 h-4" />
-                        View
-                    </Button>
-                </a>
-            ) : (
-                <div className="h-9 px-4 flex items-center justify-center rounded-full border border-border/50 bg-[#F5F5F4] text-muted-foreground text-[10px] sm:text-xs font-medium italic">
-                    Not Uploaded Yet
-                </div>
-            )}
-        </div>
-    );
+			{status === "view" ? (
+				<a href={viewLink !== "#" ? viewLink : undefined} target="_blank" rel="noreferrer">
+					<Button
+						variant="outline"
+						className="border-border text-foreground hover:bg-muted h-9 gap-2 rounded-full px-4 text-sm font-normal"
+						disabled={!viewLink || viewLink === "#"}
+					>
+						<Icon icon="ph:eye" className="size-4" />
+						View
+					</Button>
+				</a>
+			) : (
+				<div className="border-border/50 text-muted-foreground flex h-9 items-center justify-center rounded-full border bg-[#F5F5F4] px-4 text-[10px] font-medium italic sm:text-xs">
+					Not Uploaded Yet
+				</div>
+			)}
+		</div>
+	);
 }
+
+/* eslint-enable */

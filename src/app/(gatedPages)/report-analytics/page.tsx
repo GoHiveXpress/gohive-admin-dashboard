@@ -1,7 +1,6 @@
-//src/app/(gatedPages)/report-analytics/page.tsx
+// src/app/(gatedPages)/report-analytics/page.tsx
 import ReportAnalyticsClient from "./client";
 
-
 export default function ReportAnalyticsPage() {
-    return <ReportAnalyticsClient />;
+	return <ReportAnalyticsClient />;
 }

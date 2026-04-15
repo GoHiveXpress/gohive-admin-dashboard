@@ -1,4 +1,6 @@
-//src/components/_auths/VerifyLoginForm/index.tsx
+// src/components/_auths/VerifyLoginForm/index.tsx
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -50,7 +52,7 @@ export default function VerifyLoginForm() {
 		// Use NextAuth signIn with custom "isOtpFlow" flag
 		// This triggers the authorize() logic in nextAuthOptions.ts which calls the verify-otp endpoint
 		const result = await signIn("credentials", {
-			email: email,
+			email,
 			otp: values.otp,
 			isOtpFlow: "true",
 			redirect: false,
@@ -118,7 +120,7 @@ export default function VerifyLoginForm() {
 										<div className="group relative">
 											<Input
 												placeholder="XXXXXX"
-												className="h-[52px] text-center rounded-xl border border-[#E2E8F0] !bg-white pl-12 text-lg shadow-sm placeholder:text-gray-400 focus-visible:border-[#FDB900] focus-visible:ring-[#FDB900] font-semibold"
+												className="h-[52px] rounded-xl border border-[#E2E8F0] !bg-white pl-12 text-center text-lg font-semibold shadow-sm placeholder:text-gray-400 focus-visible:border-[#FDB900] focus-visible:ring-[#FDB900]"
 												{...field}
 											/>
 										</div>
@@ -153,3 +155,5 @@ export default function VerifyLoginForm() {
 		</div>
 	);
 }
+
+/* eslint-enable */

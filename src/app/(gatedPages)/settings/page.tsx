@@ -1,6 +1,6 @@
-//src/app/(gatedPages)/settings/page.tsx
+// src/app/(gatedPages)/settings/page.tsx
 import SettingsClient from "./client";
 
 export default function SettingsPage() {
-    return <SettingsClient />;
+	return <SettingsClient />;
 }

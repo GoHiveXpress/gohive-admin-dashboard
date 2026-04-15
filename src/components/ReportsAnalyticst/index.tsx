@@ -1,7 +1,9 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import React, { useState } from "react";
-import CustomTabs, { TabItem } from "@/components/Tabs";
+import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { Icon } from "@iconify/react";
 import CustomerReportTab from "./CustomerReportTab";
 import VendorReportTab from "./VendorReportTab";
@@ -24,7 +26,7 @@ export default function ReportsAnalytics() {
 				
 			</div> */}
 
-			<div className="bg-muted/30 rounded-full p-1 w-fit">
+			<div className="bg-muted/30 w-fit rounded-full p-1">
 				<CustomTabs
 					items={TABS}
 					activeTab={activeTab}
@@ -33,7 +35,7 @@ export default function ReportsAnalytics() {
 				/>
 			</div>
 
-			<div className="flex-1 min-h-0 mt-2">
+			<div className="mt-2 min-h-0 flex-1">
 				{activeTab === "customer" && <CustomerReportTab />}
 				{activeTab === "vendor" && <VendorReportTab />}
 				{activeTab === "rider" && <RiderReportTab />}
@@ -41,3 +43,5 @@ export default function ReportsAnalytics() {
 		</div>
 	);
 }
+
+/* eslint-enable */

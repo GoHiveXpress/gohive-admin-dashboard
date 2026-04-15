@@ -7,35 +7,35 @@ import VendorPayoutWeeklyTab from "./WeeklyTab";
 import VendorPayoutMonthlyTab from "./MonthlyTab";
 
 export default function VendorPayoutTab() {
-  const [activeSubTab, setActiveSubTab] = useState<"Today" | "Weekly" | "Monthly">("Today");
+	const [activeSubTab, setActiveSubTab] = useState<"Today" | "Weekly" | "Monthly">("Today");
 
-  return (
-    <div className="space-y-6">
-      {/* Sub Tabs Heading */}
-      <div>
-         <h2 className="text-xl font-medium mb-3">Earning/Payout Report</h2>
-         <div className="bg-muted rounded-full p-1 inline-flex">
-            {(["Today", "Weekly", "Monthly"] as const).map((tab) => (
-               <Button
-                  key={tab}
-                  onClick={() => setActiveSubTab(tab)}
-                  variant="ghost"
-                  className={`rounded-full px-6 h-9 text-sm font-medium transition-all ${
-                     activeSubTab === tab 
-                     ? "bg-secondary text-white hover:bg-secondary/90 shadow-sm" 
-                     : "text-foreground hover:bg-accent"
-                  }`}
-               >
-                  {tab}
-               </Button>
-            ))}
-         </div>
-      </div>
+	return (
+		<div className="space-y-6">
+			{/* Sub Tabs Heading */}
+			<div>
+				<h2 className="mb-3 text-xl font-medium">Earning/Payout Report</h2>
+				<div className="bg-muted inline-flex rounded-full p-1">
+					{(["Today", "Weekly", "Monthly"] as const).map((tab) => (
+						<Button
+							key={tab}
+							onClick={() => setActiveSubTab(tab)}
+							variant="ghost"
+							className={`h-9 rounded-full px-6 text-sm font-medium transition-all ${
+								activeSubTab === tab
+									? "bg-secondary hover:bg-secondary/90 text-white shadow-sm"
+									: "text-foreground hover:bg-accent"
+							}`}
+						>
+							{tab}
+						</Button>
+					))}
+				</div>
+			</div>
 
-      {/* Content */}
-      {activeSubTab === "Today" && <VendorPayoutTodayTab />}
-      {activeSubTab === "Weekly" && <VendorPayoutWeeklyTab />}
-      {activeSubTab === "Monthly" && <VendorPayoutMonthlyTab />}
-    </div>
-  );
+			{/* Content */}
+			{activeSubTab === "Today" && <VendorPayoutTodayTab />}
+			{activeSubTab === "Weekly" && <VendorPayoutWeeklyTab />}
+			{activeSubTab === "Monthly" && <VendorPayoutMonthlyTab />}
+		</div>
+	);
 }

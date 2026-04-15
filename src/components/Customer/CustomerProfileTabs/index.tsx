@@ -1,20 +1,22 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
+
 import { Button } from "@/components/ui/button";
 import FloatingInput from "@/components/FormElements/FloatingInput";
 
-import { Customer } from "@/types/customerManagement";
+import { type Customer } from "@/types/customerManagement";
 import { format } from "date-fns";
 
 export default function CustomerProfileTab({ customer }: { customer: Customer }) {
 	const formattedDob = customer.dob ? format(new Date(customer.dob), "MMM d, yyyy") : "N/A";
 
 	return (
-		<div className="bg-white rounded-[20px] p-8 border border-border/50 shadow-sm relative">
+		<div className="border-border/50 relative rounded-[20px] border bg-white p-8 shadow-sm">
 			{/* Save Button removed as requested */}
 
 			{/* Form Grid */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 max-w-4xl pt-6">
+			<div className="grid max-w-4xl grid-cols-1 gap-x-8 gap-y-6 pt-6 md:grid-cols-2">
 				<FloatingInput
 					label="Full Name"
 					icon="ph:user-bold"
@@ -54,3 +56,5 @@ export default function CustomerProfileTab({ customer }: { customer: Customer })
 		</div>
 	);
 }
+
+/* eslint-enable */
