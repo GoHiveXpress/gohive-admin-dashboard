@@ -8,21 +8,21 @@ import Link from "next/link";
 
 // --- Types ---
 export type CustomerData = {
-    id: string;
+    _id: string;
     name: string;
     email: string;
     phone: string;
-    status: "Active" | "Inactive" | "Suspend";
-    orders: number;
+    accountStatus: "Active" | "Inactive" | "Suspend";
+    orderCount: number;
 };
 
 export type OrderData = {
-    id: string;
+    _id: string;
     orderId: string;
-    customer: string;
-    vendor: string;
-    rider: string;
-    status: "Delivered" | "Picked up" | "Canceled" | "Placed" | "Prepared";
+    customer: string | { name: string };
+    vendor: string | { vendorProfile: { businessName: string } };
+    rider?: string | { name: string };
+    status: string;
 };
 
 // --- Customer Columns ---
@@ -30,7 +30,6 @@ export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
     {
         key: "name",
         header: "Name",
-        // UPDATED: Just text, no link here anymore
         render: (row) => <span className="text-foreground font-medium">{row.name}</span>,
     },
     {
@@ -44,13 +43,15 @@ export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
         render: (row) => <span className="text-foreground">{row.phone}</span>,
     },
     {
-        key: "status",
+        key: "accountStatus",
         header: "Status",
         render: (row) => {
             let variantClass = "";
             let dotClass = "";
 
-            switch (row.status) {
+            const status = row.accountStatus || "Active";
+
+            switch (status) {
                 case "Active":
                     variantClass = "bg-secondary/10 text-secondary";
                     dotClass = "bg-secondary";
@@ -63,6 +64,9 @@ export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
                     variantClass = "bg-destructive/10 text-destructive";
                     dotClass = "bg-destructive";
                     break;
+                default:
+                    variantClass = "bg-muted text-muted-foreground";
+                    dotClass = "bg-muted-foreground";
             }
 
             return (
@@ -71,22 +75,21 @@ export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
                     className={`border-none px-3 py-1 rounded-full font-medium ${variantClass}`}
                 >
                     <div className={`w-2 h-2 rounded-full mr-2 ${dotClass}`} />
-                    {row.status}
+                    {status}
                 </Badge>
             );
         },
     },
     {
-        key: "orders",
+        key: "orderCount",
         header: "Orders",
-        render: (row) => <span className="text-foreground font-medium pl-4">{row.orders}</span>,
+        render: (row) => <span className="text-foreground font-medium pl-4">{row.orderCount || 0}</span>,
     },
     {
         key: "action",
-        header: "",
+        header: "Action", // Added Action header for better visibility
         render: (row) => (
-            // UPDATED: Link moved here, Icon changed to Eye
-            <Link href={ROUTES.CUSTOMER_DETAILS(row.id)}>
+            <Link href={ROUTES.CUSTOMER_DETAILS(row._id)}>
                 <Button 
                     variant="ghost" 
                     size="icon" 
@@ -109,21 +112,23 @@ export const orderColumnsConfig: BaseColumnSchema<OrderData>[] = [
     {
         key: "customer",
         header: "Customer",
-        render: (row) => <span className="text-foreground">{row.customer}</span>,
+        render: (row) => <span className="text-foreground">{typeof row.customer === 'object' ? row.customer.name : row.customer}</span>,
     },
     {
         key: "vendor",
         header: "Vendor",
         render: (row) => (
             <div className="flex flex-col">
-                <span className="text-foreground">{row.vendor}</span>
+                <span className="text-foreground">
+                    {typeof row.vendor === 'object' ? row.vendor.vendorProfile.businessName : row.vendor}
+                </span>
             </div>
         ),
     },
     {
         key: "rider",
         header: "Rider",
-        render: (row) => <span className="text-foreground">{row.rider}</span>,
+        render: (row) => <span className="text-foreground">{typeof row.rider === 'object' ? row.rider.name : (row.rider || "N/A")}</span>,
     },
     {
         key: "status",
@@ -132,27 +137,40 @@ export const orderColumnsConfig: BaseColumnSchema<OrderData>[] = [
             let variantClass = "";
             let dotClass = "";
 
-            switch (row.status) {
-                case "Delivered":
+            const status = row.status || "pending";
+
+            switch (status.toLowerCase()) {
+                case "delivered":
                     variantClass = "bg-secondary/10 text-secondary";
                     dotClass = "bg-secondary";
                     break;
-                case "Picked up":
+                case "picked up":
+                case "picked_up":
+                case "ready":
                     variantClass = "bg-[#FDB900]/10 text-[#FDB900]";
                     dotClass = "bg-[#FDB900]";
                     break;
-                case "Canceled":
+                case "canceled":
+                case "cancelled":
+                case "rejected":
+                case "expired":
                     variantClass = "bg-destructive/10 text-destructive";
                     dotClass = "bg-destructive";
                     break;
-                case "Placed":
+                case "placed":
+                case "accepted":
+                case "pending":
                     variantClass = "bg-green-500/10 text-green-500";
                     dotClass = "bg-green-500";
                     break;
-                case "Prepared":
+                case "prepared":
+                case "preparing":
                     variantClass = "bg-blue-500/10 text-blue-500";
                     dotClass = "bg-blue-500";
                     break;
+                default:
+                    variantClass = "bg-muted text-muted-foreground";
+                    dotClass = "bg-muted-foreground";
             }
 
             return (
@@ -161,7 +179,7 @@ export const orderColumnsConfig: BaseColumnSchema<OrderData>[] = [
                     className={`border-none px-3 py-1 rounded-full font-medium ${variantClass}`}
                 >
                     <div className={`w-2 h-2 rounded-full mr-2 ${dotClass}`} />
-                    {row.status}
+                    {status}
                 </Badge>
             );
         },

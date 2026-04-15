@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 
 export type OrderData = {
-    id: string;
+    _id: string;
     orderId: string;
-    customer: string;
-    vendor: string;
-    rider: string;
-    status: "Delivered" | "Picked up" | "Canceled" | "Placed" | "Prepared";
-    // Extra fields for the modal simulation
+    customer: { name: string; email: string };
+    vendor: { vendorProfile: { businessName: string } };
+    rider?: { name: string; phone: string };
+    status: string;
+    // Extra fields if needed for the modal
     item?: string;
     date?: string;
     location?: string;
@@ -29,17 +29,17 @@ export const getCustomerOrderManagementColumns = (
     {
         key: "customer",
         header: "Customer",
-        render: (row) => <span className="text-foreground">{row.customer}</span>,
+        render: (row) => <span className="text-foreground">{row.customer?.name || "N/A"}</span>,
     },
     {
         key: "vendor",
         header: "Vendor",
-        render: (row) => <span className="text-foreground">{row.vendor}</span>,
+        render: (row) => <span className="text-foreground">{row.vendor?.vendorProfile?.businessName || "N/A"}</span>,
     },
     {
         key: "rider",
         header: "Rider",
-        render: (row) => <span className="text-foreground">{row.rider}</span>,
+        render: (row) => <span className="text-foreground">{row.rider?.name || "N/A"}</span>,
     },
     {
         key: "status",
@@ -48,27 +48,38 @@ export const getCustomerOrderManagementColumns = (
             let variantClass = "";
             let dotClass = "";
 
-            switch (row.status) {
-                case "Delivered":
+            // Normalize backend status to UI status
+            const status = row.status || "pending";
+
+            switch (status) {
+                case "delivered":
                     variantClass = "bg-secondary/10 text-secondary";
                     dotClass = "bg-secondary";
                     break;
-                case "Picked up":
+                case "picked_up":
+                case "ready":
                     variantClass = "bg-[#FDB900]/10 text-[#FDB900]";
                     dotClass = "bg-[#FDB900]";
                     break;
-                case "Canceled":
+                case "cancelled":
+                case "rejected":
+                case "expired":
                     variantClass = "bg-destructive/10 text-destructive";
                     dotClass = "bg-destructive";
                     break;
-                case "Placed":
+                case "placed":
+                case "accepted":
+                case "pending":
                     variantClass = "bg-green-500/10 text-green-500";
                     dotClass = "bg-green-500";
                     break;
-                case "Prepared":
+                case "preparing":
                     variantClass = "bg-blue-500/10 text-blue-500";
                     dotClass = "bg-blue-500";
                     break;
+                default:
+                    variantClass = "bg-muted text-muted-foreground";
+                    dotClass = "bg-muted-foreground";
             }
 
             return (
@@ -77,7 +88,7 @@ export const getCustomerOrderManagementColumns = (
                     className={`border-none px-3 py-1 rounded-full font-medium ${variantClass}`}
                 >
                     <div className={`w-2 h-2 rounded-full mr-2 ${dotClass}`} />
-                    {row.status}
+                    {status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ")}
                 </Badge>
             );
         },

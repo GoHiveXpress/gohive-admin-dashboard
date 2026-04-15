@@ -9,7 +9,7 @@
 		"moduleDetection": "force",
 		"isolatedModules": true,
 		"forceConsistentCasingInFileNames": true,
-		"typeRoots": ["./src/types", "./node_modules/@types"],
+		"typeRoots": ["./node_modules/@types"],
 		/* Strictness */
 		"strict": false,
 		"noUncheckedIndexedAccess": true,

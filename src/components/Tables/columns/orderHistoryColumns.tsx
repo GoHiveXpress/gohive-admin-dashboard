@@ -1,18 +1,29 @@
 import { BaseColumnSchema } from "@/components/Tables/types";
 import { Badge } from "@/components/ui/badge";
 
+import { format } from "date-fns";
+
 // Types
 export type OrderHistory = {
-    id: string;
+    _id: string;
     orderId: string;
-    status: "Delivered" | "Pending" | "Canceled" | "Placed" | "Prepared" | "Picked Up";
-    date: string;
-    vendor: string;
-    location: string;
-    amount: string;
-    customer: string;
-    rider: string;
-    item: string;
+    status: string;
+    createdAt: string;
+    vendor: {
+        vendorProfile: {
+            businessName: string;
+        };
+    };
+    deliveryAddress?: {
+        address: string;
+    };
+    totalAmount: number;
+    customer: {
+        name: string;
+    };
+    rider?: {
+        name: string;
+    };
 };
 
 // Column Config - No Action Column
@@ -24,19 +35,25 @@ export const orderHistoryColumns: BaseColumnSchema<OrderHistory>[] = [
             let variantClass = "";
             let dotClass = "";
 
+            const status = row.status.charAt(0).toUpperCase() + row.status.slice(1);
+
             switch (row.status) {
-                case "Delivered":
+                case "delivered":
                     variantClass = "bg-secondary/10 text-secondary";
                     dotClass = "bg-secondary";
                     break;
-                case "Pending":
-                case "Placed":
-                case "Prepared":
-                case "Picked Up":
+                case "pending":
+                case "placed":
+                case "accepted":
+                case "preparing":
+                case "ready":
+                case "picked_up":
                     variantClass = "bg-[#FDB900]/10 text-[#FDB900]";
                     dotClass = "bg-[#FDB900]";
                     break;
-                case "Canceled":
+                case "cancelled":
+                case "rejected":
+                case "payment_failed":
                     variantClass = "bg-destructive/10 text-destructive";
                     dotClass = "bg-destructive";
                     break;
@@ -51,21 +68,33 @@ export const orderHistoryColumns: BaseColumnSchema<OrderHistory>[] = [
                     className={`border-none px-3 py-1 rounded-full font-medium ${variantClass}`}
                 >
                     <div className={`w-2 h-2 rounded-full mr-2 ${dotClass}`} />
-                    {row.status}
+                    {status}
                 </Badge>
             );
         },
     },
-    { key: "date", header: "Date" },
-    { key: "vendor", header: "Vendor" },
+    {
+        key: "createdAt",
+        header: "Date",
+        render: (row) => <span>{format(new Date(row.createdAt), "MMM d, yyyy")}</span>,
+    },
+    {
+        key: "vendor",
+        header: "Vendor",
+        render: (row) => <span>{row.vendor?.vendorProfile?.businessName || "N/A"}</span>,
+    },
     {
         key: "location",
         header: "Location",
-        render: (row) => <div className="truncate max-w-[150px]">{row.location}</div>,
+        render: (row) => (
+            <div className="truncate max-w-[150px]">
+                {row.deliveryAddress?.address || "N/A"}
+            </div>
+        ),
     },
     {
-        key: "amount",
+        key: "totalAmount",
         header: "Amount",
-        render: (row) => <span className="font-semibold">{row.amount}</span>,
+        render: (row) => <span className="font-semibold">₦{row.totalAmount?.toLocaleString()}</span>,
     },
 ];

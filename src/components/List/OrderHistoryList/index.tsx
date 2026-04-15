@@ -1,52 +1,45 @@
-"use client";
-
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
-import { orderHistoryColumns, OrderHistory } from "@/components/Tables/columns/orderHistoryColumns";
+import { orderHistoryColumns } from "@/components/Tables/columns/orderHistoryColumns";
+import { useCustomerOrders, useOrders } from "@/hooks/customerManagement";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock Data
-const DATA: OrderHistory[] = [
-    {
-        id: "1",
-        orderId: "#OD4567",
-        status: "Delivered",
-        date: "2025-10-12",
-        vendor: "Mama Foodie",
-        item: "Jollof Rice",
-        customer: "Victor Kenny",
-        rider: "James James",
-        location: "No 5, King street Offa",
-        amount: "₦5,000",
-    },
-    {
-        id: "2",
-        orderId: "#OD4589",
-        status: "Pending",
-        date: "2025-11-01",
-        vendor: "Item 7",
-        item: "Chicken & Chips",
-        customer: "Kim Kim",
-        rider: "John Doe",
-        location: "No 5, King street Offa",
-        amount: "₦5,000",
-    },
-    {
-        id: "3",
-        orderId: "#OD2338",
-        status: "Canceled",
-        date: "2025-09-28",
-        vendor: "Unique Restaurant",
-        item: "Burger",
-        customer: "Ade Ade",
-        rider: "Mike Mike",
-        location: "No 5, King street Offa",
-        amount: "₦5,000",
-    },
-];
+export default function OrderHistoryList({ customerId }: { customerId?: string }) {
+    const { 
+        data: customerOrdersResponse, 
+        isLoading: isCustomerOrdersLoading,
+        error: customerOrdersError
+    } = useCustomerOrders(customerId as string);
 
-export default function OrderHistoryList() {
+    const { 
+        data: allOrdersResponse, 
+        isLoading: isAllOrdersLoading,
+        error: allOrdersError
+    } = useOrders({}); // General list could use filters, but for now empty
+
+    const isLoading = customerId ? isCustomerOrdersLoading : isAllOrdersLoading;
+    const error = customerId ? customerOrdersError : allOrdersError;
+    const orders = customerId ? customerOrdersResponse?.data : allOrdersResponse?.data;
+
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 text-center text-destructive">
+                Failed to load order history.
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Filters Section */}
@@ -71,7 +64,7 @@ export default function OrderHistoryList() {
             {/* Table - Modal/Action removed */}
             <DataTable 
                 columns={getColumns(orderHistoryColumns)} 
-                data={DATA} 
+                data={orders || []} 
                 title="" 
             />
         </div>
