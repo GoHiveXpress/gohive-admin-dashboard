@@ -19,7 +19,14 @@ interface CustomTabsProps {
 
 export default function CustomTabs({ items, activeTab, onTabChange, className }: CustomTabsProps) {
 	return (
-		<div className={cn("flex items-center gap-2 bg-transparent", className)}>
+		<div
+			className={cn(
+				"flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap bg-transparent scrollbar-hide",
+				className
+			)}
+			style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+		>
+			<style dangerouslySetInnerHTML={{ __html: `::-webkit-scrollbar { display: none; }` }} />
 			{items.map((item) => {
 				const isActive = activeTab === item.id;
 				return (
@@ -28,10 +35,10 @@ export default function CustomTabs({ items, activeTab, onTabChange, className }:
 						onClick={() => onTabChange(item.id)}
 						variant="ghost"
 						className={cn(
-							"rounded-full px-6 h-12 text-base font-medium transition-all duration-200",
+							"shrink-0 rounded-full h-10 px-4 text-xs sm:h-12 sm:px-6 sm:text-base font-medium transition-all duration-200",
 							isActive
 								? "bg-secondary text-white hover:bg-secondary/90 shadow-sm"
-								: "bg-transparent text-foreground hover:bg-accent",
+								: "bg-transparent text-foreground hover:bg-accent hover:text-foreground",
 						)}
 					>
 						{item.label}

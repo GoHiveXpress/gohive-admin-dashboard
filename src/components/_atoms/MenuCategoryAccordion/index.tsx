@@ -9,7 +9,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
-import AddNewItemModal from "@/components/_modals/AddNewItemModal";
+
 
 interface MenuCategoryAccordionProps {
 	category: string;
@@ -39,24 +39,6 @@ export default function MenuCategoryAccordion({
 					</div>
 
 					<div className="flex items-center gap-3">
-						{/* Header Actions */}
-						<AddNewItemModal
-							mode="create"
-							categoryName={category}
-							trigger={
-								<button className="text-muted-foreground hover:text-foreground transition-colors">
-									<Icon icon="ph:plus-bold" width="18" />
-								</button>
-							}
-						/>
-
-						<button className="text-muted-foreground hover:text-foreground transition-colors">
-							<Icon icon="ph:pencil-simple-bold" width="18" />
-						</button>
-						<button className="text-muted-foreground hover:text-destructive transition-colors">
-							<Icon icon="ph:trash-bold" width="18" />
-						</button>
-
 						<AccordionTrigger className="text-muted-foreground py-0 pl-2 pr-0 hover:no-underline" />
 					</div>
 				</div>

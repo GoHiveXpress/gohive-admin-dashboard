@@ -4,33 +4,84 @@
 
 import { Icon } from "@iconify/react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import AddExtraModal from "@/components/_modals/AddExtraModal";
 
-export default function AddExtraList() {
+
+import { useVendorMenuDetails } from "@/hooks/vendorManagement";
+import { Loader2 } from "lucide-react";
+import { useMemo } from "react";
+
+interface AddExtraListProps {
+	vendorId: string;
+	searchQuery: string;
+	sortMode: "asc" | "desc" | null;
+	filterStatus: "all" | "available" | "unavailable";
+}
+
+export default function AddExtraList({ vendorId, searchQuery, sortMode, filterStatus }: AddExtraListProps) {
+	const { data, isLoading } = useVendorMenuDetails(vendorId);
+
+	const extras = data?.data?.extras || [];
+
+	const processedExtras = useMemo(() => {
+		let filtered = [...extras];
+
+		if (searchQuery.trim() !== "") {
+			const query = searchQuery.toLowerCase();
+			filtered = filtered.filter(
+				(item: any) =>
+					item.name.toLowerCase().includes(query) ||
+					(item.description && item.description.toLowerCase().includes(query))
+			);
+		}
+
+		if (filterStatus === "available") {
+			filtered = filtered.filter((item: any) => item.isAvailable === true);
+		} else if (filterStatus === "unavailable") {
+			filtered = filtered.filter((item: any) => item.isAvailable === false);
+		}
+
+		if (sortMode === "asc") {
+			filtered.sort((a: any, b: any) => a.name.localeCompare(b.name));
+		} else if (sortMode === "desc") {
+			filtered.sort((a: any, b: any) => b.name.localeCompare(a.name));
+		}
+
+		return filtered;
+	}, [extras, searchQuery, sortMode, filterStatus]);
+
+	if (isLoading) {
+		return (
+			<div className="flex h-64 items-center justify-center">
+				<Loader2 className="size-8 animate-spin text-secondary" />
+			</div>
+		);
+	}
+
+	if (processedExtras.length === 0) {
+		return (
+			<div className="py-12 text-center text-muted-foreground">
+				No matching extra items found.
+			</div>
+		);
+	}
+
 	return (
 		<div className="space-y-4">
-			{/* Extra Item 1 */}
-			<ExtraItemRow name="Plantain" detail="Fried Plantain" price="100" isAvailable />
-
-			{/* Extra Item 2 */}
-			<ExtraItemRow name="Moi Moi" detail="Bean Pudding" price="200" isAvailable />
-
-			{/* Dashed Add Button */}
-			<AddExtraModal
-				mode="create"
-				trigger={
-					<Button className="border-border text-muted-foreground hover:bg-muted/10 hover:border-primary/50 hover:text-primary mt-4 h-14 w-full rounded-xl border-2 border-dashed bg-transparent">
-						<Icon icon="ph:plus" className="mr-2" />
-						Add New Extra
-					</Button>
-				}
-			/>
+			{processedExtras.map((extra) => (
+				<ExtraItemRow
+					key={extra._id}
+					name={extra.name}
+					detail={extra.description || "N/A"}
+					price={extra.price.toString()}
+					isAvailable={extra.isAvailable}
+					quantity={extra.quantity || 0}
+				/>
+			))}
 		</div>
 	);
 }
 
-function ExtraItemRow({ name, detail, price, isAvailable }: any) {
+function ExtraItemRow({ name, detail, price, isAvailable, quantity }: any) {
 	return (
 		<div className="border-border flex flex-col justify-between gap-4 rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:items-center">
 			<span className="text-foreground font-medium">{name}</span>
@@ -54,22 +105,6 @@ function ExtraItemRow({ name, detail, price, isAvailable }: any) {
 					{isAvailable ? "Available" : "Unavailable"}
 				</Badge>
 
-				<div className="border-border/50 flex items-center gap-3 border-l pl-2 sm:ml-4">
-					<AddExtraModal
-						mode="edit"
-						initialData={{ name, price, description: detail }}
-						trigger={
-							<Icon
-								icon="ph:pencil-simple"
-								className="text-muted-foreground hover:text-foreground size-5 cursor-pointer transition-colors"
-							/>
-						}
-					/>
-					<Icon
-						icon="ph:trash"
-						className="text-muted-foreground hover:text-destructive size-5 cursor-pointer transition-colors"
-					/>
-				</div>
 			</div>
 		</div>
 	);

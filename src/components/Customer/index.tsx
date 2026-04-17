@@ -68,7 +68,7 @@ export default function SingleCustomerView({ id }: { id: string }) {
 			<div className="border-border/50 relative rounded-[20px] border bg-white p-6 shadow-sm">
 				<div className="mb-8 flex items-center gap-4">
 					<Avatar className="size-20 border-2 border-white shadow-sm">
-						<AvatarImage src="" /> {/* Add image if available */}
+						<AvatarImage src={customer.profilePicture || ""} alt={customer.name} />
 						<AvatarFallback className="text-foreground bg-[#E3D5C0] text-2xl font-medium">
 							{customer.name.charAt(0)}
 						</AvatarFallback>

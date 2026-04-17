@@ -39,4 +39,19 @@ export const useUpdateVendorStatus = () => {
 	});
 };
 
+export const useVendorCategories = () => {
+	return useQuery({
+		queryKey: ["vendorCategories"],
+		queryFn: vendorApi.getVendorCategories,
+	});
+};
+
+export const useVendorMenuDetails = (id: string) => {
+	return useQuery({
+		queryKey: ["vendorMenu", id],
+		queryFn: () => vendorApi.getVendorMenuDetails(id),
+		enabled: !!id,
+	});
+};
+
 /* eslint-enable */

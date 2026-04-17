@@ -5,6 +5,7 @@ export type Customer = {
 	name: string;
 	email: string;
 	phone: string;
+	profilePicture?: string;
 	accountStatus: "Active" | "Inactive" | "Suspend";
 	orderCount: number;
 	createdAt: string;

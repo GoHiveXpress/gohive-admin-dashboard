@@ -2,6 +2,7 @@
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
+import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { type OrderHistory } from "@/components/Tables/columns/orderHistoryColumns";
@@ -18,6 +19,8 @@ export default function OrderProcessModal({ isOpen, onClose, data }: OrderProces
 	// Poll for the latest order data in real time
 	const { data: orderResponse, isLoading } = useOrder(data?._id || "");
 	const currentOrder = orderResponse?.data || data;
+
+	const [showDetails, setShowDetails] = useState(false);
 
 	if (!isOpen || !currentOrder) return null;
 
@@ -198,14 +201,31 @@ export default function OrderProcessModal({ isOpen, onClose, data }: OrderProces
 
 					{/* Conditional Action Button */}
 					{isErrorState && (
-						<div className="bg-destructive/5 border-destructive/20 flex items-center justify-between rounded-lg border px-4 py-3 pt-4">
-							<div className="text-destructive flex items-center gap-2 text-sm font-semibold">
-								<Icon icon="ph:warning-circle-bold" width="20" />
-								Order was {orderStatus.replace("_", " ")}
+						<div className="space-y-3">
+							<div className="bg-destructive/5 border-destructive/20 flex items-center justify-between rounded-lg border px-4 py-3">
+								<div className="text-destructive flex items-center gap-2 text-sm font-semibold">
+									<Icon icon="ph:warning-circle-bold" width="20" />
+									Order was {orderStatus.replace("_", " ")}
+								</div>
+								{!showDetails && (
+									<Button
+										onClick={() => setShowDetails(true)}
+										className="bg-destructive hover:bg-destructive/90 h-9 rounded-md px-4 text-sm font-medium text-white shadow-sm transition-all"
+									>
+										View Details
+									</Button>
+								)}
 							</div>
-							<Button className="bg-destructive hover:bg-destructive/90 h-9 rounded-md px-4 text-sm font-medium text-white shadow-sm transition-all">
-								View Details
-							</Button>
+
+							{showDetails && (
+								<div className="bg-muted text-foreground animate-in slide-in-from-top-2 rounded-lg p-4 text-sm font-medium">
+									{orderStatus === "expired"
+										? "Order was not accepted or delivered and customer full payment refunded."
+										: orderStatus === "cancelled"
+											? "Order canceled by vendor"
+											: `The order was ${orderStatus.replace("_", " ")}.`}
+								</div>
+							)}
 						</div>
 					)}
 				</div>

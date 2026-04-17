@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Badge } from "@/components/ui/badge";
-import AddNewItemModal from "@/components/_modals/AddNewItemModal";
+
 
 interface MenuItemCardProps {
 	name: string;
@@ -12,6 +12,7 @@ interface MenuItemCardProps {
 	isAvailable: boolean;
 	category: string;
 	image: string;
+	quantity?: number;
 }
 
 export default function MenuItemCard({
@@ -21,20 +22,10 @@ export default function MenuItemCard({
 	isAvailable,
 	category,
 	image,
+	quantity = 0,
 }: MenuItemCardProps) {
 	return (
-		<AddNewItemModal
-			mode="edit"
-			categoryName={category}
-			initialData={{
-				name,
-				price: price.toString(),
-				description: desc,
-				isAvailable,
-				category,
-			}}
-			trigger={
-				<div className="border-border group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:shadow-md">
+		<div className="border-border group flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:shadow-md">
 					{/* Image Area */}
 					<div className="bg-muted relative h-40 w-full overflow-hidden">
 						<img
@@ -67,11 +58,13 @@ export default function MenuItemCard({
 							>
 								{isAvailable ? "Available" : "Unavailable"}
 							</Badge>
+
+							<Badge variant="outline" className="rounded-md border-none px-2.5 py-0.5 text-xs font-medium bg-[#F3F4F6] text-[#374151]">
+								Qty: {quantity}
+							</Badge>
 						</div>
 					</div>
 				</div>
-			}
-		/>
 	);
 }
 

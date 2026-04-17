@@ -7,9 +7,9 @@ import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Icon } from "@iconify/react";
 import FloatingInput from "@/components/FormElements/FloatingInput";
-import FloatingSelect from "@/components/FormElements/FloatingSelect";
-import { SelectItem } from "@/components/ui/select";
 import { type VendorUser, type OperatingHours } from "@/types/vendorManagement";
+import { useVendorCategories } from "@/hooks/vendorManagement";
+import { Loader2 } from "lucide-react";
 
 interface BusinessProfileProps {
 	vendor: VendorUser;
@@ -18,6 +18,15 @@ interface BusinessProfileProps {
 export default function BusinessProfile({ vendor }: BusinessProfileProps) {
 	const profile = vendor.vendorProfile;
 	const hours = profile.operatingHours || [];
+	const { data: categoriesResponse, isLoading } = useVendorCategories();
+	const vendorCategories = categoriesResponse?.data || [];
+
+	const displayBusinessType = isLoading
+		? "Loading..."
+		: vendorCategories.find((cat) => cat.value === profile?.businessType)?.title ||
+			profile?.businessType ||
+			"N/A";
+
 
 	// Helper to find specific day hours or default
 	const getDayHours = (day: string) => {
@@ -50,28 +59,28 @@ export default function BusinessProfile({ vendor }: BusinessProfileProps) {
 					label="Business Name"
 					defaultValue={profile.businessName}
 					icon="ph:storefront"
+					readOnly
 				/>
 
-				<FloatingSelect
+				<FloatingInput
 					label="Business Type"
-					defaultValue={profile.businessType || "restaurant"} // Default fallback
+					value={displayBusinessType}
 					icon="ph:storefront"
-				>
-					<SelectItem value="restaurant">Restaurant</SelectItem>
-					<SelectItem value="grocery">Grocery</SelectItem>
-					<SelectItem value="pharmacy">Pharmacy</SelectItem>
-				</FloatingSelect>
+					readOnly
+				/>
 
 				<FloatingInput
 					label="Business Registration Number"
 					defaultValue={profile.cacNumber}
 					icon="ph:hash"
+					readOnly
 				/>
 
 				<FloatingInput
 					label="Business Address"
 					defaultValue={profile.businessAddress}
 					icon="ph:map-pin-fill"
+					readOnly
 				/>
 			</div>
 

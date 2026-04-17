@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import {
@@ -17,15 +18,21 @@ import { useOrders, useOrderStats } from "@/hooks/customerManagement";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuItem,
+	DropdownMenuCheckboxItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import GoogleRoutesMap from "@/components/Map/GoogleRoutesMap";
+import { useMemo } from "react";
 
 export default function OrderManagementTabList() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [selectedOrder, setSelectedOrder] = useState<Record<string, unknown> | null>(null);
-	const [status, setStatus] = useState("all");
+	const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+	const [status, setStatus] = useState<string>("all");
 	const [search, setSearch] = useState("");
+	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
 
 	const { data: orderResponse, isLoading, error } = useOrders({ status, search });
 	const { data: statsResponse } = useOrderStats();
@@ -44,6 +51,16 @@ export default function OrderManagementTabList() {
 		cancelled: 0,
 		expired: 0,
 	};
+
+	const processedOrders = useMemo(() => {
+		const result = [...orders];
+		if (sortMode === "asc") {
+			result.sort((a, b) => (a.customer?.name || "").localeCompare(b.customer?.name || ""));
+		} else if (sortMode === "desc") {
+			result.sort((a, b) => (b.customer?.name || "").localeCompare(a.customer?.name || ""));
+		}
+		return result;
+	}, [orders, sortMode]);
 
 	const handleViewOrder = (order: OrderData) => {
 		setSelectedOrder(order);
@@ -100,44 +117,107 @@ export default function OrderManagementTabList() {
 
 			{/* Order Filters */}
 			<div className="mt-4 flex flex-wrap items-center gap-3">
-				<Button variant="outline" className="border-border size-10 rounded-lg bg-white p-0">
-					<Icon icon="ph:sliders-horizontal" width="20" />
-				</Button>
+				{/* Search */}
+				<div className="relative w-full sm:w-64">
+					<Icon
+						icon="ph:magnifying-glass"
+						className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2"
+					/>
+					<Input
+						placeholder="Search Orders"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						className="border-border h-10 rounded-lg bg-white pl-10"
+					/>
+				</div>
 
+				{/* Filter Button Dropdown */}
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button
 							variant="outline"
-							className="border-border h-10 min-w-[120px] justify-between rounded-lg bg-white px-4 font-medium"
+							size="icon"
+							className="border-border relative size-10 shrink-0 rounded-lg bg-white p-0"
 						>
-							{status === "all" ? "Status" : status}{" "}
-							<Icon icon="ph:caret-down" className="ml-2" />
+							<Icon icon="ph:sliders-horizontal" className="size-5" />
+							{status !== "all" && (
+								<span className="absolute right-0 top-0 size-2 rounded-full bg-[#F97316]" />
+							)}
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-[180px]">
-						<DropdownMenuItem onClick={() => setStatus("all")}>
-							All Status
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatus("placed")}>
+					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						<DropdownMenuCheckboxItem
+							checked={status === "all"}
+							onCheckedChange={() => setStatus("all")}
+						>
+							All Statuses
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "placed"}
+							onCheckedChange={() => setStatus("placed")}
+						>
 							Placed
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatus("preparing")}>
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "preparing"}
+							onCheckedChange={() => setStatus("preparing")}
+						>
 							Preparing
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatus("ready")}>
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "ready"}
+							onCheckedChange={() => setStatus("ready")}
+						>
 							Ready
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatus("picked_up")}>
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "picked_up"}
+							onCheckedChange={() => setStatus("picked_up")}
+						>
 							Picked up
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatus("delivered")}>
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "delivered"}
+							onCheckedChange={() => setStatus("delivered")}
+						>
 							Delivered
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatus("cancelled")}>
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "cancelled"}
+							onCheckedChange={() => setStatus("cancelled")}
+						>
 							Cancelled
-						</DropdownMenuItem>
+						</DropdownMenuCheckboxItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
+
+				{/* Quick Filters */}
+				<Button
+					onClick={() => setStatus("all")}
+					className={cn(
+						"h-10 rounded-lg px-6 font-medium transition-colors",
+						status === "all"
+							? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
+							: "border-border bg-white text-foreground hover:bg-muted/80"
+					)}
+				>
+					All
+				</Button>
+
+				<Button
+					variant={sortMode !== null ? "default" : "outline"}
+					onClick={() => setSortMode((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
+					className={cn(
+						"h-10 rounded-lg bg-white px-4 font-medium",
+						sortMode !== null ? "bg-[#123614] text-white hover:bg-[#123614]/90" : "border-border"
+					)}
+				>
+					A-Z {sortMode === "asc" ? "↓" : sortMode === "desc" ? "↑" : ""}
+				</Button>
+
+				<div className="bg-border mx-1 hidden h-6 w-px sm:block" />
 
 				<Button
 					variant="outline"
@@ -153,10 +233,10 @@ export default function OrderManagementTabList() {
 				</Button>
 			</div>
 
-			{/* Map Placeholder */}
-			<div className="border-border/20 text-muted-foreground/30 flex h-64 w-full items-center justify-center rounded-[20px] border bg-[#F5F5F0]">
-				<Icon icon="ph:map-trifold" className="size-12 opacity-20" />
-			</div>
+			{/* Google Map Tracker for Active Orders */}
+			<div className="w-full">
+				<GoogleRoutesMap orders={orders} />
+			</div> 
 
 			{/* Legend */}
 			<div className="text-foreground flex justify-end gap-4 text-[10px] font-medium">
@@ -192,7 +272,7 @@ export default function OrderManagementTabList() {
 			) : (
 				<DataTable
 					columns={getColumns(getCustomerOrderManagementColumns(handleViewOrder))}
-					data={orders}
+					data={processedOrders}
 					title=""
 				/>
 			)}

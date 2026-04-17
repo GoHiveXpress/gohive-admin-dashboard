@@ -15,6 +15,15 @@ import {
 	type ISupportMessage,
 	type ISupportUser,
 } from "@/types/supportManagement";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuCheckboxItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export default function TicketTab() {
 	const [activeCategory, setActiveCategory] = useState<"customer" | "vendor" | "rider" | "all">(
@@ -23,7 +32,7 @@ export default function TicketTab() {
 	const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">("all");
 	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
-	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+	const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
 	const [messageText, setMessageText] = useState("");
 	const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -42,11 +51,16 @@ export default function TicketTab() {
 			return matchesCategory && matchesStatus && matchesSearch;
 		});
 
-		// Apply sort by ID or Date (default desc)
-		return result.sort((a, b) => {
-			if (sortOrder === "asc") return a._id.localeCompare(b._id);
-			return b._id.localeCompare(a._id);
-		});
+		// Apply A-Z sort by user name
+		if (sortOrder === "asc") {
+			result.sort((a, b) => a.user.name.localeCompare(b.user.name));
+		} else if (sortOrder === "desc") {
+			result.sort((a, b) => b.user.name.localeCompare(a.user.name));
+		} else {
+			// default to latest first if no sort selected
+			result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+		}
+		return result;
 	}, [chats, activeCategory, searchQuery, statusFilter, sortOrder]);
 
 	// 3. Selected Chat
@@ -147,68 +161,86 @@ export default function TicketTab() {
 					})}
 				</div>
 
-				<div className="relative w-64">
+				<div className="relative w-full sm:w-64">
 					<Icon
-						icon="lucide:search"
-						className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2"
+						icon="ph:magnifying-glass"
+						className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2"
 					/>
 					<Input
 						placeholder="Search by name or ID"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="h-10 bg-transparent pl-9"
+						className="border-border h-10 rounded-lg bg-transparent pl-10"
 					/>
 				</div>
 
-				<Button variant="outline" size="icon" className="size-10">
-					<Icon icon="lucide:sliders-horizontal" className="size-4" />
-				</Button>
+				{/* Filter Dropdown */}
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							variant="outline"
+							size="icon"
+							className="border-border relative size-10 shrink-0 rounded-lg"
+						>
+							<Icon icon="ph:sliders-horizontal" className="size-5" />
+							{statusFilter !== "all" && (
+								<span className="absolute right-0 top-0 size-2 rounded-full bg-[#F97316]" />
+							)}
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						<DropdownMenuCheckboxItem
+							checked={statusFilter === "all"}
+							onCheckedChange={() => setStatusFilter("all")}
+						>
+							All Statuses
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={statusFilter === "active"}
+							onCheckedChange={() => setStatusFilter("active")}
+						>
+							Open Tickets
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={statusFilter === "closed"}
+							onCheckedChange={() => setStatusFilter("closed")}
+						>
+							Closed Tickets
+						</DropdownMenuCheckboxItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 
+				{/* Quick Reset All */}
 				<Button
 					onClick={() => {
 						setActiveCategory("all");
 						setStatusFilter("all");
 						setSearchQuery("");
+						setSortOrder(null);
 					}}
-					className={`h-10 px-6 ${
-						activeCategory === "all"
-							? "bg-accent text-white"
-							: "bg-muted text-foreground"
-					} hover:bg-accent/90`}
+					className={cn(
+						"h-10 rounded-lg px-6 font-medium transition-colors",
+						activeCategory === "all" && statusFilter === "all"
+							? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
+							: "bg-muted text-foreground hover:bg-muted/80"
+					)}
 				>
 					All
 				</Button>
 
+				{/* A-Z Sort Toggle */}
 				<Button
-					variant="outline"
-					onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-					className={`flex h-10 items-center gap-2 bg-transparent ${sortOrder !== "desc" ? "border-primary text-primary" : ""}`}
+					variant={sortOrder !== null ? "default" : "outline"}
+					onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
+					className={cn(
+						"h-10 rounded-lg bg-transparent px-4 font-medium",
+						sortOrder !== null ? "bg-[#123614] text-white hover:bg-[#123614]/90" : "border-border"
+					)}
 				>
-					ID{" "}
-					<Icon
-						icon={sortOrder === "asc" ? "lucide:arrow-up" : "lucide:arrow-down"}
-						className="size-3"
-					/>
+					A-Z {sortOrder === "asc" ? "↓" : sortOrder === "desc" ? "↑" : ""}
 				</Button>
-
-				<div className="border-border flex items-center gap-2 rounded-md border p-1">
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => setStatusFilter("active")}
-						className={`h-8 px-3 text-xs ${statusFilter === "active" ? "bg-secondary text-secondary-foreground" : ""}`}
-					>
-						Open
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => setStatusFilter("closed")}
-						className={`h-8 px-3 text-xs ${statusFilter === "closed" ? "bg-destructive/10 text-destructive" : ""}`}
-					>
-						Closed
-					</Button>
-				</div>
 			</div>
 
 			<div className="flex items-center gap-2">
