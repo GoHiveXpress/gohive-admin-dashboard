@@ -65,6 +65,13 @@ export const customerApi = {
 			`${ADMIN_BASE}/order-stats`,
 			"Failed to fetch order stats",
 		),
+
+	alertVendor: (orderId: string, message?: string) =>
+		apiClient.post<{ success: boolean; message: string }>(
+			`${ADMIN_BASE}/vendor-alert`,
+			{ orderId, message },
+			"Failed to alert vendor",
+		),
 };
 
 /* eslint-enable */

@@ -26,7 +26,7 @@ export default function RiderIndex() {
 					<h1 className="text-foreground text-2xl font-bold">Rider Management</h1>
 				</div>
 
-				<Button className="bg-destructive hover:bg-destructive/90 h-10 rounded-lg px-4 font-medium text-white">
+				<Button className="hidden h-10 rounded-lg px-4 font-medium text-white opacity-0">
 					<Icon icon="ph:flag-banner-fill" className="mr-2 size-5" />
 					View Flagged Reports
 				</Button>

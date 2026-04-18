@@ -1,5 +1,5 @@
 // src/hooks/customerManagement/index.ts
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { customerApi } from "@/app/api/customerManagement";
 
 export const useCustomers = (filters: { search?: string; status?: string }) => {
@@ -55,5 +55,12 @@ export const useOrderStats = () => {
 		queryFn: customerApi.getOrderStats,
 		// Poll every 30 seconds for live updates if needed
 		refetchInterval: 30000,
+	});
+};
+
+export const useAlertVendor = () => {
+	return useMutation({
+		mutationFn: ({ orderId, message }: { orderId: string; message?: string }) =>
+			customerApi.alertVendor(orderId, message),
 	});
 };
