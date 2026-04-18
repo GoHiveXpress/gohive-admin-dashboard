@@ -3,5 +3,5 @@
 import RiderEarningList from "@/components/List/RiderEarningList";
 
 export default function RiderEarningTodayTab() {
-	return <RiderEarningList />;
+	return <RiderEarningList range="today" />;
 }

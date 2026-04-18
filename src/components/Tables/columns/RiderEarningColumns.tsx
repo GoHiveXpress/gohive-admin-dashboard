@@ -9,6 +9,7 @@ export type RiderEarningData = {
 	name: string;
 	riderId: string;
 	completedTrips: number;
+	todayEarnings: string;
 	earnings: string;
 	payout: string;
 	incentives: string;
@@ -38,6 +39,18 @@ export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 		key: "completedTrips",
 		header: "Completed Trip",
 		render: (row) => <span className="font-medium">{row.completedTrips}</span>,
+	},
+	{
+		key: "todayEarnings",
+		header: "Today's Earnings",
+		render: (row) => (
+			<div className="text-secondary flex items-center gap-1 font-medium italic">
+				<span className="border-secondary flex size-3 items-center justify-center rounded-full border text-[10px]">
+					↓
+				</span>
+				{row.todayEarnings}
+			</div>
+		),
 	},
 	{
 		key: "earnings",
@@ -77,7 +90,7 @@ export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 	},
 	{
 		key: "totalBalance",
-		header: "Total Balance",
+		header: "Period Balance",
 		render: (row) => <span className="text-foreground font-semibold">{row.totalBalance}</span>,
 	},
 ];
