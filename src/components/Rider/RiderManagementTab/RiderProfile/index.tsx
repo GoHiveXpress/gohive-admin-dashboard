@@ -79,9 +79,13 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 				<div className="mb-8 flex flex-col items-start gap-6 md:flex-row md:items-center">
 					{/* Avatar */}
 					<div className="flex size-24 items-center justify-center rounded-full bg-[#E8E6D9] text-[#8E8B7B]">
-						<div className="flex size-20 items-center justify-center rounded-full bg-[#D9D7C8]">
-							<Icon icon="ph:user-fill" width="40" />
-						</div>
+						{rider.profilePicture ? (
+							<img src={rider.profilePicture} alt={rider.name} className="size-24 rounded-full object-cover shadow-sm" />
+						) : (
+							<div className="flex size-20 items-center justify-center rounded-full bg-[#D9D7C8]">
+								<Icon icon="ph:user-fill" width="40" />
+							</div>
+						)}
 					</div>
 
 					<div className="space-y-1">
@@ -106,9 +110,21 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 						/>
 					</div>
 
-					<div className="flex items-center gap-2 rounded-full bg-[#E8F5E9] px-4 py-1.5 text-sm font-medium text-[#22C55E]">
-						<div className="size-2 rounded-full bg-[#22C55E]" />
-						{rider.riderProfile?.availabilityStatus || "Active"}
+					<div 
+						className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${
+							rider.riderProfile?.availabilityStatus?.toLowerCase() === "online"
+								? "bg-[#E8F5E9] text-[#22C55E]"
+								: "bg-[#F4F4F5] text-[#71717A]"
+						}`}
+					>
+						<div 
+							className={`size-2 rounded-full ${
+								rider.riderProfile?.availabilityStatus?.toLowerCase() === "online" 
+									? "bg-[#22C55E]" 
+									: "bg-[#71717A]"
+							}`} 
+						/>
+						{rider.riderProfile?.availabilityStatus?.charAt(0).toUpperCase() + rider.riderProfile?.availabilityStatus?.slice(1) || "Offline"}
 					</div>
 				</div>
 
@@ -119,7 +135,7 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 					{/* FIXED: Passing the rider prop to the components */}
 					{activeTab === "profile" && <ProfileTab rider={rider} />}
 					{activeTab === "kyc_verification" && <RiderKycTab rider={rider} />}
-					{activeTab === "performance_metrics" && <RiderPerformanceTab />}
+					{activeTab === "performance_metrics" && <RiderPerformanceTab rider={rider} />}
 				</div>
 			</div>
 		</div>

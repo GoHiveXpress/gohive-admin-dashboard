@@ -9,8 +9,8 @@ import Delayed from "./Delayed";
 
 const SUB_TABS = [
 	{ id: "all_orders", label: "All Orders" },
-	{ id: "pending", label: "Pending" },
-	{ id: "en_route", label: "En route" },
+	{ id: "pending", label: "Confirmed order" },
+	{ id: "en_route", label: "Pick up order" },
 	{ id: "delayed", label: "Delayed" },
 ];
 

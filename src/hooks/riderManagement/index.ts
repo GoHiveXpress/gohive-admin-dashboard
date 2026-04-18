@@ -39,4 +39,12 @@ export const useUpdateRiderStatus = () => {
 	});
 };
 
+export const useRiderTrips = (id: string, status?: string, month?: number, year?: number) => {
+	return useQuery({
+		queryKey: ["rider_trips", id, status, month, year],
+		queryFn: () => riderApi.getRiderTrips(id, { status, month, year }),
+		enabled: !!id,
+	});
+};
+
 /* eslint-enable */

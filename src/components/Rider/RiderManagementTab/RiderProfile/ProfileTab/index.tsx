@@ -16,11 +16,7 @@ export default function ProfileTab({ rider }: ProfileTabProps) {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-end">
-				<Button className="bg-secondary hover:bg-secondary/90 h-10 rounded-full px-6 text-white">
-					Save Changes
-				</Button>
-			</div>
+			{/* View-only mode for Rider Profile */}
 
 			<div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
 				{/* Full Name */}

@@ -13,6 +13,7 @@ export type RiderData = {
 	status: string;
 	kyc: string;
 	rating: number;
+	profilePicture: string;
 };
 
 export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
@@ -20,9 +21,17 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
 		key: "name",
 		header: "Name",
 		render: (row) => (
-			<div className="flex items-center gap-2">
-				<div className="bg-secondary size-2 rounded-full" />
-				<span className="text-foreground font-medium">{row.name}</span>
+			<div className="flex items-center gap-3">
+				{row.profilePicture ? (
+					<img src={row.profilePicture} alt={row.name} className="size-8 rounded-full object-cover shadow-sm" />
+				) : (
+					<div className="flex size-8 items-center justify-center rounded-full bg-secondary/10">
+						<Icon icon="ph:user" className="size-4 text-secondary" />
+					</div>
+				)}
+				<div className="flex flex-col">
+					<span className="text-foreground font-medium">{row.name}</span>
+				</div>
 			</div>
 		),
 	},
@@ -39,27 +48,39 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
 	{
 		key: "status",
 		header: "Status",
-		render: (row) => (
-			<Badge
-				variant="outline"
-				className="bg-secondary/10 text-secondary rounded-full border-none px-3 py-1 font-medium"
-			>
-				<div className="bg-secondary mr-2 size-2 rounded-full" />
-				{/* This will now display 'Online', 'Offline', etc. */}
-				{row.status}
-			</Badge>
-		),
+		render: (row) => {
+			const isOnline = row.status.toLowerCase() === "online";
+			return (
+				<Badge
+					variant="outline"
+					className={`rounded-full border-none px-3 py-1 font-medium ${
+						isOnline
+							? "bg-[#E8F5E9] text-[#22C55E]"
+							: "bg-[#F4F4F5] text-[#71717A]"
+					}`}
+				>
+					<div className={`mr-2 size-2 rounded-full ${isOnline ? "bg-[#22C55E]" : "bg-[#71717A]"}`} />
+					{row.status}
+				</Badge>
+			);
+		},
 	},
 	{
 		key: "kyc",
 		header: "KYC",
-		render: (row) => (
-			<Badge className="bg-secondary hover:bg-secondary/90 rounded-[6px] border-none px-4 py-1 font-medium text-white">
-				<div className="mr-2 size-2 rounded-full bg-white" />
-				{/* This will now display 'Approved', 'Pending', etc. */}
-				{row.kyc}
-			</Badge>
-		),
+		render: (row) => {
+			const status = row.kyc.toLowerCase();
+			let bg = "bg-secondary";
+			if (status === "pending") bg = "bg-yellow-500";
+			else if (status === "rejected") bg = "bg-red-500";
+
+			return (
+				<Badge className={`${bg} hover:${bg} rounded-[6px] border-none px-4 py-1 font-medium text-white shadow-none`}>
+					<div className="mr-2 size-2 rounded-full bg-white" />
+					{row.kyc}
+				</Badge>
+			);
+		},
 	},
 	{
 		key: "rating",
