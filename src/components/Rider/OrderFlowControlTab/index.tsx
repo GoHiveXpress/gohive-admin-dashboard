@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import AllOrders from "./AllOrders";
 import Pending from "./Pending";
 import EnRoute from "./EnRoute";
-import Delayed from "./Delayed";
+import Rejected from "./Rejected";
+import Delivered from "./Delivered";
 
 const SUB_TABS = [
 	{ id: "all_orders", label: "All Orders" },
 	{ id: "pending", label: "Confirmed order" },
 	{ id: "en_route", label: "Pick up order" },
-	{ id: "delayed", label: "Delayed" },
+	{ id: "delivered", label: "Delivered order" },
+	{ id: "rejected", label: "Rejected" },
 ];
 
 export default function OrderFlowControlTab() {
@@ -44,7 +46,8 @@ export default function OrderFlowControlTab() {
 			{activeSubTab === "all_orders" && <AllOrders />}
 			{activeSubTab === "pending" && <Pending />}
 			{activeSubTab === "en_route" && <EnRoute />}
-			{activeSubTab === "delayed" && <Delayed />}
+			{activeSubTab === "delivered" && <Delivered />}
+			{activeSubTab === "rejected" && <Rejected />}
 		</div>
 	);
 }

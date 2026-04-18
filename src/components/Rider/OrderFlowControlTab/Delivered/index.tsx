@@ -15,7 +15,7 @@ const containerStyle = {
 	borderRadius: "16px",
 };
 
-export default function DelayedOrders() {
+export default function Delivered() {
 	const { data: orderResponse, isLoading: isLoadingOrders } = useOrders({});
 	const { data: riderResponse, isLoading: isLoadingRiders } = useRiders();
 
@@ -28,8 +28,8 @@ export default function DelayedOrders() {
 	});
 
 	// Compute Order Metrics
-	const { pending, enRoute, completed, delayed } = useMemo(() => {
-		const result = { pending: [] as any[], enRoute: [] as any[], completed: [] as any[], delayed: [] as any[] };
+	const { pending, enRoute, completed, rejected } = useMemo(() => {
+		const result = { pending: [] as any[], enRoute: [] as any[], completed: [] as any[], rejected: [] as any[] };
 		
 		orders.forEach((o: any) => {
 			if (["pending", "placed", "accepted"].includes(o.status)) {
@@ -38,19 +38,18 @@ export default function DelayedOrders() {
 				result.enRoute.push(o);
 			} else if (["delivered"].includes(o.status)) {
 				result.completed.push(o);
-			} else {
-				result.delayed.push(o);
+			} else if (["rejected", "payment_failed", "expired", "cancelled"].includes(o.status)) {
+				result.rejected.push(o);
 			}
 		});
 
 		return result;
 	}, [orders]);
 
-	const totalOrders = pending.length + enRoute.length + completed.length + delayed.length;
+	const totalOrders = pending.length + enRoute.length + completed.length + rejected.length;
 	// Simplistic CSS Donut logic simulating chunks natively
 	const getConicGradient = () => {
 		if (totalOrders === 0) return "conic-gradient(#E5E7EB 0% 100%)";
-		let start = 0;
 		const cEnd = (completed.length / totalOrders) * 100;
 		const rEnd = cEnd + (enRoute.length / totalOrders) * 100;
 		const pEnd = rEnd + (pending.length / totalOrders) * 100;
@@ -58,20 +57,21 @@ export default function DelayedOrders() {
 	};
 
 	// Compute Rider Metrics
-	const { online, available, busy } = useMemo(() => {
-		let o = 0, a = 0, b = 0;
+	const { online, offline } = useMemo(() => {
+		let o = 0, off = 0;
 		riders.forEach((r: any) => {
-			if (r.riderProfile?.availabilityStatus === "active") a++;
-			else if (r.riderProfile?.availabilityStatus === "inactive") o++;
-			else b++; 
+			if (r.riderProfile?.availabilityStatus?.toLowerCase() === "online") o++;
+			else off++; 
 		});
-		return { online: o + a + b, available: a, busy: b }; // Simplification based on typical schema mappings
+		return { online: o, offline: off }; 
 	}, [riders]);
 
 	// Display First Active En Route/Pending Order on Map seamlessly
 	const targetOrder = pending[0] || enRoute[0] || null;
 	const vendorLocation = { lat: 6.5244, lng: 3.3792 };
-	const riderLocation = { lat: 6.5244 + 0.01, lng: 3.3792 + 0.01 };
+	
+	const activeRider = riders.find((r: any) => r.riderProfile?.availabilityStatus?.toLowerCase() === "online" && r.location?.coordinates?.length === 2) as any;
+	const mapCenter = activeRider ? { lat: activeRider.location.coordinates[1], lng: activeRider.location.coordinates[0] } : vendorLocation;
 
 	if (isLoadingOrders || isLoadingRiders) {
 		return (
@@ -91,14 +91,14 @@ export default function DelayedOrders() {
 				<div className="border-border/50 flex flex-1 flex-col gap-4 rounded-[20px] border bg-white p-5">
 					<h3 className="text-foreground flex items-center gap-2 text-lg font-bold">
 						<Icon icon="ph:circle-notch-bold" className="text-primary size-6" />
-						Order Queue (Delayed Only)
+						Order Queue (Delivered Only)
 					</h3>
 
 					{/* Chart & Legend Section */}
 					<div className="border-border/40 flex items-center justify-between rounded-xl border bg-white p-4">
 						<div className="text-muted-foreground space-y-2 text-xs font-medium">
 							<div className="flex items-center gap-2">
-								<div className="size-2.5 rounded-full bg-[#EF4444]" /> Delayed ({delayed.length})
+								<div className="size-2.5 rounded-full bg-[#EF4444]" /> Rejected ({rejected.length})
 							</div>
 							<div className="flex items-center gap-2">
 								<div className="size-2.5 rounded-full bg-[#EAB308]" /> Confirmed order ({pending.length})
@@ -122,22 +122,28 @@ export default function DelayedOrders() {
 
 					{/* Order Cards List */}
 					<div className="custom-scrollbar max-h-[400px] flex-1 space-y-3 overflow-y-auto pr-1">
-						{delayed.map((o: any) => (
-							<div key={o._id} className="space-y-3 rounded-2xl border border-[#FECDD3] bg-[#FFF1F2] p-4">
-								<div className="flex items-start justify-between">
-									<div className="flex items-center gap-2 text-xs font-semibold text-[#BE123C]">
-										<div className="size-2 rounded-full bg-[#BE123C]" />
-										Order ID: #{o.orderId?.slice(-6)}
-									</div>
-									<Icon icon="ph:copy" className="text-muted-foreground/70 hover:text-foreground size-4 cursor-pointer" />
-								</div>
-								<div className="text-foreground/80 space-y-1 text-xs font-medium">
-									{o.items?.map((item: any, i: number) => (
-										<p key={i}>{item.quantity} X {item.name}</p>
-									))}
-								</div>
+						{completed.length === 0 ? (
+							<div className="text-muted-foreground pt-10 text-center text-sm">
+								No delivered orders recorded.
 							</div>
-						))}
+						) : (
+							completed.map((o: any) => (
+								<div key={o._id} className="space-y-3 rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5] p-4">
+									<div className="flex items-start justify-between">
+										<div className="flex items-center gap-2 text-xs font-semibold text-[#059669]">
+											<div className="size-2 rounded-full bg-[#059669]" />
+											Order ID: #{o.orderId?.slice(-6)}
+										</div>
+										<Icon icon="ph:copy" className="text-muted-foreground/70 hover:text-foreground size-4 cursor-pointer" />
+									</div>
+									<div className="text-foreground/80 space-y-1 text-xs font-medium">
+										{o.items?.map((item: any, i: number) => (
+											<p key={i}>{item.quantity} X {item.name}</p>
+										))}
+									</div>
+								</div>
+							))
+						)}
 					</div>
 				</div>
 			</div>
@@ -154,7 +160,7 @@ export default function DelayedOrders() {
 				<div className="space-y-3">
 					<div className="border-border/60 flex items-center justify-between rounded-2xl border bg-white p-4 shadow-sm">
 						<div className="flex items-center gap-3">
-							<div className="size-3 rounded-full bg-[#F97316]" />
+							<div className="size-3 rounded-full bg-[#22C55E]" />
 							<span className="text-sm font-medium">Online</span>
 						</div>
 						<span className="text-lg font-bold">{online}</span>
@@ -162,18 +168,10 @@ export default function DelayedOrders() {
 
 					<div className="border-border/60 flex items-center justify-between rounded-2xl border bg-white p-4 shadow-sm">
 						<div className="flex items-center gap-3">
-							<div className="size-3 rounded-full bg-[#22C55E]" />
-							<span className="text-sm font-medium">Available</span>
+							<div className="size-3 rounded-full bg-[#71717A]" />
+							<span className="text-sm font-medium">Offline</span>
 						</div>
-						<span className="text-lg font-bold">{available}</span>
-					</div>
-
-					<div className="border-border/60 flex items-center justify-between rounded-2xl border bg-white p-4 shadow-sm">
-						<div className="flex items-center gap-3">
-							<div className="size-3 rounded-full bg-[#EF4444]" />
-							<span className="text-sm font-medium">Busy</span>
-						</div>
-						<span className="text-lg font-bold">{busy}</span>
+						<span className="text-lg font-bold">{offline}</span>
 					</div>
 				</div>
 
@@ -191,8 +189,8 @@ export default function DelayedOrders() {
 									<p className="text-sm font-semibold">{rider.name}</p>
 									<div className="text-muted-foreground flex items-center gap-1.5 text-[10px] font-medium">
 										Status
-										<div className={`size-1.5 rounded-full ${rider.riderProfile?.availabilityStatus === "active" ? "bg-[#22C55E]" : "bg-[#EF4444]"}`} />
-										<span className="text-foreground capitalize">{rider.riderProfile?.availabilityStatus || "Inactive"}</span>
+										<div className={`size-1.5 rounded-full ${rider.riderProfile?.availabilityStatus?.toLowerCase() === "online" ? "bg-[#22C55E]" : "bg-[#71717A]"}`} />
+										<span className="text-foreground capitalize">{rider.riderProfile?.availabilityStatus || "Offline"}</span>
 									</div>
 								</div>
 								<div className="flex items-center gap-2">
@@ -221,7 +219,7 @@ export default function DelayedOrders() {
 					) : (
 						<GoogleMap
 							mapContainerStyle={containerStyle}
-							center={vendorLocation}
+							center={mapCenter}
 							zoom={12}
 							options={{
 								disableDefaultUI: true,
@@ -229,28 +227,20 @@ export default function DelayedOrders() {
 								styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }],
 							}}
 						>
-							<Marker
-								position={vendorLocation}
-								icon={{
-									path: google.maps.SymbolPath.CIRCLE,
-									scale: 8,
-									fillColor: "#EF4444",
-									fillOpacity: 1,
-									strokeWeight: 2,
-									strokeColor: "#FFFFFF",
-								}}
-							/>
-							<Marker
-								position={riderLocation}
-								icon={{
-									path: google.maps.SymbolPath.CIRCLE,
-									scale: 8,
-									fillColor: "#22C55E",
-									fillOpacity: 1,
-									strokeWeight: 2,
-									strokeColor: "#FFFFFF",
-								}}
-							/>
+							{riders.filter((r: any) => r.riderProfile?.availabilityStatus === "online" && r.location?.coordinates?.length === 2).map((rider: any) => (
+								<Marker
+									key={rider._id}
+									position={{ lat: rider.location.coordinates[1], lng: rider.location.coordinates[0] }}
+									icon={{
+										path: google.maps.SymbolPath.CIRCLE,
+										scale: 8,
+										fillColor: "#22C55E",
+										fillOpacity: 1,
+										strokeWeight: 2,
+										strokeColor: "#FFFFFF",
+									}}
+								/>
+							))}
 						</GoogleMap>
 					)}
 				</div>

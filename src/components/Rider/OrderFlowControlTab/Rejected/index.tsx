@@ -15,7 +15,7 @@ const containerStyle = {
 	borderRadius: "16px",
 };
 
-export default function PendingOrders() {
+export default function Rejected() {
 	const { data: orderResponse, isLoading: isLoadingOrders } = useOrders({});
 	const { data: riderResponse, isLoading: isLoadingRiders } = useRiders();
 
@@ -91,7 +91,7 @@ export default function PendingOrders() {
 				<div className="border-border/50 flex flex-1 flex-col gap-4 rounded-[20px] border bg-white p-5">
 					<h3 className="text-foreground flex items-center gap-2 text-lg font-bold">
 						<Icon icon="ph:circle-notch-bold" className="text-primary size-6" />
-						Order Queue (Confirmed order only)
+						Order Queue (Rejected Only)
 					</h3>
 
 					{/* Chart & Legend Section */}
@@ -122,21 +122,28 @@ export default function PendingOrders() {
 
 					{/* Order Cards List */}
 					<div className="custom-scrollbar max-h-[400px] flex-1 space-y-3 overflow-y-auto pr-1">
-						{pending.map((o: any) => (
-							<div key={o._id} className="space-y-3 rounded-2xl border border-[#FEF08A] bg-[#FEFCE8] p-4">
-								<div className="flex items-start justify-between">
-									<div className="flex items-center gap-2 text-xs font-semibold text-[#A16207]">
-										<div className="size-2 rounded-full bg-[#EAB308]" />
-										Order ID: #{o.orderId?.slice(-6)}
+						{rejected.length === 0 ? (
+							<div className="text-muted-foreground pt-10 text-center text-sm">
+								No rejected orders.
+							</div>
+						) : (
+							rejected.map((o: any) => (
+								<div key={o._id} className="space-y-3 rounded-2xl border border-[#FECDD3] bg-[#FFF1F2] p-4">
+									<div className="flex items-start justify-between">
+										<div className="flex items-center gap-2 text-xs font-semibold text-[#BE123C]">
+											<div className="size-2 rounded-full bg-[#BE123C]" />
+											Order ID: #{o.orderId?.slice(-6)}
+										</div>
+										<Icon icon="ph:copy" className="text-muted-foreground/70 hover:text-foreground size-4 cursor-pointer" />
 									</div>
-								</div>
-								<div className="text-foreground/80 space-y-1 text-xs font-medium">
-									{o.items?.map((item: any, i: number) => (
+									<div className="text-foreground/80 space-y-1 text-xs font-medium">
+										{o.items?.map((item: any, i: number) => (
 										<p key={i}>{item.quantity} X {item.name}</p>
 									))}
 								</div>
 							</div>
-						))}
+							))
+						)}
 					</div>
 				</div>
 			</div>
