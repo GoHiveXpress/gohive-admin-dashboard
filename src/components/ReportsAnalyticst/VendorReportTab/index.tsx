@@ -9,15 +9,20 @@ import VendorPerformanceReport from "@/components/_widgets/VendorPerformanceRepo
 import VendorLeaderboardList from "@/components/List/VendorLeaderboardList";
 
 export default function VendorReportTab() {
+	const [filters, setFilters] = React.useState({
+		range: "monthly",
+		location: "",
+		category: "",
+	});
+
+	const updateFilter = (key: string, value: string) => {
+		setFilters((prev) => ({ ...prev, [key]: value }));
+	};
+
 	return (
-		<div>
-			<VendorPerformanceReport />
-			<VendorLeaderboardList />
-			{/* <div className="mt-6">
-            <Button className="bg-secondary hover:bg-secondary/90 text-white h-10 px-6 rounded-lg flex items-center gap-2">
-                <Icon icon="lucide:download" /> Export
-            </Button>
-        </div> */}
+		<div className="space-y-6">
+			<VendorPerformanceReport filters={filters} onFilterChange={updateFilter} />
+			<VendorLeaderboardList filters={filters} onFilterChange={updateFilter} />
 		</div>
 	);
 }

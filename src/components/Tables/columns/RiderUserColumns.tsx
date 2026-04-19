@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { Badge } from "@/components/ui/badge";
 import UserActionCell from "@/components/Tables/cells/UserActionCell"; // Import the cell
 import { type BaseColumnSchema } from "../types";
+import { cn } from "@/lib/utils";
 
 export type RiderUserData = {
 	id: string;
@@ -11,7 +12,6 @@ export type RiderUserData = {
 	riderId: string;
 	vehicleType: string;
 	phone: string;
-	activityType: string;
 	date: string;
 	rating: number;
 	status: "Active" | "Offline";
@@ -48,15 +48,6 @@ export const riderUserColumns: BaseColumnSchema<RiderUserData>[] = [
 		render: (row) => <span className="text-foreground text-sm">{row.phone}</span>,
 	},
 	{
-		key: "activityType",
-		header: "Activity Type",
-		render: (row) => (
-			<span className="text-muted-foreground block max-w-[120px] text-sm font-medium">
-				{row.activityType}
-			</span>
-		),
-	},
-	{
 		key: "date",
 		header: "Date & Time Stamp",
 		render: (row) => <span className="text-muted-foreground text-sm">{row.date}</span>,
@@ -77,9 +68,17 @@ export const riderUserColumns: BaseColumnSchema<RiderUserData>[] = [
 		render: (row) => (
 			<Badge
 				variant="outline"
-				className="bg-muted text-foreground border-border rounded-full px-3 py-1 font-medium shadow-none"
+				className={cn(
+					"rounded-full px-3 py-1 font-medium shadow-none",
+					row.status === "Active"
+						? "bg-secondary/10 text-secondary border-secondary/20"
+						: "bg-destructive/10 text-destructive border-destructive/20"
+				)}
 			>
-				<Icon icon="ph:circle-fill" className="text-destructive mr-2 size-2" />
+				<Icon 
+					icon="ph:circle-fill" 
+					className={cn("mr-2 size-2", row.status === "Active" ? "text-secondary" : "text-destructive")} 
+				/>
 				{row.status}
 			</Badge>
 		),

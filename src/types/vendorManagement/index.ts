@@ -35,6 +35,7 @@ export type VendorUser = {
 	phone: string;
 	role: "vendor";
 	profilePicture: string;
+	accountStatus: "Active" | "Inactive" | "Suspend";
 	vendorProfile: VendorProfile;
 	bankDetails?: BankDetails;
 	createdAt: string;

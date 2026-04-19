@@ -6,7 +6,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { getAuthToken, clearAuth } from "@/utils/auth";
 import { toast } from "sonner";
 // eslint-disable-next-line import/no-named-as-default
-import env from "@src/env";
+import env from "@/env";
 
 const axiosInstance = axios.create({
 	baseURL: env.NEXT_PUBLIC_ADMIN_API_BASE_URL,

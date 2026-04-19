@@ -24,6 +24,7 @@ export type RiderUser = {
 	phone: string;
 	role: "rider";
 	profilePicture: string;
+	accountStatus: "Active" | "Inactive" | "Suspend";
 	riderProfile: RiderProfile;
 	bankDetails?: BankDetails;
 	createdAt: string;

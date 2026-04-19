@@ -1,8 +1,8 @@
-"use client";
-
 import React from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
+import { useCustomerAnalytics } from "@/hooks/analytics";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	AreaChart,
 	Area,
@@ -13,23 +13,32 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 
-const data = [
-	{ name: "0", food: 20, groceries: 15, pharmacy: 18 },
-	{ name: "2", food: 75, groceries: 20, pharmacy: 25 },
-	{ name: "4", food: 20, groceries: 18, pharmacy: 30 },
-	{ name: "6", food: 60, groceries: 25, pharmacy: 20 },
-	{ name: "8", food: 35, groceries: 28, pharmacy: 22 },
-	{ name: "10", food: 50, groceries: 35, pharmacy: 28 },
-	{ name: "12", food: 40, groceries: 32, pharmacy: 10 },
-	{ name: "14", food: 70, groceries: 20, pharmacy: 40 },
-	{ name: "16", food: 55, groceries: 35, pharmacy: 42 },
-	{ name: "18", food: 68, groceries: 25, pharmacy: 32 },
-	{ name: "20", food: 30, groceries: 45, pharmacy: 48 },
-	{ name: "22", food: 40, groceries: 10, pharmacy: 20 },
-	{ name: "24", food: 15, groceries: 60, pharmacy: 55 },
-];
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
-export default function CustomerOrderVolumeReport() {
+interface CustomerOrderVolumeReportProps {
+	filters: any;
+	onFilterChange: (key: string, value: string) => void;
+}
+
+export default function CustomerOrderVolumeReport({ filters, onFilterChange }: CustomerOrderVolumeReportProps) {
+	const { data: analyticsResponse, isLoading } = useCustomerAnalytics(filters);
+	const volumeData = analyticsResponse?.data?.volumeData || [];
+
+	if (isLoading) {
+		return (
+			<div className="border-border flex h-full flex-col rounded-[20px] border bg-white p-6 shadow-sm">
+				<Skeleton className="mb-4 h-8 w-48" />
+				<Skeleton className="flex-1 w-full" />
+			</div>
+		);
+	}
+
 	return (
 		<div className="border-border flex h-full flex-col rounded-[20px] border bg-white p-6 shadow-sm">
 			<div className="mb-6 flex items-start justify-between">
@@ -61,24 +70,58 @@ export default function CustomerOrderVolumeReport() {
 				>
 					<Icon icon="lucide:sliders-horizontal" className="size-4" />
 				</Button>
-				<Button variant="outline" className="border-border h-9 bg-transparent px-3 text-sm">
-					Date <Icon icon="lucide:chevron-down" className="ml-2 size-3" />
-				</Button>
-				<Button variant="outline" className="border-border h-9 bg-transparent px-3 text-sm">
-					Location <Icon icon="lucide:chevron-down" className="ml-2 size-3" />
-				</Button>
-				<Button variant="outline" className="border-border h-9 bg-transparent px-3 text-sm">
-					Category <Icon icon="lucide:chevron-down" className="ml-2 size-3" />
-				</Button>
+				
+				<Select value={filters.range} onValueChange={(val) => onFilterChange("range", val)}>
+					<SelectTrigger className="border-border h-9 w-[120px] bg-transparent text-sm">
+						<SelectValue placeholder="Date" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="today">Today</SelectItem>
+						<SelectItem value="weekly">Weekly</SelectItem>
+						<SelectItem value="monthly">Monthly</SelectItem>
+					</SelectContent>
+				</Select>
+
+				<Select value={filters.location || "all"} onValueChange={(val) => onFilterChange("location", val === "all" ? "" : val)}>
+					<SelectTrigger className="border-border h-9 w-[140px] bg-transparent text-sm">
+						<SelectValue placeholder="Location" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">All Locations</SelectItem>
+						<SelectItem value="Lagos">Lagos</SelectItem>
+						<SelectItem value="VI">Victoria Island</SelectItem>
+						<SelectItem value="Lekki">Lekki</SelectItem>
+					</SelectContent>
+				</Select>
+
+				<Select value={filters.category || "all"} onValueChange={(val) => onFilterChange("category", val === "all" ? "" : val)}>
+					<SelectTrigger className="border-border h-9 w-[120px] bg-transparent text-sm">
+						<SelectValue placeholder="Category" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">All Categories</SelectItem>
+						<SelectItem value="food">Food</SelectItem>
+						<SelectItem value="groceries">Groceries</SelectItem>
+						<SelectItem value="pharmacy">Pharmacy</SelectItem>
+					</SelectContent>
+				</Select>
 			</div>
 
 			<div className="min-h-[250px] w-full flex-1">
 				<ResponsiveContainer width="100%" height="100%">
-					<AreaChart data={data}>
+					<AreaChart data={volumeData}>
 						<defs>
 							<linearGradient id="colorFood" x1="0" y1="0" x2="0" y2="1">
-								<stop offset="5%" stopColor="#F58A20" stopOpacity={0} />
+								<stop offset="5%" stopColor="#F58A20" stopOpacity={0.1} />
 								<stop offset="95%" stopColor="#F58A20" stopOpacity={0} />
+							</linearGradient>
+							<linearGradient id="colorGroceries" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="5%" stopColor="var(--secondary)" stopOpacity={0.1} />
+								<stop offset="95%" stopColor="var(--secondary)" stopOpacity={0} />
+							</linearGradient>
+							<linearGradient id="colorPharmacy" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1} />
+								<stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
 							</linearGradient>
 						</defs>
 						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
@@ -86,38 +129,36 @@ export default function CustomerOrderVolumeReport() {
 							dataKey="name"
 							axisLine={false}
 							tickLine={false}
-							tick={{ fill: "#9CA3AF", fontSize: 12 }}
+							tick={{ fill: "#9CA3AF", fontSize: 10 }}
 						/>
 						<YAxis
 							axisLine={false}
 							tickLine={false}
-							tick={{ fill: "#9CA3AF", fontSize: 12 }}
-							tickFormatter={(value) => `${value}%`}
+							tick={{ fill: "#9CA3AF", fontSize: 10 }}
 						/>
-						<Tooltip />
+						<Tooltip 
+							contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+						/>
 						<Area
-							type="monotone"
+							type="basis"
 							dataKey="food"
 							stroke="#F58A20"
-							strokeWidth={2}
-							fillOpacity={1}
+							strokeWidth={3}
 							fill="url(#colorFood)"
 						/>
 						<Area
-							type="monotone"
+							type="basis"
 							dataKey="groceries"
 							stroke="var(--secondary)"
-							strokeWidth={2}
-							fillOpacity={0}
-							fill="transparent"
+							strokeWidth={3}
+							fill="url(#colorGroceries)"
 						/>
 						<Area
-							type="monotone"
+							type="basis"
 							dataKey="pharmacy"
 							stroke="#3B82F6"
-							strokeWidth={2}
-							fillOpacity={0}
-							fill="transparent"
+							strokeWidth={3}
+							fill="url(#colorPharmacy)"
 						/>
 					</AreaChart>
 				</ResponsiveContainer>

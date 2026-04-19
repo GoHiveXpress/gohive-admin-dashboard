@@ -3,7 +3,7 @@ import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 // eslint-disable-next-line import/no-named-as-default
-import env from "@src/env";
+import env from "@/env";
 
 // eslint-disable-next-line import/prefer-default-export
 export const nextAuthOptions: NextAuthConfig = {

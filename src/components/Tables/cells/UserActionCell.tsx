@@ -32,6 +32,7 @@ export default function UserActionCell({ userType, rowId }: UserActionCellProps)
 				isOpen={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
 				userType={userType}
+				userId={rowId}
 			/>
 		</>
 	);

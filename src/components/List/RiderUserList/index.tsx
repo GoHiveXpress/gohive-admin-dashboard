@@ -4,25 +4,40 @@ import React from "react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { riderUserColumns, type RiderUserData } from "@/components/Tables/columns/RiderUserColumns";
-
-const MOCK_DATA: RiderUserData[] = [
-	{
-		id: "1",
-		riderName: "James James",
-		riderId: "VGHV0923",
-		vehicleType: "Bike (NFA8956)",
-		phone: "09056113019",
-		activityType: "Picked Order #12345",
-		date: "12 Dec 2025 | 11:43 AM",
-		rating: 5.0,
-		status: "Offline",
-	},
-];
+import { useRiders } from "@/hooks/userManagement";
+import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 export default function RiderUserList() {
+	const { data: response, isLoading } = useRiders();
+	const riders = response?.data || [];
+
+	const tableData: RiderUserData[] = riders.map((r) => ({
+		id: r._id,
+		riderName: r.name,
+		riderId: r.riderProfile?.riderId || r._id.slice(-8).toUpperCase(),
+		vehicleType: r.riderProfile?.vehicleType || "N/A",
+		phone: r.phone,
+		date: format(new Date(r.createdAt), "dd MMM yyyy | hh:mm a"),
+		rating: 0, // Backend doesn't provide rating here yet
+		status: (r.accountStatus === "Suspend"
+			? "Offline"
+			: r.riderProfile?.availabilityStatus === "online"
+				? "Active"
+				: "Offline") as any,
+	}));
+
+	if (isLoading) {
+		return (
+			<div className="flex h-64 items-center justify-center">
+				<Loader2 className="text-secondary size-8 animate-spin" />
+			</div>
+		);
+	}
+
 	return (
 		<div className="border-border/50 w-full rounded-[20px] border bg-white pt-6 shadow-sm">
-			<DataTable columns={getColumns(riderUserColumns)} data={MOCK_DATA} />
+			<DataTable columns={getColumns(riderUserColumns)} data={tableData} />
 		</div>
 	);
 }

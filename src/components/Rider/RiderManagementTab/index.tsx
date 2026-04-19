@@ -2,7 +2,7 @@
 
 "use client";
 
-import RiderManagementList from "@src/components/List/RiderManagementList";
+import RiderManagementList from "@/components/List/RiderManagementList";
 
 export default function RiderManagementTab() {
 	return (

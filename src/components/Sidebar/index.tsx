@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner"; // Import sonner
+import { signOut } from "next-auth/react";
 import { clearAuth } from "@/utils/auth"; // Import your existing auth util
 import { MENU_ITEMS, BOTTOM_MENU_ITEMS, LOGOUT_ITEM } from "@/constants/SidebarMenuItems";
 import { cn } from "@/lib/utils";
@@ -15,16 +16,17 @@ export default function Sidebar({ className }: { className?: string }) {
 	const pathname = usePathname();
 	const router = useRouter();
 
-	// Temporary Logout Logic
-	const handleLogout = () => {
-		// 1. Clear local storage token (using your existing util)
+	// Professional Logout Logic
+	const handleLogout = async () => {
+		// 1. Clear local storage token
 		clearAuth();
 
-		// 2. Show Success Toast
-		toast.success("Logged out successfully");
-
-		// 3. Redirect to root/login page
-		router.push("/");
+		// 2. Perform NextAuth signOut (clears cookies and session)
+		// Redirect to root/login but do it quietly
+		await signOut({ 
+			callbackUrl: "/",
+			redirect: true 
+		});
 	};
 
 	const NavItem = ({ item, isLogout = false }: { item: any; isLogout?: boolean }) => {

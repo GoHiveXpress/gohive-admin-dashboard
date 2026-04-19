@@ -10,19 +10,19 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 
-export default function RiderComparisonWidget() {
-	return (
-		<div className="border-border flex h-full flex-col justify-start rounded-[20px] border bg-white p-8 shadow-sm">
-			<div className="mb-6 flex items-center gap-2">
-				<Icon icon="ph:circle-fill" className="text-primary size-4" />
-				<h3 className="text-xl font-medium">Compare Periods</h3>
-			</div>
+interface RiderComparisonWidgetProps {
+	value: string;
+	onChange: (value: string) => void;
+}
 
-			<div className="mt-4">
-				<h3 className="mb-4 text-lg font-medium">Select comparison type</h3>
-				<Select>
+export default function RiderComparisonWidget({ value, onChange }: RiderComparisonWidgetProps) {
+	return (
+		<div className="border-border h-full rounded-[20px] border bg-white p-6 shadow-sm">
+			<h3 className="mb-4 text-lg font-medium">Select comparison type</h3>
+			<div className="relative">
+				<Select value={value} onValueChange={onChange}>
 					<SelectTrigger className="border-border h-14 w-full rounded-lg bg-white">
-						<SelectValue placeholder="Previous day/week/month." />
+						<SelectValue placeholder="Previous month" />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="prev_day">Previous Day</SelectItem>

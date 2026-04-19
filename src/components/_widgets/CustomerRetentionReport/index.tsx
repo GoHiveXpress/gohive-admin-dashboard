@@ -1,10 +1,10 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, react/jsx-no-useless-fragment, react/no-unstable-nested-components */
-
 import React from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
+import { useCustomerAnalytics } from "@/hooks/analytics";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	LineChart,
 	Line,
@@ -15,22 +15,33 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 
-const data = [
-	{ name: "Jan", value: 30 },
-	{ name: "Feb", value: 45 },
-	{ name: "Mar", value: 42 },
-	{ name: "Apr", value: 38 },
-	{ name: "May", value: 46 },
-	{ name: "June", value: 38 },
-	{ name: "July", value: 55 },
-	{ name: "Aug", value: 38 },
-	{ name: "Sept", value: 35 }, // Drop off point
-	{ name: "Oct", value: 32 },
-	{ name: "Nov", value: 40 },
-	{ name: "Dec", value: 25 },
-];
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
-export default function CustomerRetentionReport() {
+interface CustomerRetentionReportProps {
+	filters: any;
+	onFilterChange: (key: string, value: string) => void;
+}
+
+export default function CustomerRetentionReport({ filters, onFilterChange }: CustomerRetentionReportProps) {
+	const { data: analyticsResponse, isLoading } = useCustomerAnalytics(filters);
+	const retentionData = analyticsResponse?.data?.retentionData || [];
+	const metrics = analyticsResponse?.data?.metrics || { churnRate: 0, returnRate: 0, repeatOrderRate: 0 };
+	const comparison = analyticsResponse?.data?.comparison;
+
+	if (isLoading) {
+		return (
+			<div className="border-border mt-6 rounded-[20px] border bg-white p-6 shadow-sm">
+				<Skeleton className="h-40 w-full" />
+			</div>
+		);
+	}
+
 	return (
 		<div className="border-border mt-6 rounded-[20px] border bg-white p-6 shadow-sm">
 			<div className="mb-8 flex items-center gap-2">
@@ -43,22 +54,43 @@ export default function CustomerRetentionReport() {
 				<div className="border-border col-span-12 space-y-8 border-r pr-6 lg:col-span-2">
 					<div>
 						<h4 className="text-foreground mb-1 text-base font-medium">Churn Rate</h4>
-						<p className="text-foreground text-4xl font-bold">12%</p>
+						<div className="flex items-baseline gap-2">
+							<p className="text-foreground text-4xl font-bold">{metrics.churnRate}%</p>
+							{comparison && (
+								<span className={`text-xs font-medium ${Number(comparison.churnRate) <= 0 ? 'text-green-500' : 'text-red-500'}`}>
+									{Number(comparison.churnRate) > 0 ? '+' : ''}{comparison.churnRate}%
+								</span>
+							)}
+						</div>
 					</div>
 					<div>
 						<h4 className="text-foreground mb-1 text-base font-medium">Return Rate</h4>
-						<p className="text-foreground text-4xl font-bold">17%</p>
+						<div className="flex items-baseline gap-2">
+							<p className="text-foreground text-4xl font-bold">{metrics.returnRate}%</p>
+							{comparison && (
+								<span className={`text-xs font-medium ${Number(comparison.returnRate) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+									{Number(comparison.returnRate) > 0 ? '+' : ''}{comparison.returnRate}%
+								</span>
+							)}
+						</div>
 					</div>
 					<div>
 						<h4 className="text-foreground mb-1 text-base font-medium">Repeat Order</h4>
-						<p className="text-foreground text-4xl font-bold">8%</p>
+						<div className="flex items-baseline gap-2">
+							<p className="text-foreground text-4xl font-bold">{metrics.repeatOrderRate}</p>
+							{comparison && (
+								<span className={`text-xs font-medium ${Number(comparison.repeatOrderRate) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+									{Number(comparison.repeatOrderRate) > 0 ? '+' : ''}{comparison.repeatOrderRate}
+								</span>
+							)}
+						</div>
 					</div>
 				</div>
 
 				{/* Right Chart Column */}
 				<div className="col-span-12 lg:col-span-10">
 					<div className="mb-6 flex flex-wrap items-center justify-between">
-						<h3 className="text-xl font-medium">Retention over time</h3>
+						<h3 className="text-xl font-medium">Retention over time (Last 30 Days)</h3>
 						<div className="flex items-center gap-3">
 							<div className="bg-muted/30 flex rounded-full p-1">
 								<Button className="bg-secondary h-8 rounded-full px-4 text-xs text-white">
@@ -74,21 +106,47 @@ export default function CustomerRetentionReport() {
 							<Button variant="outline" size="icon" className="size-9">
 								<Icon icon="lucide:sliders-horizontal" className="size-4" />
 							</Button>
-							<Button variant="outline" className="h-9 text-sm">
-								Time <Icon icon="lucide:chevron-down" className="ml-2 size-3" />
-							</Button>
-							<Button variant="outline" className="h-9 text-sm">
-								Location <Icon icon="lucide:chevron-down" className="ml-2 size-3" />
-							</Button>
-							<Button variant="outline" className="h-9 text-sm">
-								City <Icon icon="lucide:chevron-down" className="ml-2 size-3" />
-							</Button>
+							
+							<Select value={filters.range} onValueChange={(val) => onFilterChange("range", val)}>
+								<SelectTrigger className="h-9 w-[110px] text-sm">
+									<SelectValue placeholder="Time" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="today">Today</SelectItem>
+									<SelectItem value="weekly">Weekly</SelectItem>
+									<SelectItem value="monthly">Monthly</SelectItem>
+								</SelectContent>
+							</Select>
+
+							<Select value={filters.location || "all"} onValueChange={(val) => onFilterChange("location", val === "all" ? "" : val)}>
+								<SelectTrigger className="h-9 w-[130px] text-sm">
+									<SelectValue placeholder="Location" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All Locations</SelectItem>
+									<SelectItem value="Lagos">Lagos</SelectItem>
+									<SelectItem value="VI">Victoria Island</SelectItem>
+									<SelectItem value="Lekki">Lekki</SelectItem>
+								</SelectContent>
+							</Select>
+
+							<Select value={filters.category || "all"} onValueChange={(val) => onFilterChange("category", val === "all" ? "" : val)}>
+								<SelectTrigger className="h-9 w-[110px] text-sm">
+									<SelectValue placeholder="Category" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All</SelectItem>
+									<SelectItem value="food">Food</SelectItem>
+									<SelectItem value="groceries">Groceries</SelectItem>
+									<SelectItem value="pharmacy">Pharmacy</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 					</div>
 
 					<div className="h-[300px] w-full">
 						<ResponsiveContainer width="100%" height="100%">
-							<LineChart data={data}>
+							<LineChart data={retentionData}>
 								<CartesianGrid
 									strokeDasharray="3 3"
 									vertical={false}
@@ -98,14 +156,12 @@ export default function CustomerRetentionReport() {
 									dataKey="name"
 									axisLine={false}
 									tickLine={false}
-									tick={{ fill: "#9CA3AF", fontSize: 12 }}
+									tick={{ fill: "#9CA3AF", fontSize: 10 }}
 								/>
 								<YAxis
 									axisLine={false}
 									tickLine={false}
-									tick={{ fill: "#9CA3AF", fontSize: 12 }}
-									tickFormatter={(value) => `${value}%`}
-									domain={[0, 100]}
+									tick={{ fill: "#9CA3AF", fontSize: 10 }}
 								/>
 								<Tooltip
 									contentStyle={{
@@ -114,26 +170,13 @@ export default function CustomerRetentionReport() {
 										boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
 									}}
 								/>
-								{/* Annotation simulated as a dot */}
 								<Line
-									type="monotone"
+									type="basis"
 									dataKey="value"
 									stroke="#F58A20"
-									strokeWidth={2}
-									dot={(props) => {
-										if (props.payload.name === "Sept")
-											return (
-												<circle
-													cx={props.cx}
-													cy={props.cy}
-													r={6}
-													fill="#EF4444"
-													stroke="white"
-													strokeWidth={2}
-												/>
-											);
-										return <></>;
-									}}
+									strokeWidth={4}
+									dot={{ r: 4, fill: "#F58A20", strokeWidth: 2, stroke: "white" }}
+									activeDot={{ r: 6 }}
 								/>
 							</LineChart>
 						</ResponsiveContainer>

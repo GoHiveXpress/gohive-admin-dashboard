@@ -4,23 +4,34 @@ import React from "react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { adminUserColumns, type AdminUserData } from "@/components/Tables/columns/AdminUserColumns";
-
-const MOCK_DATA: AdminUserData[] = [
-	{
-		id: "1",
-		name: "Victor Kenny",
-		adminId: "AGHV0923",
-		role: "Super Admin",
-		activityType: "Add Support Admin",
-		date: "12 Dec 2025 | 11:43 AM",
-		status: "Active",
-	},
-];
+import { useAdmins } from "@/hooks/userManagement";
+import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 export default function AdminUserList() {
+	const { data: response, isLoading } = useAdmins();
+	const admins = response?.data || [];
+
+	const tableData: AdminUserData[] = admins.map((a) => ({
+		id: a._id,
+		name: a.name,
+		adminId: a._id.slice(-8).toUpperCase(),
+		role: a.role === "superadmin" ? "Super Admin" : "Admin",
+		date: format(new Date(a.createdAt), "dd MMM yyyy | hh:mm a"),
+		status: a.accountStatus === "Suspend" ? "Inactive" : "Active" as any,
+	}));
+
+	if (isLoading) {
+		return (
+			<div className="flex h-64 items-center justify-center">
+				<Loader2 className="text-secondary size-8 animate-spin" />
+			</div>
+		);
+	}
+
 	return (
 		<div className="border-border/50 w-full rounded-[20px] border bg-white pt-6 shadow-sm">
-			<DataTable columns={getColumns(adminUserColumns)} data={MOCK_DATA} />
+			<DataTable columns={getColumns(adminUserColumns)} data={tableData} />
 		</div>
 	);
 }

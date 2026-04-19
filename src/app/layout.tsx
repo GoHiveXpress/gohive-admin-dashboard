@@ -4,8 +4,9 @@ import { Inter } from "next/font/google";
 import "../styles/globals.css";
 import { cn } from "@/lib/utils";
 import "../styles/fonts.css";
-import ReactQueryProvider from "@src/providers/ReactQueryProvider";
-import { Toaster } from "@src/components/ui/sonner";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import SessionTimeout from "@/providers/SessionTimeout";
+import { Toaster } from "@/components/ui/sonner";
 import { type ReactNode } from "react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}
 			>
 				<ReactQueryProvider>
-					{children}
+					<SessionTimeout>{children}</SessionTimeout>
 					<Toaster richColors position="top-right" />
 				</ReactQueryProvider>
 			</body>

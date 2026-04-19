@@ -1,7 +1,7 @@
 // src/app/api/auth/[...nextauth]/route.ts
 
 import NextAuth from "next-auth";
-import { nextAuthOptions } from "@src/lib/nextAuthOptions";
+import { nextAuthOptions } from "@/lib/nextAuthOptions";
 
 // In v5, NextAuth returns an object with a `handlers` property.
 const { handlers } = NextAuth(nextAuthOptions);

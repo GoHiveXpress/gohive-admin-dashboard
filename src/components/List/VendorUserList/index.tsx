@@ -7,34 +7,35 @@ import {
 	vendorUserColumns,
 	type VendorUserData,
 } from "@/components/Tables/columns/VendorUserColumns";
-
-const MOCK_DATA: VendorUserData[] = [
-	{
-		id: "1",
-		storeName: "Item 7",
-		vendorId: "VGHV0923",
-		location: "No 5, Abuja Street",
-		phone: "09056113019",
-		activityType: "Added new Staff",
-		date: "12 Dec 2025 | 11:43 AM",
-		status: "Active",
-	},
-	{
-		id: "2",
-		storeName: "Unique",
-		vendorId: "VGHV0425",
-		location: "No 23, Offa Street",
-		phone: "09056118888",
-		activityType: "Added new Menu",
-		date: "12 Dec 2025 | 2:43 PM",
-		status: "Active",
-	},
-];
+import { useVendors } from "@/hooks/userManagement";
+import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 export default function VendorUserList() {
+	const { data: response, isLoading } = useVendors();
+	const vendors = response?.data || [];
+
+	const tableData: VendorUserData[] = vendors.map((v) => ({
+		id: v._id,
+		storeName: v.vendorProfile.businessName || v.name,
+		vendorId: v.vendorProfile.vendorId || v._id.slice(-8).toUpperCase(),
+		location: v.vendorProfile.businessAddress || "N/A",
+		phone: v.phone,
+		date: format(new Date(v.createdAt), "dd MMM yyyy | hh:mm a"),
+		status: v.accountStatus === "Suspend" ? "Inactive" : "Active" as any,
+	}));
+
+	if (isLoading) {
+		return (
+			<div className="flex h-64 items-center justify-center">
+				<Loader2 className="text-secondary size-8 animate-spin" />
+			</div>
+		);
+	}
+
 	return (
 		<div className="border-border/50 w-full rounded-[20px] border bg-white pt-6 shadow-sm">
-			<DataTable columns={getColumns(vendorUserColumns)} data={MOCK_DATA} />
+			<DataTable columns={getColumns(vendorUserColumns)} data={tableData} />
 		</div>
 	);
 }

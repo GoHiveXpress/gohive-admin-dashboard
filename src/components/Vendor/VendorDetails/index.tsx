@@ -11,8 +11,9 @@ import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
-import { useSingleVendor } from "@/hooks/vendorManagement";
+import { useVendor, useUpdateAccountStatus } from "@/hooks/userManagement";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import KycVerificationTab from "./KycVerification";
 import MenuManagementTab from "./MenuManagement";
 import ProfileManagementTab from "./ProfileManagement";
@@ -29,9 +30,20 @@ const TAB_ITEMS: TabItem[] = [
 
 export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 	const [activeTab, setActiveTab] = useState("profile_management");
+	const updateStatus = useUpdateAccountStatus();
 
-	const { data: vendorResponse, isLoading } = useSingleVendor(vendorId);
+	const { data: vendorResponse, isLoading, refetch } = useVendor(vendorId);
 	const vendor = vendorResponse?.data;
+
+	const handleStatusToggle = async (newStatus: "Active" | "Suspend") => {
+		try {
+			await updateStatus.mutateAsync({ userId: vendorId, status: newStatus });
+			toast.success(`Account ${newStatus === "Active" ? "reactivated" : "suspended"} successfully`);
+			refetch();
+		} catch (error: any) {
+			toast.error(error.message || "Action failed");
+		}
+	};
 
 	if (isLoading) {
 		return (
@@ -99,11 +111,32 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 							</div>
 							<div className="flex items-center gap-2">
 								<div
-									className={`size-2 rounded-full ${vendor.vendorProfile?.isApproved ? "bg-secondary" : "bg-muted"}`}
+									className={`size-2 rounded-full ${vendor.accountStatus === "Active" ? "bg-secondary" : "bg-destructive"}`}
 								/>
-								<span className="text-secondary text-sm font-medium">
-									{vendor.vendorProfile?.isApproved ? "Active" : "Pending"}
+								<span className={`${vendor.accountStatus === "Active" ? "text-secondary" : "text-destructive"} mr-2 text-sm font-medium`}>
+									{vendor.accountStatus === "Active" ? "Active" : "Suspended"}
 								</span>
+								{vendor.accountStatus === "Suspend" && (
+									<Button 
+										size="sm" 
+										className="bg-secondary hover:bg-secondary/80 h-7 rounded-full px-3 text-[10px]"
+										onClick={() => handleStatusToggle("Active")}
+										disabled={updateStatus.isPending}
+									>
+										{updateStatus.isPending ? "Activating..." : "Activate Account"}
+									</Button>
+								)}
+								{vendor.accountStatus === "Active" && (
+									<Button 
+										variant="outline"
+										size="sm" 
+										className="border-destructive/30 text-destructive hover:bg-destructive/5 h-7 rounded-full px-3 text-[10px]"
+										onClick={() => handleStatusToggle("Suspend")}
+										disabled={updateStatus.isPending}
+									>
+										{updateStatus.isPending ? "Suspending..." : "Suspend Account"}
+									</Button>
+								)}
 							</div>
 						</div>
 

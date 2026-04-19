@@ -6,19 +6,7 @@ import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { type BaseColumnSchema } from "../types";
 
-export type RiderLeaderboardData = {
-	id: string;
-	rank: number;
-	riderName: string;
-	riderId: string;
-	location: string;
-	compositeScore: number;
-	tripCount: number;
-	avgRating: number;
-	estDeliveryTime: string;
-	totalEarnings: string;
-	trend: "Improving" | "Stable" | "Declining";
-};
+import { RiderLeaderboardData } from "@/types/analytics";
 
 export const riderLeaderboardColumns: BaseColumnSchema<RiderLeaderboardData>[] = [
 	{

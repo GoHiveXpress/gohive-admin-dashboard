@@ -4,13 +4,13 @@ import { Icon } from "@iconify/react";
 import { Badge } from "@/components/ui/badge";
 import UserActionCell from "@/components/Tables/cells/UserActionCell"; // Import the cell
 import { type BaseColumnSchema } from "../types";
+import { cn } from "@/lib/utils";
 
 export type AdminUserData = {
 	id: string;
 	name: string;
 	adminId: string;
 	role: string;
-	activityType: string;
 	date: string;
 	status: "Active" | "Inactive";
 };
@@ -41,13 +41,6 @@ export const adminUserColumns: BaseColumnSchema<AdminUserData>[] = [
 		render: (row) => <span className="text-foreground text-sm">{row.role}</span>,
 	},
 	{
-		key: "activityType",
-		header: "Activity Type",
-		render: (row) => (
-			<span className="text-muted-foreground text-sm font-medium">{row.activityType}</span>
-		),
-	},
-	{
 		key: "date",
 		header: "Date & Time Stamp",
 		render: (row) => <span className="text-muted-foreground text-sm">{row.date}</span>,
@@ -56,7 +49,14 @@ export const adminUserColumns: BaseColumnSchema<AdminUserData>[] = [
 		key: "status",
 		header: "Status",
 		render: (row) => (
-			<Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 rounded-full border-none px-3 py-1 font-medium shadow-none">
+			<Badge 
+				className={cn(
+					"rounded-full border-none px-3 py-1 font-medium shadow-none",
+					row.status === "Active" 
+						? "bg-secondary/10 text-secondary hover:bg-secondary/20" 
+						: "bg-destructive/10 text-destructive hover:bg-destructive/20"
+				)}
+			>
 				<Icon icon="ph:circle-fill" className="mr-2 size-2" />
 				{row.status}
 			</Badge>

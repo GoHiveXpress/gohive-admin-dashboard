@@ -12,12 +12,17 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 
-export default function CustomerComparisonWidget() {
+interface CustomerComparisonWidgetProps {
+	value: string;
+	onChange: (value: string) => void;
+}
+
+export default function CustomerComparisonWidget({ value, onChange }: CustomerComparisonWidgetProps) {
 	return (
 		<div className="border-border h-full rounded-[20px] border bg-white p-6 shadow-sm">
 			<h3 className="mb-4 text-lg font-medium">Select comparison type</h3>
 			<div className="relative">
-				<Select>
+				<Select value={value} onValueChange={onChange}>
 					<SelectTrigger className="border-border h-14 w-full rounded-lg bg-white">
 						<SelectValue placeholder="Previous day/week/month." />
 					</SelectTrigger>

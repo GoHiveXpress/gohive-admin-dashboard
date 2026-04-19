@@ -132,14 +132,14 @@ export default function GoogleRoutesMap({ orders = [] }: GoogleRoutesMapProps) {
 
 	if (!isLoaded) {
 		return (
-			<div className="border-border/20 text-muted-foreground/30 flex h-64 w-full items-center justify-center rounded-[20px] border bg-[#F5F5F0]">
+			<div className="border-border/20 text-muted-foreground/30 flex h-full w-full items-center justify-center rounded-[20px] border bg-[#F5F5F0]">
 				<Icon icon="line-md:loading-twotone-loop" className="size-8" />
 			</div>
 		);
 	}
 
 	return (
-		<div className="h-64 w-full overflow-hidden rounded-[20px] border border-border/20 bg-[#F5F5F0]">
+		<div className="h-full w-full overflow-hidden rounded-[20px] border border-border/20 bg-[#F5F5F0]">
 			<GoogleMap
 				mapContainerStyle={containerStyle}
 				center={defaultCenter}

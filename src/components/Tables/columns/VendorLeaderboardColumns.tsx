@@ -7,18 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type BaseColumnSchema } from "../types";
 
-export type VendorLeaderboardData = {
-	id: string;
-	rank: number;
-	vendorName: string;
-	location: string;
-	category: string;
-	totalOrders: number;
-	avgRating: number;
-	deliveryTime: string;
-	revenue: string;
-	trend: "Improving" | "Stable" | "Declining";
-};
+import { VendorLeaderboardData, RiderLeaderboardData } from "@/types/analytics";
 
 export const vendorLeaderboardColumns: BaseColumnSchema<VendorLeaderboardData>[] = [
 	{
