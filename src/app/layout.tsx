@@ -5,6 +5,7 @@ import "../styles/globals.css";
 import { cn } from "@/lib/utils";
 import "../styles/fonts.css";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import AuthProvider from "@/providers/AuthProvider";
 import SessionTimeout from "@/providers/SessionTimeout";
 import { Toaster } from "@/components/ui/sonner";
 import { type ReactNode } from "react";
@@ -22,10 +23,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			<body
 				className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}
 			>
-				<ReactQueryProvider>
-					<SessionTimeout>{children}</SessionTimeout>
-					<Toaster richColors position="top-right" />
-				</ReactQueryProvider>
+				<AuthProvider>
+					<ReactQueryProvider>
+						<SessionTimeout>{children}</SessionTimeout>
+						<Toaster richColors position="top-right" />
+					</ReactQueryProvider>
+				</AuthProvider>
 			</body>
 		</html>
 	);

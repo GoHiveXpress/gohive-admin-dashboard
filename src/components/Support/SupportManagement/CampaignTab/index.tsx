@@ -1,16 +1,109 @@
-import React from "react";
+import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { ICreateCommunicationRequest, UserRole } from "@/types/communication";
+import { useCreateCommunication, useTemplates } from "@/hooks/communication";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
-// This is structurally similar to Broadcast but with specific field changes (Email selector)
 export default function CampaignTab() {
+	const {
+		register,
+		handleSubmit,
+		reset,
+		setValue,
+		watch,
+		formState: { errors },
+	} = useForm<ICreateCommunicationRequest>({
+		defaultValues: {
+			type: "campaign-email",
+			targetAudience: ["customer"],
+		},
+	});
+
+	const { mutate: sendCampaign, isPending } = useCreateCommunication();
+	const { data: templatesData } = useTemplates();
+	const templates = templatesData?.data || [];
+
+	const [selectedQuickTemplate, setSelectedQuickTemplate] = useState<string>("");
+	const [quickRoles, setQuickRoles] = useState<UserRole[]>(["customer"]);
+	const [selectedImage, setSelectedImage] = useState<File | null>(null);
+	const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+	const onImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (file) {
+			setSelectedImage(file);
+			const reader = new FileReader();
+			reader.onloadend = () => setImagePreview(reader.result as string);
+			reader.readAsDataURL(file);
+		}
+	};
+
+	const onSubmit = (data: ICreateCommunicationRequest) => {
+		const formData = new FormData();
+		formData.append("subject", data.subject);
+		formData.append("content", data.content);
+		formData.append("type", data.type);
+		data.targetAudience.forEach((role) => formData.append("targetAudience[]", role));
+		if (data.ctaLink) formData.append("ctaLink", data.ctaLink);
+		if (selectedImage) formData.append("image", selectedImage);
+
+		sendCampaign(formData, {
+			onSuccess: () => {
+				reset();
+				setSelectedImage(null);
+				setImagePreview(null);
+			},
+		});
+	};
+
+	const handleTemplateSelect = (templateId: string) => {
+		const template = templates.find((t) => t._id === templateId);
+		if (template) {
+			setValue("subject", template.title);
+			setValue("content", template.message);
+		}
+	};
+
+	const handleQuickSend = () => {
+		const template = templates.find((t) => t._id === selectedQuickTemplate);
+		if (!template) return;
+
+		const formData = new FormData();
+		formData.append("subject", template.title);
+		formData.append("content", template.message);
+		formData.append("type", "campaign-email");
+		quickRoles.forEach((role) => formData.append("targetAudience[]", role));
+
+		sendCampaign(formData, {
+			onSuccess: () => setSelectedQuickTemplate(""),
+		});
+	};
+
+	const toggleRole = (role: UserRole) => {
+		setQuickRoles((prev) =>
+			prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
+		);
+	};
+
 	return (
 		<div className="grid h-full grid-cols-12 items-start gap-6">
 			{/* === LEFT: SMS/Email Campaigns === */}
 			<div className="col-span-8 space-y-6">
-				<div className="bg-card border-border rounded-xl border p-6 shadow-sm">
+				<form
+					onSubmit={handleSubmit(onSubmit)}
+					className="bg-card border-border rounded-xl border p-6 shadow-sm"
+				>
 					<div className="mb-6 flex items-center gap-2">
 						<div className="border-primary size-4 rounded-full border-[3px]" />
 						<h3 className="text-xl font-semibold">SMS/Email Campaigns</h3>
@@ -20,65 +113,145 @@ export default function CampaignTab() {
 					<div className="space-y-6">
 						<div className="space-y-2">
 							<label className="text-lg font-medium">Subject</label>
-							<Input placeholder="Subject" className="h-12 bg-transparent" />
+							<Input
+								{...register("subject", { required: "Subject is required" })}
+								placeholder="Subject"
+								className={`h-12 bg-transparent ${errors.subject ? "border-destructive" : ""}`}
+							/>
+							{errors.subject && (
+								<p className="text-destructive text-sm">{errors.subject.message}</p>
+							)}
 						</div>
 
 						<div className="space-y-2">
 							<label className="text-lg font-medium">Message</label>
-							<Textarea
-								placeholder="Type Message"
-								className="min-h-[160px] resize-none bg-transparent p-4"
-							/>
+							<div className="relative">
+								<Textarea
+									{...register("content", { required: "Message content is required" })}
+									placeholder="Type Message"
+									className={`min-h-[160px] resize-none bg-transparent p-4 ${
+										errors.content ? "border-destructive" : ""
+									}`}
+								/>
+								{imagePreview && (
+									<div className="absolute bottom-4 right-4">
+										<div className="relative h-20 w-20 overflow-hidden rounded-lg border">
+											<img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+											<button
+												type="button"
+												onClick={() => {
+													setSelectedImage(null);
+													setImagePreview(null);
+												}}
+												className="bg-destructive absolute right-0 top-0 flex h-5 w-5 items-center justify-center text-white"
+											>
+												<Icon icon="lucide:x" className="size-3" />
+											</button>
+										</div>
+									</div>
+								)}
+							</div>
+							{errors.content && (
+								<p className="text-destructive text-sm">{errors.content.message}</p>
+							)}
 						</div>
 
 						<div className="space-y-2">
 							<label className="text-lg font-medium">Target Audience/User</label>
-							<div className="relative">
-								<select className="border-border h-12 w-full appearance-none rounded-md border bg-transparent px-3">
-									<option>All Riders</option>
-								</select>
-								<Icon
-									icon="lucide:chevron-down"
-									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-								/>
+							<div className="flex flex-wrap gap-4 pt-2">
+								{["customer", "vendor", "rider"].map((role) => (
+									<div key={role} className="flex items-center gap-2">
+										<Checkbox
+											id={`campaign-${role}`}
+											checked={(watch("targetAudience") || []).includes(role as UserRole)}
+											onCheckedChange={(checked) => {
+												const current = watch("targetAudience") || [];
+												if (checked) {
+													setValue("targetAudience", [...current, role as UserRole]);
+												} else {
+													setValue(
+														"targetAudience",
+														current.filter((r) => r !== (role as UserRole)),
+													);
+												}
+											}}
+										/>
+										<label
+											htmlFor={`campaign-${role}`}
+											className="text-sm font-medium capitalize"
+										>
+											{role}s
+										</label>
+									</div>
+								))}
 							</div>
 						</div>
 
 						{/* Additional Field for Campaigns: Type (Email) */}
 						<div className="space-y-2">
-							<div className="relative">
-								<select className="border-border text-muted-foreground h-12 w-full appearance-none rounded-md border bg-transparent px-3">
-									<option>Email</option>
-									<option>SMS</option>
-								</select>
-								<Icon
-									icon="lucide:chevron-down"
-									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-								/>
-							</div>
+							<Select
+								value={watch("type")}
+								onValueChange={(val) => setValue("type", val as any)}
+							>
+								<SelectTrigger className="border-border text-muted-foreground h-12 w-full bg-transparent">
+									<SelectValue placeholder="Campaign Type" />
+								</SelectTrigger>
+								<SelectContent className="bg-white">
+									<SelectItem value="campaign-email">Email</SelectItem>
+									<SelectItem value="campaign-sms">SMS</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 
 						<div className="flex items-center gap-4 pt-4">
 							<div className="flex gap-2">
+								<div className="relative">
+									<input
+										type="file"
+										id="campaign-image-upload"
+										className="hidden"
+										accept="image/*"
+										onChange={onImageSelect}
+									/>
+									<Button
+										type="button"
+										size="icon"
+										asChild
+										className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
+									>
+										<label htmlFor="campaign-image-upload" className="cursor-pointer">
+											<Icon icon="lucide:image" />
+										</label>
+									</Button>
+								</div>
 								<Button
+									type="button"
 									size="icon"
 									className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
-								>
-									<Icon icon="lucide:image" />
-								</Button>
-								<Button
-									size="icon"
-									className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
+									onClick={() => {
+										const url = prompt("Enter link URL:");
+										if (url) setValue("ctaLink", url);
+									}}
 								>
 									<Icon icon="lucide:link" />
 								</Button>
+								{watch("ctaLink") && (
+									<span className="text-xs text-muted-foreground truncate max-w-[150px]">
+										Link: {watch("ctaLink")}
+									</span>
+								)}
 							</div>
 
 							<div className="flex flex-1 items-center justify-center gap-4">
-								<Button className="bg-secondary hover:bg-secondary/90 h-12 w-48 px-8 text-base text-white">
-									Send Now
+								<Button
+									type="submit"
+									disabled={isPending}
+									className="bg-secondary hover:bg-secondary/90 h-12 w-48 px-8 text-base text-white"
+								>
+									{isPending ? "Sending..." : "Send Now"}
 								</Button>
 								<Button
+									type="button"
 									variant="secondary"
 									className="bg-muted text-foreground hover:bg-muted/80 h-12 w-48 px-8 text-base"
 								>
@@ -87,7 +260,7 @@ export default function CampaignTab() {
 							</div>
 						</div>
 					</div>
-				</div>
+				</form>
 
 				{/* Analytics */}
 				<div className="bg-transparent p-4">
@@ -98,27 +271,21 @@ export default function CampaignTab() {
 					<div className="max-w-md space-y-2">
 						<div className="flex justify-between text-base">
 							<span className="font-medium">Delivery success rate</span>
-							<span className="text-muted-foreground text-sm">
-								% of users reached
-							</span>
+							<span className="text-muted-foreground text-sm">0%</span>
 						</div>
 						<div className="flex justify-between text-base">
 							<span className="font-medium">Open rate</span>
-							<span className="text-muted-foreground text-sm">
-								% of users reached
-							</span>
+							<span className="text-muted-foreground text-sm">0%</span>
 						</div>
 						<div className="flex justify-between text-base">
 							<span className="font-medium">Click-through rate</span>
-							<span className="text-muted-foreground text-sm">
-								% of users reached
-							</span>
+							<span className="text-muted-foreground text-sm">0%</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* === RIGHT: Quick Notification (Same as Broadcast) === */}
+			{/* === RIGHT: Quick Notification === */}
 			<div className="col-span-4">
 				<div className="bg-card border-border h-fit rounded-xl border p-6 shadow-sm">
 					<div className="mb-6 flex items-center justify-between">
@@ -132,32 +299,50 @@ export default function CampaignTab() {
 					<div className="space-y-6">
 						<div className="space-y-2">
 							<label className="text-base font-medium">Template</label>
-							<div className="relative">
-								<select className="border-border h-12 w-full appearance-none rounded-md border bg-transparent px-3 text-sm">
-									<option>System Outage</option>
-								</select>
-								<Icon
-									icon="lucide:chevron-down"
-									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-								/>
-							</div>
+							<Select
+								value={selectedQuickTemplate}
+								onValueChange={setSelectedQuickTemplate}
+							>
+								<SelectTrigger className="h-12 bg-transparent">
+									<SelectValue placeholder="Select Template" />
+								</SelectTrigger>
+								<SelectContent className="z-[9999] bg-white">
+									{templates.map((t) => (
+										<SelectItem key={t._id} value={t._id}>
+											{t.title}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 
 						<div className="space-y-2">
 							<label className="text-base font-medium">Target Audience</label>
-							<div className="relative">
-								<select className="border-border h-12 w-full appearance-none rounded-md border bg-transparent px-3 text-sm">
-									<option>All Riders</option>
-								</select>
-								<Icon
-									icon="lucide:chevron-down"
-									className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-								/>
+							<div className="flex flex-col gap-3 pt-1">
+								{["customer", "vendor", "rider"].map((role) => (
+									<div key={role} className="flex items-center gap-2">
+										<Checkbox
+											id={`quick-campaign-${role}`}
+											checked={quickRoles.includes(role as UserRole)}
+											onCheckedChange={() => toggleRole(role as UserRole)}
+										/>
+										<label
+											htmlFor={`quick-campaign-${role}`}
+											className="text-sm font-medium capitalize"
+										>
+											{role}s
+										</label>
+									</div>
+								))}
 							</div>
 						</div>
 
-						<Button className="bg-secondary hover:bg-secondary/90 h-12 w-full text-base font-medium text-white">
-							Send Notification
+						<Button
+							onClick={handleQuickSend}
+							disabled={isPending || !selectedQuickTemplate || quickRoles.length === 0}
+							className="bg-secondary hover:bg-secondary/90 h-12 w-full text-base font-medium text-white shadow-lg transition-all active:scale-[0.98]"
+						>
+							{isPending ? "Sending..." : "Send Notification"}
 						</Button>
 					</div>
 				</div>

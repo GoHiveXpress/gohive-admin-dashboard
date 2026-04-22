@@ -2,19 +2,24 @@
 
 import React, { useState } from "react";
 import CustomTabs, { type TabItem } from "@/components/Tabs";
+import { useSession } from "next-auth/react";
 import LiveChatTab from "./LiveChatTab";
 import TicketTab from "./TicketTab";
 import BroadcastTab from "./BroadcastTab";
 import CampaignTab from "./CampaignTab";
 
-const TABS: TabItem[] = [
-	{ id: "live-chat", label: "Live Chat" },
-	{ id: "tickets", label: "Support Tickets" },
-	{ id: "broadcasts", label: "Broadcasts" },
-	{ id: "campaigns", label: "Campaigns" },
+const TABS: (TabItem & { roles: string[] })[] = [
+	{ id: "live-chat", label: "Live Chat", roles: ["superadmin", "staff"] },
+	{ id: "tickets", label: "Support Tickets", roles: ["superadmin", "staff"] },
+	{ id: "broadcasts", label: "Broadcasts", roles: ["superadmin"] },
+	{ id: "campaigns", label: "Campaigns", roles: ["superadmin"] },
 ];
 
 export default function SupportManagement() {
+	const { data: session } = useSession();
+	const userRole = session?.user?.role || "staff";
+
+	const filteredTabs = TABS.filter((tab) => tab.roles.includes(userRole));
 	const [activeTab, setActiveTab] = useState("live-chat");
 
 	return (
@@ -23,7 +28,7 @@ export default function SupportManagement() {
 			{/* Tabs Container - Muted background pill */}
 			<div className="bg-muted/50 w-fit rounded-full p-1">
 				<CustomTabs
-					items={TABS}
+					items={filteredTabs}
 					activeTab={activeTab}
 					onTabChange={setActiveTab}
 					className="bg-transparent"
@@ -34,8 +39,8 @@ export default function SupportManagement() {
 			<div className="min-h-0 flex-1">
 				{activeTab === "live-chat" && <LiveChatTab />}
 				{activeTab === "tickets" && <TicketTab />}
-				{activeTab === "broadcasts" && <BroadcastTab />}
-				{activeTab === "campaigns" && <CampaignTab />}
+				{activeTab === "broadcasts" && userRole === "superadmin" && <BroadcastTab />}
+				{activeTab === "campaigns" && userRole === "superadmin" && <CampaignTab />}
 			</div>
 		</div>
 	);

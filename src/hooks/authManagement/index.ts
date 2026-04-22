@@ -56,6 +56,25 @@ export const useResendOtp = () => {
 	});
 };
 
+// --- REGISTER STAFF HOOK ---
+export const useRegisterStaff = () => {
+	const toast = useToast();
+
+	return useMutation({
+		mutationFn: authApi.registerStaff,
+		onSuccess: (data) => {
+			if (data.success) {
+				toast.success("Registration Successful", {
+					description: "You can now login with your credentials.",
+				});
+			}
+		},
+		onError: (error: Error) => {
+			toast.error(error.message);
+		},
+	});
+};
+
 // --- CUSTOMER QUERY HOOK ---
 export const useCustomers = () => {
 	return useQuery({

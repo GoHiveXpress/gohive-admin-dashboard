@@ -16,7 +16,7 @@ export default function AdminUserList() {
 		id: a._id,
 		name: a.name,
 		adminId: a._id.slice(-8).toUpperCase(),
-		role: a.role === "superadmin" ? "Super Admin" : "Admin",
+		role: a.role === "superadmin" ? "Super Admin" : "Staff",
 		date: format(new Date(a.createdAt), "dd MMM yyyy | hh:mm a"),
 		status: a.accountStatus === "Suspend" ? "Inactive" : "Active" as any,
 	}));

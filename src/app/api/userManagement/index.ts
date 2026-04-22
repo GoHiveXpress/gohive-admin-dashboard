@@ -7,6 +7,11 @@ import {
 	AdminUser,
 	UserListResponse,
 	GenericResponse,
+	InviteStaffRequest,
+	Invitation,
+	ChangePasswordRequest,
+	AdminProfileUpdate,
+	RegisterStaffRequest,
 } from "@/types/userManagement";
 
 const ADMIN_PATH = "/admin";
@@ -66,5 +71,58 @@ export const userManagementApi = {
 			`${ADMIN_PATH}/update-account-status`,
 			{ userId, status },
 			"Failed to update account status",
+		),
+
+	inviteStaff: (data: InviteStaffRequest) =>
+		apiClient.post<GenericResponse>(`${ADMIN_PATH}/invite-staff`, data, "Failed to invite staff"),
+
+	upgradeStaffToSuperAdmin: (userId: string) =>
+		apiClient.put<GenericResponse>(
+			`${ADMIN_PATH}/upgrade-staff`,
+			{ userId },
+			"Failed to upgrade staff role",
+		),
+
+	getAdminProfile: () =>
+		apiClient.get<{ success: boolean; data: AdminUser }>(
+			`${ADMIN_PATH}/profile`,
+			"Failed to fetch admin profile",
+		),
+
+	updateAdminProfile: (data: AdminProfileUpdate) =>
+		apiClient.put<GenericResponse>(
+			`${ADMIN_PATH}/profile/update`,
+			data,
+			"Failed to update admin profile",
+		),
+
+	changePassword: (data: ChangePasswordRequest) =>
+		apiClient.post<GenericResponse>("/auth/update-password", data, "Failed to change password"),
+
+	getInvitations: () =>
+		apiClient.get<{ success: boolean; data: Invitation[] }>(
+			`${ADMIN_PATH}/invitations`,
+			"Failed to fetch invitations",
+		),
+
+	resendInvitation: (email: string) =>
+		apiClient.post<GenericResponse>(
+			`${ADMIN_PATH}/resend-invitation`,
+			{ email },
+			"Failed to resend invitation",
+		),
+
+	cancelInvitation: (email: string) =>
+		apiClient.post<GenericResponse>(
+			`${ADMIN_PATH}/cancel-invitation`,
+			{ email },
+			"Failed to cancel invitation",
+		),
+
+	registerStaff: (data: RegisterStaffRequest) =>
+		apiClient.post<GenericResponse>(
+			"/auth/register-staff",
+			data,
+			"Failed to register staff",
 		),
 };

@@ -347,8 +347,12 @@ export default function TicketTab() {
 												className={`size-1.5 rounded-full ${selectedChat?.status === "active" ? "bg-secondary" : "bg-muted"}`}
 											/>
 											{selectedChat?.admin && (
-												<span className="text-secondary bg-secondary/10 ml-2 rounded px-2 py-0.5 font-medium">
-													Connected with Gohive admin
+												<span className="text-secondary bg-secondary/10 ml-2 flex items-center gap-1.5 rounded px-2 py-0.5 font-medium">
+													<Icon icon="lucide:user-check" className="size-3" />
+													Connected with{" "}
+													{typeof selectedChat.admin === "object"
+														? selectedChat.admin.name
+														: selectedChat.adminName || "Support Staff"}
 												</span>
 											)}
 										</div>
@@ -416,10 +420,31 @@ export default function TicketTab() {
 												</span>
 											</div>
 											{msg.isSupportResponse && (
-												<div className="size-8 shrink-0 overflow-hidden rounded-full bg-gray-800">
-													<div className="flex size-full items-center justify-center bg-gray-700 text-[10px] font-bold text-white">
-														YOU
-													</div>
+												<div className="size-8 shrink-0 overflow-hidden rounded-full border border-gray-100 bg-gray-50">
+													{msg.isSystem ? (
+														<div className="flex size-full items-center justify-center bg-white p-1">
+															<img
+																src="/assets/adaptive-icon2.png"
+																alt="GoHive"
+																className="size-full object-contain"
+															/>
+														</div>
+													) : typeof msg.sender === "object" && msg.sender.profilePicture ? (
+														<img
+															src={msg.sender.profilePicture}
+															className="size-full object-cover"
+														/>
+													) : (
+														<div className="bg-primary/10 text-primary flex size-full items-center justify-center text-[10px] font-bold">
+															{typeof msg.sender === "object"
+																? msg.sender.name
+																		.split(" ")
+																		.map((n) => n[0])
+																		.join("")
+																		.slice(0, 2)
+																: "ST"}
+														</div>
+													)}
 												</div>
 											)}
 										</div>

@@ -13,6 +13,7 @@ import {
 } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
+import { AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 const Form = FormProvider;
@@ -157,9 +158,12 @@ const FormMessage = React.forwardRef<
 		<p
 			ref={ref}
 			id={formMessageId}
-			className={cn("text-[0.8rem] font-medium text-destructive", className)}
+			className={cn("text-[13px] font-medium text-destructive flex items-center gap-1.5 mt-1", className)}
 			{...props}
-		/>
+		>
+			{error && <AlertCircle className="size-3.5" />}
+			{body}
+		</p>
 	);
 });
 FormMessage.displayName = "FormMessage";

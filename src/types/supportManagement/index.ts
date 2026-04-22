@@ -28,7 +28,7 @@ export interface ISupportChat {
 	_id: string;
 	user: ISupportUser;
 	role: ChatRole;
-	admin?: string;
+	admin?: ISupportUser | string;
 	adminName?: string;
 	lastMessage: string;
 	status: ChatStatus;
@@ -39,10 +39,11 @@ export interface ISupportChat {
 export interface ISupportMessage {
 	_id: string;
 	chat: string;
-	sender: string;
+	sender: ISupportUser | string;
 	content: string;
 	type: MessageType;
 	isSupportResponse: boolean;
+	isSystem?: boolean;
 	options?: Array<{ label: string; value: string }>;
 	createdAt: string;
 	updatedAt: string;

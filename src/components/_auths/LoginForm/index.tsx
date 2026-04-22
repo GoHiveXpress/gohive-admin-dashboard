@@ -23,6 +23,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { useAdminLogin } from "@/hooks/authManagement";
+import { setAuthToken } from "@/utils/auth";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -52,6 +53,9 @@ export default function LoginForm() {
 					}
 					router.push("/login-verify");
 				} else if (data.token) {
+					// Standard User Flow: Manually set token for immediate API accessibility
+					setAuthToken(data.token);
+
 					// Standard User Flow: Manually set session via NextAuth
 					// We call signIn with the same credentials to let NextAuth finalize the session
 					// strictly because NextAuth needs to own the session cookie.

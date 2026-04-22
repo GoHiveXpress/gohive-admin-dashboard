@@ -13,6 +13,8 @@ import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react"; // Import NextAuth signIn
 import { toast } from "sonner";
 import { useResendOtp } from "@/hooks/authManagement";
+import { authApi } from "@/app/api/authManagement";
+import { setAuthToken } from "@/utils/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,22 +51,43 @@ export default function VerifyLoginForm() {
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsLoading(true);
 
-		// Use NextAuth signIn with custom "isOtpFlow" flag
-		// This triggers the authorize() logic in nextAuthOptions.ts which calls the verify-otp endpoint
-		const result = await signIn("credentials", {
-			email,
-			otp: values.otp,
-			isOtpFlow: "true",
-			redirect: false,
-		});
+		try {
+			// 1. Call API directly to ensure we get the token and can save it manually
+			// This fixes the 401 issue where NextAuth session might be null/delayed
+			const response = await authApi.verifyOtp({
+				email,
+				otp: values.otp,
+			});
 
-		if (result?.ok) {
-			toast.success("Verification Successful");
-			sessionStorage.removeItem("admin_login_email"); // Cleanup
-			router.push("/dashboard");
-		} else {
+			if (response.success && response.token) {
+				// 2. Save token to localStorage for apiClient fallback
+				setAuthToken(response.token);
+
+				// 3. Sync with NextAuth for server-side / middleware awareness
+				// We don't need to re-verify here as authorize() in nextAuthOptions
+				// will call the same endpoint, which is fine for sync purposes.
+				const result = await signIn("credentials", {
+					email,
+					otp: values.otp,
+					isOtpFlow: "true",
+					redirect: false,
+				});
+
+				if (result?.ok) {
+					toast.success("Verification Successful");
+					sessionStorage.removeItem("admin_login_email"); // Cleanup
+					router.push("/dashboard");
+				} else {
+					setIsLoading(false);
+					toast.error(result?.error || "NextAuth synchronization failed");
+				}
+			} else {
+				setIsLoading(false);
+				toast.error(response.message || "Verification failed");
+			}
+		} catch (error: any) {
 			setIsLoading(false);
-			toast.error(result?.error || "Invalid OTP code");
+			toast.error(error.message || "An unexpected error occurred");
 		}
 	}
 

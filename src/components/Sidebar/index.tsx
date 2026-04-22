@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner"; // Import sonner
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { clearAuth } from "@/utils/auth"; // Import your existing auth util
 import { MENU_ITEMS, BOTTOM_MENU_ITEMS, LOGOUT_ITEM } from "@/constants/SidebarMenuItems";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,21 @@ import { cn } from "@/lib/utils";
 export default function Sidebar({ className }: { className?: string }) {
 	const pathname = usePathname();
 	const router = useRouter();
+	const { data: session } = useSession();
+	const userRole = session?.user?.role;
+
+	// Filter menu items based on role
+	const filteredMenuItems = MENU_ITEMS.filter((item) => {
+		if (userRole === "staff") {
+			const restrictedItems = [
+				"Finance & Settlements",
+				"Analytics & Reports",
+				"User Management",
+			];
+			return !restrictedItems.includes(item.label);
+		}
+		return true;
+	});
 
 	// Professional Logout Logic
 	const handleLogout = async () => {
@@ -90,7 +105,7 @@ export default function Sidebar({ className }: { className?: string }) {
 			</div>
 
 			<div className="scrollbar-none flex-1 space-y-1 overflow-y-auto px-4 py-6">
-				{MENU_ITEMS.map((item) => (
+				{filteredMenuItems.map((item) => (
 					<NavItem key={item.href} item={item} />
 				))}
 

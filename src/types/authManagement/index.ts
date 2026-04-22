@@ -15,6 +15,15 @@ export type User = {
 	createdAt: string;
 };
 
+export interface RegisterStaffRequest {
+	token: string;
+	name: string;
+	phone: string;
+	password: string;
+	dob?: string;
+	profilePicture?: string;
+}
+
 export type VerifyOtpRequest = {
 	email: string;
 	otp: string;

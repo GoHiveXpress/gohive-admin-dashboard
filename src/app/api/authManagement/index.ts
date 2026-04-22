@@ -7,6 +7,7 @@ import {
 	type VerifyOtpRequest,
 	type AuthResponse,
 	type CustomerListResponse,
+	type RegisterStaffRequest,
 } from "@/types/authManagement";
 
 const AUTH_BASE = "/auth";
@@ -32,6 +33,14 @@ export const authApi = {
 	// --- Customer Management (Part of Auth/User management per prompt) ---
 	getAllCustomers: () =>
 		apiClient.get<CustomerListResponse>(`${ADMIN_BASE}/customers`, "Failed to fetch customers"),
+
+	// Staff registration
+	registerStaff: (data: RegisterStaffRequest) =>
+		apiClient.post<{ success: boolean; message: string }>(
+			`${AUTH_BASE}/register-staff`,
+			data,
+			"Staff registration failed",
+		),
 };
 
 /* eslint-enable */

@@ -1,6 +1,4 @@
-"use client";
-
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@iconify/react";
@@ -10,50 +8,80 @@ import {
 	roleSettingsColumns,
 	type RoleSettingsData,
 } from "@/components/Tables/columns/RoleSettingsColumns";
-
-const MOCK_DATA: RoleSettingsData[] = [
-	{
-		id: "1",
-		name: "Victor Kenny",
-		adminId: "AGHV0923",
-		status: "Active",
-		phone: "09056113019",
-		role: "Super Admin",
-	},
-	{
-		id: "2",
-		name: "Victor Kenny",
-		adminId: "AGHV0923",
-		status: "Suspend",
-		phone: "09056113019",
-		role: "Super Admin",
-	},
-	{
-		id: "3",
-		name: "Victor Kenny",
-		adminId: "AGHV0923",
-		status: "Inactive",
-		phone: "09056113019",
-		role: "Super Admin",
-	},
-	{
-		id: "4",
-		name: "Victor Kenny",
-		adminId: "AGHV0923",
-		status: "Active",
-		phone: "09056113019",
-		role: "Super Admin",
-	},
-];
+import { useAdmins, useInvitations } from "@/hooks/userManagement";
+import AddNewAdminModal from "@/components/_modals/AddNewAdminModal";
 
 export default function RoleSettingsList() {
+	const { data: adminsResponse, isLoading: isLoadingAdmins } = useAdmins();
+	const { data: invitationsResponse, isLoading: isLoadingInvites } = useInvitations();
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
+
+	const adminData: RoleSettingsData[] = useMemo(() => {
+		const result: RoleSettingsData[] = [];
+
+		// Add Admins
+		if (adminsResponse?.data) {
+			adminsResponse.data.forEach((admin: any) => {
+				result.push({
+					id: admin._id,
+					name: admin.name,
+					adminId: admin._id.slice(-8).toUpperCase(),
+					status: (admin.accountStatus as any) || "Active",
+					phone: admin.phone || "N/A",
+					role: admin.role,
+					profilePicture: admin.profilePicture,
+					isInvitation: false,
+				});
+			});
+		}
+
+		// Add Invitations
+		if (invitationsResponse?.data) {
+			invitationsResponse.data.forEach((invite: any) => {
+				result.push({
+					id: invite._id,
+					name: invite.email,
+					adminId: "N/A",
+					status: invite.status,
+					phone: "N/A",
+					role: invite.role,
+					email: invite.email,
+					isInvitation: true,
+				});
+			});
+		}
+
+		return result.sort((a, b) => {
+			// Pending first, then by name
+			if (a.status === "pending" && b.status !== "pending") return -1;
+			if (a.status !== "pending" && b.status === "pending") return 1;
+			return a.name.localeCompare(b.name);
+		});
+	}, [adminsResponse, invitationsResponse]);
+
+	const filteredData = useMemo(() => {
+		return adminData.filter(
+			(admin) =>
+				admin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				admin.email?.toLowerCase().includes(searchQuery.toLowerCase()),
+		);
+	}, [adminData, searchQuery]);
+
+	if (isLoadingAdmins || isLoadingInvites) {
+		return <div className="flex h-64 items-center justify-center">Loading Role Data...</div>;
+	}
+
 	return (
 		<div className="space-y-6">
 			{/* Controls */}
 			<div className="flex flex-wrap items-center gap-4">
-				<Button className="bg-secondary hover:bg-secondary/90 h-10 gap-2 rounded-lg px-4 text-white">
+				<Button
+					onClick={() => setIsModalOpen(true)}
+					className="bg-secondary hover:bg-secondary/90 h-10 gap-2 rounded-lg px-4 text-white"
+				>
 					<Icon icon="lucide:plus-circle" className="size-5" />
-					Add New Admin
+					Add New Staff
 				</Button>
 
 				<div className="flex-1" />
@@ -65,6 +93,8 @@ export default function RoleSettingsList() {
 					/>
 					<Input
 						placeholder="Search"
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
 						className="border-border h-10 rounded-lg bg-white pl-9"
 					/>
 				</div>
@@ -97,8 +127,10 @@ export default function RoleSettingsList() {
 			</div>
 
 			<div className="border-border overflow-hidden rounded-[20px] border bg-white p-0 shadow-sm">
-				<DataTable columns={getColumns(roleSettingsColumns)} data={MOCK_DATA} />
+				<DataTable columns={getColumns(roleSettingsColumns)} data={filteredData} />
 			</div>
+
+			<AddNewAdminModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 		</div>
 	);
 }
