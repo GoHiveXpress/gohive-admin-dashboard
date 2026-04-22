@@ -38,6 +38,7 @@ export default function CampaignTab() {
 	const [quickRoles, setQuickRoles] = useState<UserRole[]>(["customer"]);
 	const [selectedImage, setSelectedImage] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
+	const [showLinkInput, setShowLinkInput] = useState(false);
 
 	const onImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -227,22 +228,23 @@ export default function CampaignTab() {
 								<Button
 									type="button"
 									size="icon"
-									className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
-									onClick={() => {
-										const url = prompt("Enter link URL:");
-										if (url) setValue("ctaLink", url);
-									}}
+									className={`${showLinkInput ? "bg-secondary" : "bg-primary"} text-white rounded-full`}
+									onClick={() => setShowLinkInput(!showLinkInput)}
 								>
 									<Icon icon="lucide:link" />
 								</Button>
-								{watch("ctaLink") && (
-									<span className="text-xs text-muted-foreground truncate max-w-[150px]">
-										Link: {watch("ctaLink")}
-									</span>
-								)}
 							</div>
 
 							<div className="flex flex-1 items-center justify-center gap-4">
+								{showLinkInput && (
+									<div className="flex-1 max-w-[300px]">
+										<Input
+											{...register("ctaLink")}
+											placeholder="https://example.com"
+											className="h-10 bg-transparent border-primary/50 focus:border-primary"
+										/>
+									</div>
+								)}
 								<Button
 									type="submit"
 									disabled={isPending}
@@ -250,13 +252,13 @@ export default function CampaignTab() {
 								>
 									{isPending ? "Sending..." : "Send Now"}
 								</Button>
-								<Button
+								{/* <Button
 									type="button"
 									variant="secondary"
 									className="bg-muted text-foreground hover:bg-muted/80 h-12 w-48 px-8 text-base"
 								>
 									Schedule Campaign
-								</Button>
+								</Button> */}
 							</div>
 						</div>
 					</div>
