@@ -64,12 +64,11 @@ export default function VerifyLoginForm() {
 				setAuthToken(response.token);
 
 				// 3. Sync with NextAuth for server-side / middleware awareness
-				// We don't need to re-verify here as authorize() in nextAuthOptions
-				// will call the same endpoint, which is fine for sync purposes.
+				// We pass the already-verified token and user data to avoid double-calling the backend
+				// which would fail because the OTP is cleared after the first call.
 				const result = await signIn("credentials", {
-					email,
-					otp: values.otp,
-					isOtpFlow: "true",
+					backendToken: response.token,
+					userJson: JSON.stringify(response.user),
 					redirect: false,
 				});
 

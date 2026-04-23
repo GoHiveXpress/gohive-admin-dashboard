@@ -8,6 +8,7 @@ export interface INotificationTemplate {
 	_id: string;
 	title: string;
 	message: string;
+	image?: string;
 	createdBy: string;
 	updatedBy?: string;
 	createdAt: string;

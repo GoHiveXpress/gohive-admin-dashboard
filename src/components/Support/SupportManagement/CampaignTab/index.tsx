@@ -30,7 +30,8 @@ export default function CampaignTab() {
 		},
 	});
 
-	const { mutate: sendCampaign, isPending } = useCreateCommunication();
+	const { mutate: sendComposerCampaign, isPending: isComposerPending } = useCreateCommunication();
+	const { mutate: sendQuickCampaign, isPending: isQuickPending } = useCreateCommunication();
 	const { data: templatesData } = useTemplates();
 	const templates = templatesData?.data || [];
 
@@ -55,11 +56,11 @@ export default function CampaignTab() {
 		formData.append("subject", data.subject);
 		formData.append("content", data.content);
 		formData.append("type", data.type);
-		data.targetAudience.forEach((role) => formData.append("targetAudience[]", role));
+		data.targetAudience.forEach((role) => formData.append("targetAudience", role));
 		if (data.ctaLink) formData.append("ctaLink", data.ctaLink);
 		if (selectedImage) formData.append("image", selectedImage);
 
-		sendCampaign(formData, {
+		sendComposerCampaign(formData, {
 			onSuccess: () => {
 				reset();
 				setSelectedImage(null);
@@ -84,9 +85,10 @@ export default function CampaignTab() {
 		formData.append("subject", template.title);
 		formData.append("content", template.message);
 		formData.append("type", "campaign-email");
-		quickRoles.forEach((role) => formData.append("targetAudience[]", role));
+		if (template.image) formData.append("image", template.image);
+		quickRoles.forEach((role) => formData.append("targetAudience", role));
 
-		sendCampaign(formData, {
+		sendQuickCampaign(formData, {
 			onSuccess: () => setSelectedQuickTemplate(""),
 		});
 	};
@@ -247,10 +249,10 @@ export default function CampaignTab() {
 								)}
 								<Button
 									type="submit"
-									disabled={isPending}
+									disabled={isComposerPending}
 									className="bg-secondary hover:bg-secondary/90 h-12 w-48 px-8 text-base text-white"
 								>
-									{isPending ? "Sending..." : "Send Now"}
+									{isComposerPending ? "Sending..." : "Send Now"}
 								</Button>
 								{/* <Button
 									type="button"
@@ -263,28 +265,6 @@ export default function CampaignTab() {
 						</div>
 					</div>
 				</form>
-
-				{/* Analytics */}
-				<div className="bg-transparent p-4">
-					<div className="mb-4 flex items-center gap-2">
-						<div className="border-primary size-4 rounded-full border-[3px]" />
-						<h3 className="text-xl font-semibold">Analytics</h3>
-					</div>
-					<div className="max-w-md space-y-2">
-						<div className="flex justify-between text-base">
-							<span className="font-medium">Delivery success rate</span>
-							<span className="text-muted-foreground text-sm">0%</span>
-						</div>
-						<div className="flex justify-between text-base">
-							<span className="font-medium">Open rate</span>
-							<span className="text-muted-foreground text-sm">0%</span>
-						</div>
-						<div className="flex justify-between text-base">
-							<span className="font-medium">Click-through rate</span>
-							<span className="text-muted-foreground text-sm">0%</span>
-						</div>
-					</div>
-				</div>
 			</div>
 
 			{/* === RIGHT: Quick Notification === */}
@@ -341,10 +321,10 @@ export default function CampaignTab() {
 
 						<Button
 							onClick={handleQuickSend}
-							disabled={isPending || !selectedQuickTemplate || quickRoles.length === 0}
+							disabled={isQuickPending || !selectedQuickTemplate || quickRoles.length === 0}
 							className="bg-secondary hover:bg-secondary/90 h-12 w-full text-base font-medium text-white shadow-lg transition-all active:scale-[0.98]"
 						>
-							{isPending ? "Sending..." : "Send Notification"}
+							{isQuickPending ? "Sending..." : "Send Notification"}
 						</Button>
 					</div>
 				</div>

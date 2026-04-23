@@ -30,7 +30,8 @@ export default function BroadcastTab() {
 		},
 	});
 
-	const { mutate: sendBroadcast, isPending } = useCreateCommunication();
+	const { mutate: sendComposerBroadcast, isPending: isComposerPending } = useCreateCommunication();
+	const { mutate: sendQuickBroadcast, isPending: isQuickPending } = useCreateCommunication();
 	const { data: templatesData } = useTemplates();
 	const templates = templatesData?.data || [];
 
@@ -55,11 +56,11 @@ export default function BroadcastTab() {
 		formData.append("subject", data.subject);
 		formData.append("content", data.content);
 		formData.append("type", data.type);
-		data.targetAudience.forEach((role) => formData.append("targetAudience[]", role));
+		data.targetAudience.forEach((role) => formData.append("targetAudience", role));
 		if (data.ctaLink) formData.append("ctaLink", data.ctaLink);
 		if (selectedImage) formData.append("image", selectedImage);
 
-		sendBroadcast(formData, {
+		sendComposerBroadcast(formData, {
 			onSuccess: () => {
 				reset();
 				setSelectedImage(null);
@@ -84,9 +85,10 @@ export default function BroadcastTab() {
 		formData.append("subject", template.title);
 		formData.append("content", template.message);
 		formData.append("type", "broadcast");
-		quickRoles.forEach((role) => formData.append("targetAudience[]", role));
+		if (template.image) formData.append("image", template.image);
+		quickRoles.forEach((role) => formData.append("targetAudience", role));
 
-		sendBroadcast(formData, {
+		sendQuickBroadcast(formData, {
 			onSuccess: () => setSelectedQuickTemplate(""),
 		});
 	};
@@ -231,10 +233,10 @@ export default function BroadcastTab() {
 								)}
 								<Button
 									type="submit"
-									disabled={isPending}
+									disabled={isComposerPending}
 									className="bg-secondary hover:bg-secondary/90 h-12 w-48 px-8 text-base text-white"
 								>
-									{isPending ? "Sending..." : "Send Now"}
+									{isComposerPending ? "Sending..." : "Send Now"}
 								</Button>
 								{/* <Button
 									type="button"
@@ -249,7 +251,7 @@ export default function BroadcastTab() {
 				</form>
 
 				{/* Analytics */}
-				<div className="bg-transparent p-4">
+				{/* <div className="bg-transparent p-4">
 					<div className="mb-4 flex items-center gap-2">
 						<div className="border-primary size-4 rounded-full border-[3px]" />
 						<h3 className="text-xl font-semibold">Analytics</h3>
@@ -268,7 +270,7 @@ export default function BroadcastTab() {
 							<span className="text-muted-foreground text-sm">0%</span>
 						</div>
 					</div>
-				</div>
+				</div> */}
 			</div>
 
 			{/* === RIGHT: Quick Notification === */}
@@ -325,10 +327,10 @@ export default function BroadcastTab() {
 
 						<Button
 							onClick={handleQuickSend}
-							disabled={isPending || !selectedQuickTemplate || quickRoles.length === 0}
+							disabled={isQuickPending || !selectedQuickTemplate || quickRoles.length === 0}
 							className="bg-secondary hover:bg-secondary/90 h-12 w-full text-base font-medium text-white shadow-lg transition-all active:scale-[0.98]"
 						>
-							{isPending ? "Sending..." : "Send Notification"}
+							{isQuickPending ? "Sending..." : "Send Notification"}
 						</Button>
 					</div>
 				</div>

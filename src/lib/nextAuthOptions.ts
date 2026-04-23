@@ -19,9 +19,24 @@ export const nextAuthOptions: NextAuthConfig = {
 				// OTP Login Flow
 				otp: { label: "OTP", type: "text" },
 				isOtpFlow: { label: "isOtpFlow", type: "text" },
+				// Pre-verified data (to avoid double-calling backend)
+				backendToken: { label: "backendToken", type: "text" },
+				userJson: { label: "userJson", type: "text" },
 			},
 			async authorize(credentials) {
 				try {
+					// --- CASE 0: PRE-VERIFIED (Manual Sync) ---
+					if (credentials?.backendToken && credentials?.userJson) {
+						const user = JSON.parse(credentials.userJson as string);
+						return {
+							id: user._id ?? user.id,
+							name: user.name,
+							email: user.email,
+							role: user.role,
+							backendToken: credentials.backendToken as string,
+						};
+					}
+
 					type ApiResponse = {
 						success: boolean;
 						message?: string;
@@ -49,7 +64,7 @@ export const nextAuthOptions: NextAuthConfig = {
 						);
 						data = response.data;
 					}
-					// --- CASE 2: STANDARD LOGIN (or initial Admin check) ---
+					// --- CASE 2: STANDARD LOGIN ---
 					else if (credentials?.email && credentials?.password) {
 						const response = await axios.post<ApiResponse>(
 							`${env.NEXT_PUBLIC_ADMIN_API_BASE_URL}/auth/login`,

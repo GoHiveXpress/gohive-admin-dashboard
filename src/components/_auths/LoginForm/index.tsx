@@ -57,11 +57,10 @@ export default function LoginForm() {
 					setAuthToken(data.token);
 
 					// Standard User Flow: Manually set session via NextAuth
-					// We call signIn with the same credentials to let NextAuth finalize the session
-					// strictly because NextAuth needs to own the session cookie.
+					// We pass the already-verified token and user data to avoid double-calling the backend
 					signIn("credentials", {
-						email: values.email,
-						password: values.password,
+						backendToken: data.token,
+						userJson: JSON.stringify(data.user),
 						redirect: false,
 					}).then((result) => {
 						if (result?.ok) {
