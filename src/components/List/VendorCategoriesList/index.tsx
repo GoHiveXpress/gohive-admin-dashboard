@@ -9,6 +9,7 @@ import { useVendorCategories, useDeleteVendorCategory } from "@/hooks/useVendorC
 import { Loader2 } from "lucide-react";
 
 import EditVendorCategoryModal from "@/components/_modals/EditVendorCategoryModal";
+import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
 import { IVendorCategory } from "@/types/vendorManagement/vendorCategory";
 
 export default function VendorCategoriesList() {
@@ -18,8 +19,23 @@ export default function VendorCategoriesList() {
 	const [isEditOpen, setIsEditOpen] = React.useState(false);
 	const [selectedCategory, setSelectedCategory] = React.useState<IVendorCategory | null>(null);
 
+	const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+	const [idToDelete, setIdToDelete] = React.useState<string | null>(null);
+
 	const handleActionDelete = (id: string) => {
-		deleteMutation.mutate(id);
+		setIdToDelete(id);
+		setIsDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		if (idToDelete) {
+			deleteMutation.mutate(idToDelete, {
+				onSuccess: () => {
+					setIsDeleteOpen(false);
+					setIdToDelete(null);
+				},
+			});
+		}
 	};
 
 	const handleActionEdit = (row: VendorCategoryData) => {
@@ -59,6 +75,14 @@ export default function VendorCategoriesList() {
 				isOpen={isEditOpen} 
 				onOpenChange={setIsEditOpen} 
 				category={selectedCategory} 
+			/>
+			<ConfirmDeleteModal 
+				isOpen={isDeleteOpen} 
+				onOpenChange={setIsDeleteOpen} 
+				onConfirm={handleConfirmDelete} 
+				isLoading={deleteMutation.isPending}
+				title="Delete Business Type?"
+				description="Are you sure you want to delete this business type? This action cannot be undone and will remove it from the platform."
 			/>
 		</div>
 	);

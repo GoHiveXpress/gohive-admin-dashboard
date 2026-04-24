@@ -21,7 +21,10 @@ export type RoleSettingsData = {
 	profilePicture?: string;
 };
 
-export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
+export const getRoleSettingsColumns = (
+	onDelete: (id: string) => void,
+	currentUserRole: string
+): BaseColumnSchema<RoleSettingsData>[] => [
 	{
 		key: "name",
 		header: "Name",
@@ -118,7 +121,13 @@ export const roleSettingsColumns: BaseColumnSchema<RoleSettingsData>[] = [
 	{
 		key: "action",
 		header: "",
-		render: (row) => <ActionCell row={row} />,
+		render: (row) => (
+			<ActionCell 
+				row={row} 
+				onDelete={onDelete} 
+				currentUserRole={currentUserRole} 
+			/>
+		),
 	},
 ];
 
@@ -169,7 +178,15 @@ const RoleCell = ({ row }: { row: RoleSettingsData }) => {
 	);
 };
 
-const ActionCell = ({ row }: { row: RoleSettingsData }) => {
+const ActionCell = ({ 
+	row, 
+	onDelete, 
+	currentUserRole 
+}: { 
+	row: RoleSettingsData;
+	onDelete: (id: string) => void;
+	currentUserRole: string;
+}) => {
 	const resendMutation = useResendInvitation();
 	const cancelMutation = useCancelInvitation();
 
@@ -215,11 +232,17 @@ const ActionCell = ({ row }: { row: RoleSettingsData }) => {
 		);
 	}
 
+	// Only SuperAdmins can delete other admins
+	if (currentUserRole !== "superadmin") {
+		return null;
+	}
+
 	return (
 		<Button
 			variant="ghost"
 			size="icon"
 			className="size-9 rounded-full bg-red-50 hover:bg-red-100"
+			onClick={() => onDelete(row.id)}
 		>
 			<Icon icon="lucide:trash-2" className="text-destructive size-5" />
 		</Button>

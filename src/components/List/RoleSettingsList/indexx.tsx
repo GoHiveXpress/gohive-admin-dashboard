@@ -5,17 +5,42 @@ import { Icon } from "@iconify/react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import {
-	roleSettingsColumns,
+	getRoleSettingsColumns,
 	type RoleSettingsData,
 } from "@/components/Tables/columns/RoleSettingsColumns";
-import { useAdmins, useInvitations } from "@/hooks/userManagement";
+import { useAdmins, useInvitations, useDeleteAdmin, useAdminProfile } from "@/hooks/userManagement";
 import AddNewAdminModal from "@/components/_modals/AddNewAdminModal";
+import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
 
 export default function RoleSettingsList() {
 	const { data: adminsResponse, isLoading: isLoadingAdmins } = useAdmins();
 	const { data: invitationsResponse, isLoading: isLoadingInvites } = useInvitations();
+	const { data: profileResponse } = useAdminProfile();
+	const deleteAdminMutation = useDeleteAdmin();
+
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
+
+	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+	const [idToDelete, setIdToDelete] = useState<string | null>(null);
+
+	const currentUserRole = profileResponse?.data?.role || "";
+
+	const handleActionDelete = (id: string) => {
+		setIdToDelete(id);
+		setIsDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		if (idToDelete) {
+			deleteAdminMutation.mutate(idToDelete, {
+				onSuccess: () => {
+					setIsDeleteOpen(false);
+					setIdToDelete(null);
+				},
+			});
+		}
+	};
 
 	const adminData: RoleSettingsData[] = useMemo(() => {
 		const result: RoleSettingsData[] = [];
@@ -127,10 +152,22 @@ export default function RoleSettingsList() {
 			</div>
 
 			<div className="border-border overflow-hidden rounded-[20px] border bg-white p-0 shadow-sm">
-				<DataTable columns={getColumns(roleSettingsColumns)} data={filteredData} />
+				<DataTable 
+					columns={getColumns(getRoleSettingsColumns(handleActionDelete, currentUserRole))} 
+					data={filteredData} 
+				/>
 			</div>
 
 			<AddNewAdminModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+			<ConfirmDeleteModal 
+				isOpen={isDeleteOpen} 
+				onOpenChange={setIsDeleteOpen} 
+				onConfirm={handleConfirmDelete} 
+				isLoading={deleteAdminMutation.isPending}
+				title="Delete Admin Account?"
+				description="Are you sure you want to permanently delete this admin account? This action cannot be undone."
+			/>
 		</div>
 	);
 }

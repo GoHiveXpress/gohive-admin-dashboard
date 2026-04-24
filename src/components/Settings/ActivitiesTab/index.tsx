@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { format, subDays, subWeeks, subMonths, isAfter } from "date-fns";
 import { useNotifications, useDeleteNotification } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
+import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -35,6 +36,25 @@ export default function ActivitiesTab() {
 	const [dateFilter, setDateFilter] = useState("all");
 	const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 	const [currentPage, setCurrentPage] = useState(1);
+
+	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+	const [idToDelete, setIdToDelete] = useState<string | null>(null);
+
+	const handleDeleteClick = (id: string) => {
+		setIdToDelete(id);
+		setIsDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		if (idToDelete) {
+			deleteNotif(idToDelete, {
+				onSuccess: () => {
+					setIsDeleteOpen(false);
+					setIdToDelete(null);
+				},
+			});
+		}
+	};
 
 	const notifications = notificationsData?.data || [];
 
@@ -207,7 +227,7 @@ export default function ActivitiesTab() {
 										"text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all",
 										isDeleting && deletingId === n._id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
 									)}
-									onClick={() => deleteNotif(n._id)}
+									onClick={() => handleDeleteClick(n._id)}
 									disabled={isDeleting && deletingId === n._id}
 								>
 									{isDeleting && deletingId === n._id ? (
@@ -266,6 +286,14 @@ export default function ActivitiesTab() {
 					</Button>
 				</div>
 			)}
+			<ConfirmDeleteModal 
+				isOpen={isDeleteOpen} 
+				onOpenChange={setIsDeleteOpen} 
+				onConfirm={handleConfirmDelete} 
+				isLoading={isDeleting}
+				title="Delete Activity Log?"
+				description="Are you sure you want to delete this activity log? This action cannot be undone and will permanently remove the record from your dashboard."
+			/>
 		</div>
 	);
 }

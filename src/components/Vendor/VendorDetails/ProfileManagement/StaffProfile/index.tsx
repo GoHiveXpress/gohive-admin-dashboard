@@ -3,11 +3,13 @@
 
 "use client";
 
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import AddNewStaffModal from "@/components/_modals/AddNewStaffModal";
 import EditStaffProfileModal from "@/components/_modals/EditStaffProfileModal";
+import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
 
 export interface StaffData {
 	id: string;
@@ -36,6 +38,19 @@ const MOCK_STAFF: StaffData[] = [
 ];
 
 export default function StaffProfile() {
+	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+	const [selectedStaff, setSelectedStaff] = useState<StaffData | null>(null);
+
+	const handleDeleteClick = (staff: StaffData) => {
+		setSelectedStaff(staff);
+		setIsDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		// Mock delete logic
+		console.log("Deleting staff:", selectedStaff?.id);
+		setIsDeleteOpen(false);
+	};
 	return (
 		<div className="space-y-6">
 			<div className="flex justify-end">
@@ -78,7 +93,10 @@ export default function StaffProfile() {
 							{/* Actions */}
 							<div className="flex items-center gap-4">
 								<EditStaffProfileModal staff={staff} />
-								<button className="text-muted-foreground hover:text-destructive transition-colors">
+								<button 
+									onClick={() => handleDeleteClick(staff)}
+									className="text-muted-foreground hover:text-destructive transition-colors"
+								>
 									<Icon icon="ph:trash-bold" width="20" />
 								</button>
 							</div>
@@ -86,6 +104,14 @@ export default function StaffProfile() {
 					</div>
 				))}
 			</div>
+
+			<ConfirmDeleteModal 
+				isOpen={isDeleteOpen} 
+				onOpenChange={setIsDeleteOpen} 
+				onConfirm={handleConfirmDelete} 
+				title="Remove Staff?"
+				description={`Are you sure you want to remove ${selectedStaff?.name} from the staff list?`}
+			/>
 		</div>
 	);
 }

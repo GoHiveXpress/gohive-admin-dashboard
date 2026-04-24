@@ -220,3 +220,21 @@ export const useRegisterStaff = () => {
 		},
 	});
 };
+
+export const useDeleteAdmin = () => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+
+	return useMutation({
+		mutationFn: (id: string) => userManagementApi.deleteAdmin(id),
+		onSuccess: (data) => {
+			if (data.success) {
+				toast.success(data.message || "Admin account deleted successfully");
+				queryClient.invalidateQueries({ queryKey: ["admins"] });
+			}
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to delete admin account");
+		},
+	});
+};

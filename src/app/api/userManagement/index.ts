@@ -125,4 +125,6 @@ export const userManagementApi = {
 			data,
 			"Failed to register staff",
 		),
+	deleteAdmin: (id: string) =>
+		apiClient.delete<GenericResponse>(`${ADMIN_PATH}/admin/${id}`, "Failed to delete admin account"),
 };

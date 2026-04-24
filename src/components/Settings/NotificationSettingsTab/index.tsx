@@ -10,14 +10,18 @@ import { Icon } from "@iconify/react";
 import { useTemplates, useCreateTemplate, useDeleteTemplate } from "@/hooks/communication";
 import { useForm } from "react-hook-form";
 import { ICreateTemplateRequest } from "@/types/communication";
+import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
 
 export default function NotificationSettingsTab() {
 	const { data: templatesData, isLoading } = useTemplates();
 	const { mutate: createTemplate, isPending: isCreating } = useCreateTemplate();
-	const { mutate: deleteTemplate } = useDeleteTemplate();
+	const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteTemplate();
 
 	const [selectedImage, setSelectedImage] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+	const [idToDelete, setIdToDelete] = useState<string | null>(null);
 
 	const {
 		register,
@@ -25,6 +29,22 @@ export default function NotificationSettingsTab() {
 		reset,
 		formState: { errors },
 	} = useForm<ICreateTemplateRequest>();
+
+	const handleDeleteClick = (id: string) => {
+		setIdToDelete(id);
+		setIsDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		if (idToDelete) {
+			deleteTemplate(idToDelete, {
+				onSuccess: () => {
+					setIsDeleteOpen(false);
+					setIdToDelete(null);
+				},
+			});
+		}
+	};
 
 	const onImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -176,10 +196,15 @@ export default function NotificationSettingsTab() {
 									<Button
 										variant="ghost"
 										size="icon"
-										onClick={() => deleteTemplate(template._id)}
+										onClick={() => handleDeleteClick(template._id)}
 										className="text-destructive hover:text-destructive/80"
+										disabled={isDeleting && idToDelete === template._id}
 									>
-										<Icon icon="lucide:trash-2" className="size-5" />
+										{isDeleting && idToDelete === template._id ? (
+											<Icon icon="line-md:loading-twotone-loop" className="size-5" />
+										) : (
+											<Icon icon="lucide:trash-2" className="size-5" />
+										)}
 									</Button>
 								</div>
 							</div>
@@ -187,6 +212,15 @@ export default function NotificationSettingsTab() {
 					)}
 				</div>
 			</div>
+
+			<ConfirmDeleteModal 
+				isOpen={isDeleteOpen} 
+				onOpenChange={setIsDeleteOpen} 
+				onConfirm={handleConfirmDelete} 
+				isLoading={isDeleting}
+				title="Delete Template?"
+				description="Are you sure you want to delete this notification template? This will permanently remove it from your saved templates."
+			/>
 		</div>
 	);
 }

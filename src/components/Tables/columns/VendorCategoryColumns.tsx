@@ -75,9 +75,7 @@ export const getVendorCategoryColumns = (
 					size="icon"
 					className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all active:scale-95"
 					onClick={() => {
-						if (confirm("Are you sure you want to delete this category?")) {
-							onDelete(row.id);
-						}
+						onDelete(row.id);
 					}}
 				>
 					<Icon icon="ph:trash-bold" className="size-5" />
