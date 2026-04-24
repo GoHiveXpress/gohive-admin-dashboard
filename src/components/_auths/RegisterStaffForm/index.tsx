@@ -123,7 +123,7 @@ export default function RegisterStaffForm({ token, email }: RegisterStaffFormPro
 				</div>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+					<form method="POST" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 						<FormField
 							control={form.control}
 							name="name"

@@ -6,16 +6,23 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import CustomTabs, { type TabItem } from "@/components/Tabs";
+import { useAdminProfile } from "@/hooks/userManagement";
 import VendorManagementTabs from "./VendorManagementTabs";
 import OrderOversightTabs from "./OrderOversighTabs";
-
-const TAB_ITEMS: TabItem[] = [
-	{ id: "vendor_management", label: "Vendor Management" },
-	{ id: "order_oversight", label: "Order Oversight" },
-];
+import VendorCategoriesTab from "./VendorCategoriesTab";
 
 export default function VendorIndex() {
+	const { data: profileData } = useAdminProfile();
+	const user = profileData?.data;
+	const isSuperAdmin = user?.role === "superadmin";
+
 	const [activeTab, setActiveTab] = useState("vendor_management");
+
+	const tabItems: TabItem[] = [
+		{ id: "vendor_management", label: "Vendor Management" },
+		{ id: "order_oversight", label: "Order Oversight" },
+		...(isSuperAdmin ? [{ id: "vendor_categories", label: "Vendor Categories" }] : []),
+	];
 
 	return (
 		<div className="w-full space-y-6">
@@ -38,7 +45,7 @@ export default function VendorIndex() {
 
 				<div className="bg-muted/30 mb-8 w-fit rounded-full p-1.5">
 					<CustomTabs
-						items={TAB_ITEMS}
+						items={tabItems}
 						activeTab={activeTab}
 						onTabChange={setActiveTab}
 						// If you want to force the green active state seen in screenshot
@@ -50,6 +57,7 @@ export default function VendorIndex() {
 				{/* Tab Content */}
 				{activeTab === "vendor_management" && <VendorManagementTabs />}
 				{activeTab === "order_oversight" && <OrderOversightTabs />}
+				{activeTab === "vendor_categories" && isSuperAdmin && <VendorCategoriesTab />}
 			</div>
 		</div>
 	);

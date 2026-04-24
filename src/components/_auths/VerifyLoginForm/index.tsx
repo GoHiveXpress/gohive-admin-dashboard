@@ -132,7 +132,7 @@ export default function VerifyLoginForm() {
 				</div>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+					<form method="POST" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 						<FormField
 							control={form.control}
 							name="otp"

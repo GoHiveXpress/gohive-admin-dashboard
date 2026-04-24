@@ -4,11 +4,14 @@ import React, { useState, useMemo } from "react";
 import ProfileSettingsTab from "./ProfileSettingsTab";
 import RoleSettingsTab from "./RoleSettingsTab";
 import NotificationSettingsTab from "./NotificationSettingsTab";
+import ActivitiesTab from "./ActivitiesTab";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { useSearchParams } from "next/navigation";
 
 const ALL_TABS = [
 	{ id: "profile", label: "Profile", roles: ["superadmin", "staff"] },
+	{ id: "activities", label: "Activities", roles: ["superadmin", "staff"] },
 	{ id: "role", label: "Role Management", roles: ["superadmin"] },
 	// { id: "app-config", label: "App Configuration", roles: ["superadmin"] },
 	{ id: "notification", label: "Notification Templates", roles: ["superadmin"] },
@@ -18,12 +21,14 @@ const ALL_TABS = [
 export default function SettingsMain() {
 	const { data: session } = useSession();
 	const userRole = session?.user?.role || "staff";
+	const searchParams = useSearchParams();
+	const initialTab = searchParams.get("tab") || "profile";
 
 	const filteredTabs = useMemo(() => {
 		return ALL_TABS.filter((tab) => tab.roles.includes(userRole));
 	}, [userRole]);
 
-	const [activeTab, setActiveTab] = useState("profile");
+	const [activeTab, setActiveTab] = useState(initialTab);
 
 	return (
 		<div className="flex size-full flex-col gap-8">
@@ -54,6 +59,7 @@ export default function SettingsMain() {
 			{/* Content Area */}
 			<div className="min-h-0 flex-1">
 				{activeTab === "profile" && <ProfileSettingsTab />}
+				{activeTab === "activities" && <ActivitiesTab />}
 				{activeTab === "role" && userRole === "superadmin" && <RoleSettingsTab />}
 				{activeTab === "notification" && userRole === "superadmin" && (
 					<NotificationSettingsTab />

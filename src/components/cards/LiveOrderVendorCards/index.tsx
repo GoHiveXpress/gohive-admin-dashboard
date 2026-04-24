@@ -17,7 +17,7 @@ interface LiveOrderVendorCardsProps {
 export default function LiveOrderVendorCards({ searchQuery, status, dateFilter }: LiveOrderVendorCardsProps) {
 	const { data: orderResponse, isLoading } = useOrders({});
 	const { data: statsResponse } = useOrderStats();
-	const { mutate: alertVendor, isPending: isAlerting } = useAlertVendor();
+	const { mutate: alertVendor, isPending: isAlerting, variables } = useAlertVendor();
 	const toast = useToast();
 
 	const allOrders = orderResponse?.data ?? [];
@@ -223,22 +223,30 @@ export default function LiveOrderVendorCards({ searchQuery, status, dateFilter }
 					</div>
 				) : (
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
-						{processedOrders.map((order) => (
-							<AlertVendorCard
-								key={order.id}
-								data={order}
-								isAlerting={isAlerting}
-								onAlertVendor={(orderId) => {
-									alertVendor(
-										{ orderId },
-										{
-											onSuccess: () => toast.success("Vendor alerted successfully"),
-											onError: () => toast.error("Failed to alert vendor"),
-										}
-									);
-								}}
-							/>
-						))}
+						{processedOrders.map((order) => {
+							// Determine if this specific order is being alerted
+							const isThisOrderAlerting = isAlerting && variables?.orderId === order.id;
+							
+							// Only allow alerting if status is placed or pending (not yet accepted)
+							const canAlert = order.status === "placed" || order.status === "pending";
+							
+							return (
+								<AlertVendorCard
+									key={order.id}
+									data={order}
+									isAlerting={isThisOrderAlerting}
+									onAlertVendor={canAlert ? (orderId) => {
+										alertVendor(
+											{ orderId },
+											{
+												onSuccess: () => toast.success("Vendor alerted successfully"),
+												onError: () => toast.error("Failed to alert vendor"),
+											}
+										);
+									} : undefined}
+								/>
+							);
+						})}
 					</div>
 				)}
 			</div>

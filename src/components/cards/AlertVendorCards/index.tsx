@@ -106,14 +106,16 @@ export default function AlertVendorCard({ data, onAlertVendor, isAlerting }: Ale
 			</div>
 
 			{/* Action Button */}
-			<Button
-				variant="outline"
-				className="border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive mt-auto h-11 w-full rounded-lg relative"
-				onClick={() => onAlertVendor?.(data.id)}
-				disabled={isAlerting}
-			>
-				{isAlerting ? "Alerting..." : "Alert Vendor"}
-			</Button>
+			{onAlertVendor && (
+				<Button
+					variant="outline"
+					className="border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive mt-auto h-11 w-full rounded-lg relative"
+					onClick={() => onAlertVendor(data.id)}
+					disabled={isAlerting}
+				>
+					{isAlerting ? "Alerting..." : "Alert Vendor"}
+				</Button>
+			)}
 		</div>
 	);
 }
