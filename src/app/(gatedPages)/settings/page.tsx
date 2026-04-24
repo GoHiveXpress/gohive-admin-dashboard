@@ -1,6 +1,10 @@
-// src/app/(gatedPages)/settings/page.tsx
+import { Suspense } from "react";
 import SettingsClient from "./client";
 
 export default function SettingsPage() {
-	return <SettingsClient />;
+	return (
+		<Suspense fallback={<div>Loading Settings...</div>}>
+			<SettingsClient />
+		</Suspense>
+	);
 }
