@@ -1,5 +1,3 @@
-// src/app/(gatedPages)/active-users/client.tsx
-
 "use client";
 
 import RouteWrapper from "@/layouts/RouteWrapper";
