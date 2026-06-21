@@ -56,8 +56,12 @@ export default function RiderKycTab({ rider }: RiderKycTabProps) {
 				<h3 className="text-foreground mb-6 text-sm font-medium">Document Upload</h3>
 
 				<div className="space-y-1">
-					{/* Assuming NIN isn't in model, marking as missing or mapping to a different field */}
-					<DocumentRow number="1" label="NIN" status="missing" />
+					<DocumentRow
+						number="1"
+						label={`NIN: ${profile.nin || "N/A"}`}
+						status={profile.nin ? "view" : "missing"}
+						viewLink="#"
+					/>
 
 					<DocumentRow
 						number="2"

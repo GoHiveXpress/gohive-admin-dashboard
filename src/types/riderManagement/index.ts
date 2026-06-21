@@ -8,6 +8,7 @@ export type RiderProfile = {
 	availabilityStatus: "online" | "offline" | "busy";
 	verificationStatus: "pending" | "approved" | "rejected";
 	isApproved: boolean;
+	nin?: string;
 };
 
 export type BankDetails = {

@@ -46,7 +46,8 @@ export default function KycVerificationTab({ vendor }: KycVerificationTabProps) 
 
 	const hasNIN = !!vendor.vendorProfile.govtIdImage;
 	const hasPassport = !!vendor.vendorProfile.passportPhoto;
-	const hasLicense = !!vendor.vendorProfile.cacNumber;
+	const hasCacDoc = !!(vendor.vendorProfile as any).cacDocumentImage;
+	const hasTaxDoc = !!(vendor.vendorProfile as any).taxDocumentImage;
 
 	return (
 		<div className="border-border/50 min-h-[600px] rounded-[20px] border bg-white p-6 shadow-sm">
@@ -71,10 +72,16 @@ export default function KycVerificationTab({ vendor }: KycVerificationTabProps) 
 						<DocumentRow
 							number="3"
 							label="Business License (CAC)"
-							status={hasLicense ? "view" : "missing"}
-							viewLink="#"
+							status={hasCacDoc ? "view" : "missing"}
+							viewLink={(vendor.vendorProfile as any).cacDocumentImage}
 						/>
-						<DocumentRow number="4" label="Tax Information" status="missing" isLast />
+						<DocumentRow
+							number="4"
+							label="Tax Information"
+							status={hasTaxDoc ? "view" : "missing"}
+							viewLink={(vendor.vendorProfile as any).taxDocumentImage}
+							isLast
+						/>
 					</div>
 				</div>
 
