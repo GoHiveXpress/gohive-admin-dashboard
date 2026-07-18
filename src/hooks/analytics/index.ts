@@ -16,10 +16,14 @@ export const useVendorAnalytics = (params?: any) => {
 	});
 };
 
-export const useVendorLeaderboard = (params: any = { range: "all_time" }) => {
+export const useVendorLeaderboard = (
+	params: any = { range: "all_time" },
+	enabled = true,
+) => {
 	return useQuery({
 		queryKey: ["vendorLeaderboard", params],
 		queryFn: () => analyticsApi.getVendorLeaderboard(params),
+		enabled,
 	});
 };
 
@@ -37,9 +41,10 @@ export const useRiderLeaderboard = (params?: any) => {
 	});
 };
 
-export const useDashboardOverview = () => {
+export const useDashboardOverview = (enabled = true) => {
 	return useQuery({
 		queryKey: ["dashboardOverview"],
 		queryFn: () => analyticsApi.getDashboardOverview(),
+		enabled,
 	});
 };

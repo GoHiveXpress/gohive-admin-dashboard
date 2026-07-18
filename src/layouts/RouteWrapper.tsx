@@ -10,10 +10,10 @@ interface RouteWrapperProps {
 }
 
 const baseStyles = {
-	top: "flex flex-col items-start gap-4 p-4 sm:p-6 lg:col-span-2 rounded-xl border border-zinc-100 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-800",
-	middle: "grid grid-cols-1 gap-6",
+	top: "flex flex-col items-start gap-5 rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm sm:p-6 lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-800",
+	middle: "grid grid-cols-1 gap-6 xl:gap-8",
 	// Update children style to be flexible
-	children: "flex flex-col flex-1 min-h-0 w-full",
+	children: "flex min-h-0 w-full flex-1 flex-col",
 };
 
 export default function RouteWrapper({
@@ -26,10 +26,15 @@ export default function RouteWrapper({
 	const hasSlots = !!topLeftSlot || !!topRightSlot || !!middleSlot;
 
 	return (
-		<section className={cn("flex flex-col gap-6 w-full h-full", !hasSlots && "p-0 gap-0")}>
+		<section
+			className={cn(
+				"flex h-full w-full flex-col gap-6 xl:gap-8",
+				!hasSlots && "gap-0",
+			)}
+		>
 			{/* Only render grid if top slots exist */}
 			{(!!topLeftSlot || !!topRightSlot) && (
-				<div className="mt-4 grid shrink-0 grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6">
+				<div className="mt-2 grid shrink-0 grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6">
 					{!!topLeftSlot && <div className={cn(baseStyles.top)}>{topLeftSlot}</div>}
 					{!!topRightSlot && <div className={cn(baseStyles.top)}>{topRightSlot}</div>}
 				</div>

@@ -168,7 +168,9 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 			</div>
 
 			<div className="animate-in fade-in slide-in-from-bottom-2 min-h-[500px] duration-300">
-				{activeTab === "profile_management" && <ProfileManagementTab vendor={vendor} />}
+				{activeTab === "profile_management" && (
+					<ProfileManagementTab vendor={vendor} vendorId={vendorId} />
+				)}
 				{activeTab === "menu_management" && <MenuManagementTab vendorId={vendorId} />}
 				{activeTab === "kyc_verification" && <KycVerificationTab vendor={vendor} />}
 			</div>

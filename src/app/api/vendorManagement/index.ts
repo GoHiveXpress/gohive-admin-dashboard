@@ -6,6 +6,7 @@ import {
 	type SingleVendorResponse,
 	type VendorCategoriesResponse,
 	type VendorMenuDetailsResponse,
+	type VendorStaffMember,
 } from "@/types/vendorManagement";
 
 const ADMIN_BASE = "/admin";
@@ -32,6 +33,54 @@ export const vendorApi = {
 
 	getVendorMenuDetails: (id: string) =>
 		apiClient.get<VendorMenuDetailsResponse>(`${ADMIN_BASE}/vendor/${id}/menu`, "Failed to fetch vendor menu details"),
+
+	getVendorStaff: (id: string) =>
+		apiClient.get<{ success: boolean; data: VendorStaffMember[] }>(
+			`${ADMIN_BASE}/vendor/${id}/staff`,
+			"Failed to fetch vendor staff",
+		),
+
+	createVendorStaff: (
+		id: string,
+		payload: {
+			name: string;
+			role: string;
+			email: string;
+			phone?: string;
+			profilePicture?: string;
+			permissions?: string[];
+		},
+	) =>
+		apiClient.post<{ success: boolean; message: string; data: VendorStaffMember }>(
+			`${ADMIN_BASE}/vendor/${id}/staff`,
+			payload,
+			"Failed to add vendor staff",
+		),
+
+	updateVendorStaff: (
+		id: string,
+		staffId: string,
+		payload: {
+			name?: string;
+			role?: string;
+			email?: string;
+			phone?: string;
+			status?: "Active" | "Inactive";
+			profilePicture?: string;
+			permissions?: string[];
+		},
+	) =>
+		apiClient.put<{ success: boolean; message: string; data: VendorStaffMember }>(
+			`${ADMIN_BASE}/vendor/${id}/staff/${staffId}`,
+			payload,
+			"Failed to update vendor staff",
+		),
+
+	deleteVendorStaff: (id: string, staffId: string) =>
+		apiClient.delete<{ success: boolean; message: string }>(
+			`${ADMIN_BASE}/vendor/${id}/staff/${staffId}`,
+			"Failed to remove vendor staff",
+		),
 };
 
 /* eslint-enable */

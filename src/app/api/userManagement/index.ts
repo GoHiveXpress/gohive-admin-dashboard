@@ -125,6 +125,31 @@ export const userManagementApi = {
 			data,
 			"Failed to register staff",
 		),
+	getAdminPermissions: (id: string) =>
+		apiClient.get<{
+			success: boolean;
+			data: {
+				_id: string;
+				name: string;
+				role: "superadmin" | "staff";
+				accountStatus: "Active" | "Inactive" | "Suspend";
+				permissions: string[];
+			};
+		}>(`${ADMIN_PATH}/admin/${id}/permissions`, "Failed to fetch admin permissions"),
+
+	updateAdminPermissions: (
+		id: string,
+		data: {
+			permissions?: string[];
+			role?: "superadmin" | "staff";
+			accountStatus?: "Active" | "Inactive" | "Suspend";
+		},
+	) =>
+		apiClient.put<GenericResponse>(
+			`${ADMIN_PATH}/admin/${id}/permissions`,
+			data,
+			"Failed to update admin permissions",
+		),
 	deleteAdmin: (id: string) =>
 		apiClient.delete<GenericResponse>(`${ADMIN_PATH}/admin/${id}`, "Failed to delete admin account"),
 };

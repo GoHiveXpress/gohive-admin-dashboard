@@ -66,15 +66,26 @@ export const activeUsersColumnConfig: BaseColumnSchema<ActiveUserData>[] = [
 	{
 		key: "status",
 		header: "Status",
-		render: (row) => (
-			<Badge
-				variant="outline"
-				className="bg-secondary/10 text-secondary hover:bg-secondary/20 rounded-full border-none px-3 py-1 font-medium"
-			>
-				<div className="bg-secondary mr-2 size-2 rounded-full" />
-				{row.status}
-			</Badge>
-		),
+		render: (row) => {
+			const isActive = row.status === "Active" || row.status === "Online";
+			return (
+				<Badge
+					variant="outline"
+					className={`rounded-full border-none px-3 py-1 font-medium ${
+						isActive
+							? "bg-secondary/10 text-secondary hover:bg-secondary/20"
+							: "bg-muted text-muted-foreground hover:bg-muted"
+					}`}
+				>
+					<div
+						className={`mr-2 size-2 rounded-full ${
+							isActive ? "bg-secondary" : "bg-muted-foreground"
+						}`}
+					/>
+					{row.status}
+				</Badge>
+			);
+		},
 	},
 	{
 		key: "activeOrder",

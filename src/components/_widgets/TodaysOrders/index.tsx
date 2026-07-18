@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { useDashboardOverview } from "@/hooks/analytics";
@@ -7,9 +8,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import GoogleRoutesMap from "@/components/Map/GoogleRoutesMap";
 
 export default function TodaysOrders() {
+	const [loadMap, setLoadMap] = useState(false);
 	const { data, isLoading } = useDashboardOverview();
 	const stats = (data?.data?.today || {}) as any;
 	const activeOrders = data?.data?.activeOrders || [];
+
+	useEffect(() => {
+		const timer = window.setTimeout(() => setLoadMap(true), 1000);
+		return () => window.clearTimeout(timer);
+	}, []);
 
 	const statusCards = [
 		{
@@ -100,7 +107,7 @@ export default function TodaysOrders() {
 
 				{/* Right Side Map Integration */}
 				<div className="bg-muted/30 relative min-h-[350px] flex-1 overflow-hidden rounded-2xl border border-border/50">
-					{isLoading ? (
+					{isLoading || !loadMap ? (
 						<Skeleton className="h-full w-full" />
 					) : (
 						<GoogleRoutesMap orders={activeOrders} />

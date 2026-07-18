@@ -3,6 +3,8 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+const isDevelopment = process.env.NODE_ENV !== "production";
+
 export const env = createEnv({
 	server: {
 		NODE_ENV: z.enum(["development", "test", "production"]),
@@ -16,9 +18,15 @@ export const env = createEnv({
 
 	runtimeEnv: {
 		NODE_ENV: process.env.NODE_ENV,
-		NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-		NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-		NEXT_PUBLIC_ADMIN_API_BASE_URL: process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL,
+		NEXTAUTH_SECRET:
+			process.env.NEXTAUTH_SECRET ??
+			(isDevelopment ? "dev-nextauth-secret-change-me" : undefined),
+		NEXTAUTH_URL:
+			process.env.NEXTAUTH_URL ??
+			(isDevelopment ? "http://localhost:3000" : undefined),
+		NEXT_PUBLIC_ADMIN_API_BASE_URL:
+			process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ??
+			(isDevelopment ? "http://localhost:5000/api" : undefined),
 	},
 
 	skipValidation: !!process.env.SKIP_ENV_VALIDATION,

@@ -238,3 +238,38 @@ export const useDeleteAdmin = () => {
 		},
 	});
 };
+
+export const useAdminPermissions = (id: string, enabled = true) => {
+	return useQuery({
+		queryKey: ["admin-permissions", id],
+		queryFn: () => userManagementApi.getAdminPermissions(id),
+		enabled: !!id && enabled,
+	});
+};
+
+export const useUpdateAdminPermissions = () => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+
+	return useMutation({
+		mutationFn: ({
+			id,
+			data,
+		}: {
+			id: string;
+			data: {
+				permissions?: string[];
+				role?: "superadmin" | "staff";
+				accountStatus?: "Active" | "Inactive" | "Suspend";
+			};
+		}) => userManagementApi.updateAdminPermissions(id, data),
+		onSuccess: (response, variables) => {
+			toast.success(response.message || "Permissions updated");
+			queryClient.invalidateQueries({ queryKey: ["admins"] });
+			queryClient.invalidateQueries({ queryKey: ["admin-permissions", variables.id] });
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to update permissions");
+		},
+	});
+};

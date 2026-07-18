@@ -16,6 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Icon } from "@iconify/react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Separator } from "@/components/ui/separator";
+import { useAdminPermissions, useUpdateAdminPermissions } from "@/hooks/userManagement";
+import { useToast } from "@/hooks/useToast";
 
 interface SettingsActionModalProps {
 	isOpen: boolean;
@@ -49,22 +51,69 @@ export default function SettingsActionModal({
 	onClose,
 	userData,
 }: SettingsActionModalProps) {
-	// Mock state for checkboxes (all true to match screenshot)
-	const [permissions, setPermissions] = useState<Record<string, boolean>>({
-		"Customer Management": true,
-		"Vendor Management": true,
-		"Rider Management": true,
-		Edit: true,
-		Messaging: true,
-		Finance: true,
-		"Customer Support": true,
-		Broadcast: true,
-		"Analytics & Reports": true,
-		Download: true,
+	const { data: permissionsResponse, isLoading } = useAdminPermissions(userData.id, isOpen);
+	const updatePermissionsMutation = useUpdateAdminPermissions();
+	const toast = useToast();
+
+	const [permissions, setPermissions] = useState<Record<string, boolean>>(() => {
+		const defaults = [...PERMISSIONS_LEFT, ...PERMISSIONS_RIGHT].reduce<Record<string, boolean>>(
+			(acc, key) => {
+				acc[key] = false;
+				return acc;
+			},
+			{},
+		);
+		return defaults;
 	});
+	const [role, setRole] = useState<"superadmin" | "staff">(
+		userData.role === "superadmin" ? "superadmin" : "staff",
+	);
+
+	const accountStatus = permissionsResponse?.data?.accountStatus || "Active";
+
+	React.useEffect(() => {
+		if (!permissionsResponse?.data) return;
+
+		const enabledPermissions = new Set(permissionsResponse.data.permissions || []);
+		const nextState = [...PERMISSIONS_LEFT, ...PERMISSIONS_RIGHT].reduce<Record<string, boolean>>(
+			(acc, key) => {
+				acc[key] = enabledPermissions.has(key);
+				return acc;
+			},
+			{},
+		);
+
+		setPermissions(nextState);
+		setRole(permissionsResponse.data.role === "superadmin" ? "superadmin" : "staff");
+	}, [permissionsResponse]);
 
 	const togglePermission = (key: string) => {
 		setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+	};
+
+	const handleSuspendToggle = async () => {
+		const nextStatus = accountStatus === "Suspend" ? "Active" : "Suspend";
+		await updatePermissionsMutation.mutateAsync({
+			id: userData.id,
+			data: { accountStatus: nextStatus },
+		});
+	};
+
+	const handleApplyChanges = async () => {
+		const selectedPermissions = Object.entries(permissions)
+			.filter(([, enabled]) => enabled)
+			.map(([key]) => key);
+
+		await updatePermissionsMutation.mutateAsync({
+			id: userData.id,
+			data: {
+				permissions: selectedPermissions,
+				role,
+			},
+		});
+
+		toast.success("Permissions updated");
+		onClose();
 	};
 
 	return (
@@ -118,24 +167,25 @@ export default function SettingsActionModal({
 
 					<Button
 						variant="ghost"
+						onClick={handleSuspendToggle}
+						disabled={updatePermissionsMutation.isPending}
 						className="text-destructive h-10 gap-2 rounded-full bg-red-50 px-6 font-medium hover:bg-red-100"
 					>
 						<Icon icon="ph:minus-circle-fill" className="size-5" />
-						Suspend Account
+						{accountStatus === "Suspend" ? "Reactivate Account" : "Suspend Account"}
 					</Button>
 				</div>
 
 				{/* Role Selector */}
 				<div className="mb-8 flex items-center gap-4">
 					<span className="text-foreground text-base font-medium">Role</span>
-					<Select defaultValue="Customer Support">
+					<Select value={role} onValueChange={(value) => setRole(value as "superadmin" | "staff")}>
 						<SelectTrigger className="border-border h-11 w-[200px] rounded-xl bg-white text-base">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="Customer Support">Customer Support</SelectItem>
-							<SelectItem value="Super Admin">Super Admin</SelectItem>
-							<SelectItem value="Manager">Manager</SelectItem>
+							<SelectItem value="staff">Staff</SelectItem>
+							<SelectItem value="superadmin">Super Admin</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>
@@ -144,6 +194,10 @@ export default function SettingsActionModal({
 
 				{/* Permissions Grid */}
 				<div className="mb-10 flex flex-col gap-8 md:flex-row md:gap-16">
+					{isLoading ? (
+						<div className="text-muted-foreground py-10 text-center">Loading permissions...</div>
+					) : (
+						<>
 					{/* Left Column */}
 					<div className="flex-1 space-y-6">
 						{PERMISSIONS_LEFT.map((perm) => (
@@ -190,15 +244,18 @@ export default function SettingsActionModal({
 							</div>
 						))}
 					</div>
+						</>
+					)}
 				</div>
 
 				{/* Footer Button */}
 				<div className="flex justify-center">
 					<Button
-						onClick={onClose}
+						onClick={handleApplyChanges}
+						disabled={updatePermissionsMutation.isPending}
 						className="bg-secondary hover:bg-secondary/90 h-12 w-[300px] rounded-lg text-lg font-medium text-white"
 					>
-						Apply Changes
+						{updatePermissionsMutation.isPending ? "Applying..." : "Apply Changes"}
 					</Button>
 				</div>
 			</DialogContent>

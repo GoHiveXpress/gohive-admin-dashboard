@@ -139,9 +139,9 @@ export default function TicketTab() {
 	}, [selectedChatId]);
 
 	return (
-		<div className="flex h-full flex-col gap-6">
+		<div className="flex h-full flex-col gap-6 xl:gap-7">
 			{/* Top Filter Bar */}
-			<div className="flex flex-wrap items-center gap-4">
+			<div className="flex flex-wrap items-start gap-3 xl:items-center xl:gap-4">
 				<div className="flex gap-2">
 					{(["customer", "vendor", "rider"] as const).map((role) => {
 						const count = chats.filter((c) => c.role === role).length;
@@ -149,7 +149,7 @@ export default function TicketTab() {
 							<Button
 								key={role}
 								onClick={() => setActiveCategory(role)}
-								className={`h-10 px-6 ${
+								className={`h-10 px-4 sm:px-6 ${
 									activeCategory === role
 										? "bg-primary text-primary-foreground hover:bg-primary/90"
 										: "border-border text-foreground hover:bg-muted border bg-transparent"
@@ -250,9 +250,9 @@ export default function TicketTab() {
 				</h2>
 			</div>
 
-			<div className="grid h-full min-h-[600px] grid-cols-12 gap-6">
+			<div className="grid h-full min-h-[600px] grid-cols-1 gap-4 2xl:grid-cols-12 2xl:gap-6">
 				{/* === LEFT: Ticket Grid === */}
-				<div className="custom-scrollbar col-span-5 space-y-4 overflow-y-auto pr-2">
+				<div className="custom-scrollbar space-y-4 overflow-y-auto pr-0 2xl:col-span-5 2xl:pr-2">
 					{chatsLoading ? (
 						<div className="text-muted-foreground py-10 text-center">
 							Loading tickets...
@@ -331,7 +331,7 @@ export default function TicketTab() {
 				</div>
 
 				{/* === RIGHT: Chat Details === */}
-				<div className="bg-card border-border col-span-7 flex h-full flex-col overflow-hidden rounded-xl border">
+				<div className="bg-card border-border flex h-full min-h-[420px] flex-col overflow-hidden rounded-2xl border 2xl:col-span-7 2xl:min-h-0">
 					{selectedChatId ? (
 						<>
 							<div className="border-border flex items-center justify-between border-b p-4">

@@ -10,6 +10,7 @@ import env from "@/env";
 
 const axiosInstance = axios.create({
 	baseURL: env.NEXT_PUBLIC_ADMIN_API_BASE_URL,
+	timeout: 15_000,
 	headers: { "Content-Type": "application/json" },
 });
 
@@ -28,6 +29,10 @@ axiosInstance.interceptors.response.use(
 	(response) => response,
 	(error: AxiosError<{ message?: string }>) => {
 		const errResponse = error.response;
+		if (error.code === "ECONNABORTED") {
+			toast.error("Request timed out. Please try again.");
+			return Promise.reject(error);
+		}
 
 		// Only handle 401 if token exists (i.e., user is logged in)
 		const tokenExists = !!localStorage.getItem("token"); // same as AUTH_TOKEN_KEY

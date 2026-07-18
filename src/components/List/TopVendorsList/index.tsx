@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useVendorLeaderboard } from "@/hooks/analytics";
 import { useVendors, useVendorCategories } from "@/hooks/vendorManagement";
 import { DataTable } from "@/components/Tables";
@@ -28,6 +28,12 @@ export default function TopVendorsList() {
 	const [category, setCategory] = useState<string>("all");
 	const [sort, setSort] = useState<string>("default");
 	const [date, setDate] = useState<Date | undefined>(undefined);
+	const [shouldFetchLeaderboard, setShouldFetchLeaderboard] = useState(false);
+
+	useEffect(() => {
+		const timer = window.setTimeout(() => setShouldFetchLeaderboard(true), 700);
+		return () => window.clearTimeout(timer);
+	}, []);
 
 	// Fetch dynamic data for filters
 	const { data: categoriesData } = useVendorCategories();
@@ -54,22 +60,15 @@ export default function TopVendorsList() {
 		);
 	}, [category, sort, date]);
 
-	const { data: leaderboardData, isLoading, error } = useVendorLeaderboard(filterParams);
+	const { data: leaderboardData, isLoading, error } = useVendorLeaderboard(
+		filterParams,
+		shouldFetchLeaderboard,
+	);
 	const columns = getColumns(vendorsColumnConfig);
 	
 	// Professional Mapping with fallbacks to avoid crashes
 	const tableData = useMemo(() => {
 		const rawData = leaderboardData?.data || [];
-		
-		// Debug logging for frontend, helping with "please implement if none" request
-		if (!isLoading) {
-			console.log("TopVendorsList: Raw Response", { 
-				count: rawData.length, 
-				firstItem: rawData[0],
-				filterParams,
-				error 
-			});
-		}
 
 		return rawData.map((item: any) => ({
 			...item,
@@ -83,7 +82,7 @@ export default function TopVendorsList() {
 			// Backend doesn't return image yet, using a standard placeholder logic
 			image: item.image || "", 
 		}));
-	}, [leaderboardData, filterParams, isLoading, error]);
+	}, [leaderboardData]);
 
 	const resetFilters = () => {
 		setCategory("all");

@@ -24,9 +24,9 @@ export default function SupportManagement() {
 
 	return (
 		// We use h-full and flex-col to ensure it fills the RouteWrapper's children slot
-		<div className="flex size-full flex-col gap-6">
+		<div className="flex size-full flex-col gap-6 rounded-2xl border border-transparent p-1 xl:gap-8 xl:p-2">
 			{/* Tabs Container - Muted background pill */}
-			<div className="bg-muted/50 w-fit rounded-full p-1">
+			<div className="bg-muted/50 max-w-full overflow-x-auto rounded-full p-1">
 				<CustomTabs
 					items={filteredTabs}
 					activeTab={activeTab}

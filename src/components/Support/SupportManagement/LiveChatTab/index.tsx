@@ -141,11 +141,11 @@ export default function LiveChatTab() {
 	};
 
 	return (
-		<div className="grid h-full min-h-[600px] grid-cols-12 gap-6">
+		<div className="grid h-full min-h-[600px] grid-cols-1 gap-4 xl:grid-cols-12 xl:gap-6 2xl:gap-7">
 			{/* === LEFT COLUMN: Conversation List === */}
-			<div className="bg-card border-border col-span-3 flex h-full flex-col gap-4 overflow-hidden rounded-xl border p-4">
+			<div className="bg-card border-border flex h-full flex-col gap-4 overflow-hidden rounded-2xl border p-4 xl:col-span-4 xl:p-5 2xl:col-span-3">
 				{/* Filters */}
-				<div className="flex shrink-0 gap-2">
+				<div className="flex shrink-0 flex-wrap gap-2">
 					{(["customer", "vendor", "rider"] as const).map((role) => {
 						const count = chats.filter(
 							(c) => c.role === role && c.status === "active",
@@ -154,7 +154,7 @@ export default function LiveChatTab() {
 							<Button
 								key={role}
 								onClick={() => setActiveCategory(role)}
-								className={`h-9 flex-1 px-0 text-xs ${
+								className={`h-9 min-w-[100px] flex-1 px-2 text-xs ${
 									activeCategory === role
 										? "bg-primary text-primary-foreground hover:bg-primary/90"
 										: "border-border text-foreground hover:bg-muted border bg-transparent"
@@ -269,7 +269,7 @@ export default function LiveChatTab() {
 			</div>
 
 			{/* === MIDDLE COLUMN: Chat Area === */}
-			<div className="bg-card border-border col-span-6 flex h-full flex-col overflow-hidden rounded-xl border">
+			<div className="bg-card border-border flex h-full min-h-[420px] flex-col overflow-hidden rounded-2xl border xl:col-span-8 xl:min-h-0 2xl:col-span-6">
 				{selectedChatId ? (
 					<>
 						{/* Header */}
@@ -454,7 +454,7 @@ export default function LiveChatTab() {
 			</div>
 
 			{/* === RIGHT COLUMN: Profile === */}
-			<div className="bg-card border-border col-span-3 h-full overflow-y-auto rounded-xl border p-6">
+			<div className="bg-card border-border h-full overflow-y-auto rounded-2xl border p-5 xl:col-span-12 xl:p-6 2xl:col-span-3">
 				{selectedChat ? (
 					<>
 						<div className="border-border mb-6 flex gap-4 border-b pb-4">

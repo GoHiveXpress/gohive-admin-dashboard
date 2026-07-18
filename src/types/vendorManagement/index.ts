@@ -108,3 +108,17 @@ export type VendorMenuDetailsResponse = {
 		extras: ExtraItem[];
 	};
 };
+
+export type VendorStaffMember = {
+	_id: string;
+	vendor: string;
+	name: string;
+	role: string;
+	email: string;
+	phone?: string;
+	profilePicture?: string;
+	status: "Active" | "Inactive";
+	permissions: string[];
+	createdAt: string;
+	updatedAt: string;
+};

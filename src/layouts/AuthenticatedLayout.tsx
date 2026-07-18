@@ -17,7 +17,9 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
 			<div className="flex min-h-screen flex-col transition-all duration-300 lg:pl-[280px]">
 				<Navbar />
 
-				<main className="flex-1 overflow-x-hidden p-4 lg:p-8">{children}</main>
+				<main className="flex-1 overflow-x-hidden px-4 py-5 md:px-6 md:py-6 xl:px-8 xl:py-8">
+					<div className="mx-auto w-full max-w-[1680px]">{children}</div>
+				</main>
 			</div>
 		</div>
 	);

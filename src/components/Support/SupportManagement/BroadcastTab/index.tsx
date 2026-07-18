@@ -100,9 +100,9 @@ export default function BroadcastTab() {
 	};
 
 	return (
-		<div className="grid h-full grid-cols-12 items-start gap-6">
+		<div className="grid h-full grid-cols-1 items-start gap-5 xl:grid-cols-12 xl:gap-6">
 			{/* === LEFT: Message Composer === */}
-			<div className="col-span-8 space-y-6">
+			<div className="space-y-6 xl:col-span-8">
 				<form
 					onSubmit={handleSubmit(onSubmit)}
 					className="bg-card border-border rounded-xl border p-6 shadow-sm"
@@ -274,8 +274,8 @@ export default function BroadcastTab() {
 			</div>
 
 			{/* === RIGHT: Quick Notification === */}
-			<div className="col-span-4">
-				<div className="bg-card border-border h-fit rounded-xl border p-6 shadow-sm">
+			<div className="xl:col-span-4">
+				<div className="bg-card border-border h-fit rounded-2xl border p-5 shadow-sm xl:sticky xl:top-24 xl:p-6">
 					<div className="mb-6 flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							<div className="border-primary size-4 rounded-full border-[3px]" />

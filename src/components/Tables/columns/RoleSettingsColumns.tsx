@@ -238,14 +238,24 @@ const ActionCell = ({
 	}
 
 	return (
-		<Button
-			variant="ghost"
-			size="icon"
-			className="size-9 rounded-full bg-red-50 hover:bg-red-100"
-			onClick={() => onDelete(row.id)}
-		>
-			<Icon icon="lucide:trash-2" className="text-destructive size-5" />
-		</Button>
+		<div className="flex items-center gap-2">
+			<RoleActionCell
+				row={{
+					id: row.id,
+					name: row.name,
+					adminId: row.adminId,
+					role: row.role,
+				}}
+			/>
+			<Button
+				variant="ghost"
+				size="icon"
+				className="size-9 rounded-full bg-red-50 hover:bg-red-100"
+				onClick={() => onDelete(row.id)}
+			>
+				<Icon icon="lucide:trash-2" className="text-destructive size-5" />
+			</Button>
+		</div>
 	);
 };
 
