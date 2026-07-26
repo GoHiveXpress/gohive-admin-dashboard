@@ -6,6 +6,7 @@ import RoleSettingsTab from "./RoleSettingsTab";
 import NotificationSettingsTab from "./NotificationSettingsTab";
 import ActivitiesTab from "./ActivitiesTab";
 import OthersSettingsTab from "./OthersSettingsTab";
+import AppConfigSettingsTab from "./AppConfigSettingsTab";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
@@ -14,7 +15,7 @@ const ALL_TABS = [
 	{ id: "profile", label: "Profile", roles: ["superadmin", "staff"] },
 	{ id: "activities", label: "Activities", roles: ["superadmin", "staff"] },
 	{ id: "role", label: "Role Management", roles: ["superadmin"] },
-	// { id: "app-config", label: "App Configuration", roles: ["superadmin"] },
+	{ id: "app-config", label: "Delivery Fee Settings", roles: ["superadmin"] },
 	{ id: "notification", label: "Notification Templates", roles: ["superadmin"] },
 	{ id: "others", label: "Others", roles: ["superadmin"] },
 ];
@@ -62,6 +63,9 @@ export default function SettingsMain() {
 				{activeTab === "profile" && <ProfileSettingsTab />}
 				{activeTab === "activities" && <ActivitiesTab />}
 				{activeTab === "role" && userRole === "superadmin" && <RoleSettingsTab />}
+				{activeTab === "app-config" && userRole === "superadmin" && (
+					<AppConfigSettingsTab />
+				)}
 				{activeTab === "notification" && userRole === "superadmin" && (
 					<NotificationSettingsTab />
 				)}

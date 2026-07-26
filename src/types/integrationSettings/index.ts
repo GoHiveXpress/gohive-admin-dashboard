@@ -21,6 +21,43 @@ export interface WebhookItem {
 	lastTriggeredAt?: string;
 }
 
+export interface FeeStateOverride {
+	state: string;
+	serviceFeePercent?: number;
+	deliveryBaseFee?: number;
+	baseDistanceKm?: number;
+	extraBlockDistanceKm?: number;
+	extraBlockFee?: number;
+	maxDistanceKm?: number;
+}
+
+export interface FeeConfig {
+	_id: string;
+	serviceFeePercent: number;
+	deliveryBaseFee: number;
+	baseDistanceKm: number;
+	extraBlockDistanceKm: number;
+	extraBlockFee: number;
+	maxDistanceKm: number;
+	stateOverrides: FeeStateOverride[];
+	updatedAt: string;
+	createdAt: string;
+}
+
+export type UpdateFeeConfigPayload = Partial<
+	Pick<
+		FeeConfig,
+		| "serviceFeePercent"
+		| "deliveryBaseFee"
+		| "baseDistanceKm"
+		| "extraBlockDistanceKm"
+		| "extraBlockFee"
+		| "maxDistanceKm"
+	>
+> & {
+	stateOverrides?: FeeStateOverride[];
+};
+
 export interface IntegrationListResponse<T> {
 	success: boolean;
 	data: T[];

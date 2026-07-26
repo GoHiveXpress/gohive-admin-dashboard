@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { integrationSettingsApi } from "@/app/api/integrationSettings";
+import { type UpdateFeeConfigPayload } from "@/types/integrationSettings";
 
 export const useApiKeys = () => {
 	return useQuery({
@@ -51,6 +52,30 @@ export const useDeleteApiKey = () => {
 		onSuccess: () => {
 			toast.success("API key deleted");
 			queryClient.invalidateQueries({ queryKey: ["integration-api-keys"] });
+		},
+		onError: (error: Error) => {
+			toast.error(error.message);
+		},
+	});
+};
+
+export const useFeeConfig = () => {
+	return useQuery({
+		queryKey: ["integration-fee-config"],
+		queryFn: integrationSettingsApi.getFeeConfig,
+	});
+};
+
+export const useUpdateFeeConfig = () => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+
+	return useMutation({
+		mutationFn: (payload: UpdateFeeConfigPayload) =>
+			integrationSettingsApi.updateFeeConfig(payload),
+		onSuccess: () => {
+			toast.success("Fee configuration updated");
+			queryClient.invalidateQueries({ queryKey: ["integration-fee-config"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);

@@ -1,8 +1,10 @@
 import { apiClient } from "@/lib/apiClient";
 import {
 	type ApiKeyItem,
+	type FeeConfig,
 	type IntegrationListResponse,
 	type IntegrationSingleResponse,
+	type UpdateFeeConfigPayload,
 	type WebhookItem,
 } from "@/types/integrationSettings";
 
@@ -33,6 +35,19 @@ export const integrationSettingsApi = {
 		apiClient.delete<{ success: boolean; message: string }>(
 			`${ADMIN_BASE}/api-keys/${id}`,
 			"Failed to delete API key",
+		),
+
+	getFeeConfig: () =>
+		apiClient.get<IntegrationSingleResponse<FeeConfig>>(
+			`${ADMIN_BASE}/fee-config`,
+			"Failed to fetch fee configuration",
+		),
+
+	updateFeeConfig: (payload: UpdateFeeConfigPayload) =>
+		apiClient.put<IntegrationSingleResponse<FeeConfig>, UpdateFeeConfigPayload>(
+			`${ADMIN_BASE}/fee-config`,
+			payload,
+			"Failed to update fee configuration",
 		),
 
 	getWebhooks: () =>
