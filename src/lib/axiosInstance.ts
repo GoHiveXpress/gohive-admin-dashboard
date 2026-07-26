@@ -5,11 +5,11 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { getAuthToken, clearAuth } from "@/utils/auth";
 import { toast } from "sonner";
-// eslint-disable-next-line import/no-named-as-default
-import env from "@/env";
+
+const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
 
 const axiosInstance = axios.create({
-	baseURL: env.NEXT_PUBLIC_ADMIN_API_BASE_URL,
+	baseURL: adminApiBaseUrl,
 	timeout: 15_000,
 	headers: { "Content-Type": "application/json" },
 });

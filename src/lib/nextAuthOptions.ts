@@ -2,12 +2,24 @@
 import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
-// eslint-disable-next-line import/no-named-as-default
-import env from "@/env";
+
+const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
+
+const nextAuthSecret =
+	process.env.NEXTAUTH_SECRET ??
+	(process.env.NODE_ENV !== "production" ? "dev-nextauth-secret-change-me" : undefined);
+
+type PreVerifiedUser = {
+	_id?: string;
+	id?: string;
+	name?: string;
+	email?: string;
+	role?: string;
+};
 
 // eslint-disable-next-line import/prefer-default-export
 export const nextAuthOptions: NextAuthConfig = {
-	secret: env.NEXTAUTH_SECRET,
+	secret: nextAuthSecret,
 	session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
 	providers: [
 		CredentialsProvider({
@@ -27,7 +39,9 @@ export const nextAuthOptions: NextAuthConfig = {
 				try {
 					// --- CASE 0: PRE-VERIFIED (Manual Sync) ---
 					if (credentials?.backendToken && credentials?.userJson) {
-						const user = JSON.parse(credentials.userJson as string);
+						const parsedUser: unknown = JSON.parse(credentials.userJson as string);
+						if (!parsedUser || typeof parsedUser !== "object") return null;
+						const user = parsedUser as PreVerifiedUser;
 						return {
 							id: user._id ?? user.id,
 							name: user.name,
@@ -59,7 +73,7 @@ export const nextAuthOptions: NextAuthConfig = {
 						credentials?.email
 					) {
 						const response = await axios.post<ApiResponse>(
-							`${env.NEXT_PUBLIC_ADMIN_API_BASE_URL}/auth/verify-otp`,
+							`${adminApiBaseUrl}/auth/verify-otp`,
 							{ email: credentials.email, otp: credentials.otp },
 						);
 						data = response.data;
@@ -67,7 +81,7 @@ export const nextAuthOptions: NextAuthConfig = {
 					// --- CASE 2: STANDARD LOGIN ---
 					else if (credentials?.email && credentials?.password) {
 						const response = await axios.post<ApiResponse>(
-							`${env.NEXT_PUBLIC_ADMIN_API_BASE_URL}/auth/login`,
+							`${adminApiBaseUrl}/auth/login`,
 							{ email: credentials.email, password: credentials.password },
 						);
 						data = response.data;
@@ -118,8 +132,8 @@ export const nextAuthOptions: NextAuthConfig = {
 				...session,
 				user: {
 					...session.user,
-					role: token.role as string,
-					backendToken: token.backendToken as string,
+					role: token.role!,
+					backendToken: token.backendToken!,
 				},
 			};
 		},

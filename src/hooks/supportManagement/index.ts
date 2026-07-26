@@ -1,14 +1,15 @@
 // src/hooks/supportManagement/index.ts
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, import/no-named-as-default, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, no-console */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supportApi } from "@/app/api/supportManagement";
 import { useToast } from "@/hooks/useToast";
 import { io, type Socket } from "socket.io-client";
 import { useEffect, useState, useRef } from "react";
-import env from "@/env";
+
+const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
 
 // Socket URL logic: Remove /api from the base URL
-const SOCKET_URL = env.NEXT_PUBLIC_ADMIN_API_BASE_URL.replace("/api", "");
+const SOCKET_URL = adminApiBaseUrl.replace("/api", "");
 
 export const useAllChats = () => {
 	return useQuery({
