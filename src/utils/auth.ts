@@ -5,6 +5,8 @@
 import { getSession } from "next-auth/react";
 
 export const AUTH_TOKEN_KEY = "token";
+// Last time the dashboard was used (epoch ms), for the 48h away logout
+export const LAST_ACTIVE_KEY = "gohive-admin-last-active";
 const SESSION_CACHE_TTL = 60_000;
 
 let cachedSessionToken: string | null = null;
@@ -34,6 +36,7 @@ export async function getAuthToken(): Promise<string | null> {
 export function setAuthToken(token: string) {
 	if (typeof window !== "undefined") {
 		localStorage.setItem(AUTH_TOKEN_KEY, token);
+		localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
 	}
 	cachedSessionToken = token;
 	cachedAt = Date.now();
@@ -43,6 +46,7 @@ export function setAuthToken(token: string) {
 export function clearAuth() {
 	if (typeof window !== "undefined") {
 		localStorage.removeItem(AUTH_TOKEN_KEY);
+		localStorage.removeItem(LAST_ACTIVE_KEY);
 	}
 	cachedSessionToken = null;
 	cachedAt = 0;

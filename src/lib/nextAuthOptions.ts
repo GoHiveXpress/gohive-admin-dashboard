@@ -20,7 +20,9 @@ type PreVerifiedUser = {
 // eslint-disable-next-line import/prefer-default-export
 export const nextAuthOptions: NextAuthConfig = {
 	secret: nextAuthSecret,
-	session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
+	// Rolling 48h session, matching the backend token: each visit extends it,
+	// so it only ends after 48h without opening the dashboard
+	session: { strategy: "jwt", maxAge: 48 * 60 * 60, updateAge: 60 * 60 },
 	providers: [
 		CredentialsProvider({
 			name: "Credentials",
