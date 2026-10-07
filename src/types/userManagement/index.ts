@@ -26,6 +26,7 @@ export interface AdminUser extends UserBase {
 
 export interface InviteStaffRequest {
 	email: string;
+	role?: string; // "staff" (default) or "superadmin"
 }
 
 export interface UserListResponse<T> {

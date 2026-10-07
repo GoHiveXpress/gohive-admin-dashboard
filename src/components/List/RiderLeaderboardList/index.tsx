@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { useRiderLeaderboard } from "@/hooks/analytics";
@@ -28,7 +29,10 @@ interface RiderLeaderboardListProps {
 	onFilterChange: (key: string, value: string) => void;
 }
 
-export default function RiderLeaderboardList({ filters, onFilterChange }: RiderLeaderboardListProps) {
+export default function RiderLeaderboardList({
+	filters,
+	onFilterChange,
+}: RiderLeaderboardListProps) {
 	const { data: leaderboardResponse, isLoading } = useRiderLeaderboard(filters);
 	const leaderboardData = (leaderboardResponse?.data as RiderLeaderboardData[]) || [];
 
@@ -40,14 +44,12 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 					<h3 className="text-xl font-medium">Rider Leaderboard</h3>
 				</div>
 				<div className="flex flex-wrap items-center gap-3">
-					<Button variant="outline" size="icon" className="size-9">
-						<Icon icon="lucide:sliders-horizontal" className="size-4" />
-					</Button>
-					<Button className="bg-secondary h-9 rounded-lg px-4 text-xs text-white">
-						All
-					</Button>
-
-					<Select value={filters.location || "all"} onValueChange={(val) => onFilterChange("location", val === "all" ? "" : val)}>
+					<Select
+						value={filters.location || "all"}
+						onValueChange={(val) =>
+							onFilterChange("location", val === "all" ? "" : val)
+						}
+					>
 						<SelectTrigger className="h-9 w-[120px] text-sm">
 							<SelectValue placeholder="Region" />
 						</SelectTrigger>
@@ -59,7 +61,10 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 						</SelectContent>
 					</Select>
 
-					<Select value={filters.range} onValueChange={(val) => onFilterChange("range", val)}>
+					<Select
+						value={filters.range}
+						onValueChange={(val) => onFilterChange("range", val)}
+					>
 						<SelectTrigger className="h-9 w-[120px] text-sm">
 							<SelectValue placeholder="Timeframe" />
 						</SelectTrigger>
@@ -67,29 +72,41 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 							<SelectItem value="today">Today</SelectItem>
 							<SelectItem value="weekly">Weekly</SelectItem>
 							<SelectItem value="monthly">Monthly</SelectItem>
+							<SelectItem value="yearly">Yearly</SelectItem>
+							<SelectItem value="all_time">All time</SelectItem>
 						</SelectContent>
 					</Select>
 
-					<Select value={filters.category || "all"} onValueChange={(val) => onFilterChange("category", val === "all" ? "" : val)}>
+					<Select
+						value={filters.category || "all"}
+						onValueChange={(val) =>
+							onFilterChange("category", val === "all" ? "" : val)
+						}
+					>
 						<SelectTrigger className="h-9 w-[130px] text-sm">
 							<SelectValue placeholder="Vehicle Type" />
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="all">All Vehicles</SelectItem>
-							<SelectItem value="bike">Bike</SelectItem>
-							<SelectItem value="car">Car</SelectItem>
-							<SelectItem value="van">Van</SelectItem>
+							<SelectItem value="Motorbike">Motorbike</SelectItem>
+							<SelectItem value="Bicycle">Bicycle</SelectItem>
+							<SelectItem value="Car">Car</SelectItem>
+							<SelectItem value="Van">Van</SelectItem>
 						</SelectContent>
 					</Select>
 
-					<Select value={filters.rating} onValueChange={(val) => onFilterChange("rating", val)}>
+					<Select
+						value={filters.rating || "any"}
+						onValueChange={(val) => onFilterChange("rating", val === "any" ? "" : val)}
+					>
 						<SelectTrigger className="h-9 w-[150px] text-sm">
 							<SelectValue placeholder="Rating Threshold" />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="4.5">Above 4.5</SelectItem>
-							<SelectItem value="4.0">Above 4.0</SelectItem>
-							<SelectItem value="3.5">Above 3.5</SelectItem>
+							<SelectItem value="any">Any rating</SelectItem>
+							<SelectItem value="4.5">4.5 and above</SelectItem>
+							<SelectItem value="4.0">4.0 and above</SelectItem>
+							<SelectItem value="3.5">3.5 and above</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>
@@ -123,9 +140,7 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 							<TableHead className="text-xs font-semibold uppercase">
 								Total Earnings
 							</TableHead>
-							<TableHead className="text-xs font-semibold uppercase">
-								Trend
-							</TableHead>
+							<TableHead className="text-xs font-semibold uppercase">Trend</TableHead>
 							<TableHead className="w-[50px]"></TableHead>
 						</TableRow>
 					</TableHeader>
@@ -140,7 +155,10 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 							))
 						) : leaderboardData.length > 0 ? (
 							leaderboardData.map((rider: RiderLeaderboardData) => (
-								<TableRow key={rider.id || rider.riderId} className="border-border hover:bg-muted/50 border-b">
+								<TableRow
+									key={rider.id || rider.riderId}
+									className="border-border hover:bg-muted/50 border-b"
+								>
 									<TableCell className="font-medium">
 										{rider.rank === 1 ? (
 											<span className="flex items-center gap-1.5">
@@ -166,9 +184,7 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 									<TableCell className="font-bold">
 										{rider.compositeScore}%
 									</TableCell>
-									<TableCell className="font-medium">
-										{rider.tripCount}
-									</TableCell>
+									<TableCell className="font-medium">{rider.tripCount}</TableCell>
 									<TableCell>
 										<div className="flex items-center gap-1">
 											<Icon
@@ -194,11 +210,20 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 									</TableCell>
 									<TableCell>
 										<Button
+											asChild
 											variant="ghost"
 											size="icon"
 											className="text-muted-foreground size-8"
 										>
-											<Icon icon="lucide:more-vertical" className="size-4" />
+											<Link
+												href={`/rider-management/${rider.id}`}
+												aria-label="View profile"
+											>
+												<Icon
+													icon="lucide:arrow-up-right"
+													className="size-4"
+												/>
+											</Link>
 										</Button>
 									</TableCell>
 								</TableRow>
@@ -216,9 +241,9 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 
 			<div className="mt-6 flex items-center justify-between">
 				<div className="flex gap-3">
-					<TableExport 
-						data={leaderboardData} 
-						filename="rider-leaderboard" 
+					<TableExport
+						data={leaderboardData}
+						filename="rider-leaderboard"
 						columns={[
 							{ header: "Rank", key: "rank" },
 							{ header: "Rider Name", key: "riderName" },
@@ -230,19 +255,6 @@ export default function RiderLeaderboardList({ filters, onFilterChange }: RiderL
 							{ header: "Total Earnings", key: "totalEarnings" },
 						]}
 					/>
-					<Button className="bg-secondary h-10 gap-2 rounded-lg px-6 text-white hover:bg-secondary/90">
-						<Icon icon="ph:share-network-bold" className="size-4" />
-						Share Report
-					</Button>
-				</div>
-				<div className="flex gap-4">
-					<Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-lg px-6">
-						Reward/Incentive
-					</Button>
-					<Button variant="destructive" className="h-10 gap-2 rounded-lg px-6">
-						<Icon icon="ph:flag-bold" className="size-4" />
-						Underperformer Flagging
-					</Button>
 				</div>
 			</div>
 		</div>

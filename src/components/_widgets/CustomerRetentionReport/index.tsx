@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Icon } from "@iconify/react";
-import { Button } from "@/components/ui/button";
 import { useCustomerAnalytics } from "@/hooks/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -28,10 +27,17 @@ interface CustomerRetentionReportProps {
 	onFilterChange: (key: string, value: string) => void;
 }
 
-export default function CustomerRetentionReport({ filters, onFilterChange }: CustomerRetentionReportProps) {
+export default function CustomerRetentionReport({
+	filters,
+	onFilterChange,
+}: CustomerRetentionReportProps) {
 	const { data: analyticsResponse, isLoading } = useCustomerAnalytics(filters);
 	const retentionData = analyticsResponse?.data?.retentionData || [];
-	const metrics = analyticsResponse?.data?.metrics || { churnRate: 0, returnRate: 0, repeatOrderRate: 0 };
+	const metrics = analyticsResponse?.data?.metrics || {
+		churnRate: 0,
+		returnRate: 0,
+		repeatOrderRate: 0,
+	};
 	const comparison = analyticsResponse?.data?.comparison;
 
 	if (isLoading) {
@@ -55,10 +61,15 @@ export default function CustomerRetentionReport({ filters, onFilterChange }: Cus
 					<div>
 						<h4 className="text-foreground mb-1 text-base font-medium">Churn Rate</h4>
 						<div className="flex items-baseline gap-2">
-							<p className="text-foreground text-4xl font-bold">{metrics.churnRate}%</p>
+							<p className="text-foreground text-4xl font-bold">
+								{metrics.churnRate}%
+							</p>
 							{comparison && (
-								<span className={`text-xs font-medium ${Number(comparison.churnRate) <= 0 ? 'text-green-500' : 'text-red-500'}`}>
-									{Number(comparison.churnRate) > 0 ? '+' : ''}{comparison.churnRate}%
+								<span
+									className={`text-xs font-medium ${Number(comparison.churnRate) <= 0 ? "text-green-500" : "text-red-500"}`}
+								>
+									{Number(comparison.churnRate) > 0 ? "+" : ""}
+									{comparison.churnRate}%
 								</span>
 							)}
 						</div>
@@ -66,10 +77,15 @@ export default function CustomerRetentionReport({ filters, onFilterChange }: Cus
 					<div>
 						<h4 className="text-foreground mb-1 text-base font-medium">Return Rate</h4>
 						<div className="flex items-baseline gap-2">
-							<p className="text-foreground text-4xl font-bold">{metrics.returnRate}%</p>
+							<p className="text-foreground text-4xl font-bold">
+								{metrics.returnRate}%
+							</p>
 							{comparison && (
-								<span className={`text-xs font-medium ${Number(comparison.returnRate) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-									{Number(comparison.returnRate) > 0 ? '+' : ''}{comparison.returnRate}%
+								<span
+									className={`text-xs font-medium ${Number(comparison.returnRate) >= 0 ? "text-green-500" : "text-red-500"}`}
+								>
+									{Number(comparison.returnRate) > 0 ? "+" : ""}
+									{comparison.returnRate}%
 								</span>
 							)}
 						</div>
@@ -77,10 +93,15 @@ export default function CustomerRetentionReport({ filters, onFilterChange }: Cus
 					<div>
 						<h4 className="text-foreground mb-1 text-base font-medium">Repeat Order</h4>
 						<div className="flex items-baseline gap-2">
-							<p className="text-foreground text-4xl font-bold">{metrics.repeatOrderRate}</p>
+							<p className="text-foreground text-4xl font-bold">
+								{metrics.repeatOrderRate}
+							</p>
 							{comparison && (
-								<span className={`text-xs font-medium ${Number(comparison.repeatOrderRate) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-									{Number(comparison.repeatOrderRate) > 0 ? '+' : ''}{comparison.repeatOrderRate}
+								<span
+									className={`text-xs font-medium ${Number(comparison.repeatOrderRate) >= 0 ? "text-green-500" : "text-red-500"}`}
+								>
+									{Number(comparison.repeatOrderRate) > 0 ? "+" : ""}
+									{comparison.repeatOrderRate}
 								</span>
 							)}
 						</div>
@@ -90,24 +111,12 @@ export default function CustomerRetentionReport({ filters, onFilterChange }: Cus
 				{/* Right Chart Column */}
 				<div className="col-span-12 lg:col-span-10">
 					<div className="mb-6 flex flex-wrap items-center justify-between">
-						<h3 className="text-xl font-medium">Retention over time (Last 30 Days)</h3>
+						<h3 className="text-xl font-medium">Active customers per day</h3>
 						<div className="flex items-center gap-3">
-							<div className="bg-muted/30 flex rounded-full p-1">
-								<Button className="bg-secondary h-8 rounded-full px-4 text-xs text-white">
-									New
-								</Button>
-								<Button
-									variant="ghost"
-									className="text-muted-foreground h-8 rounded-full px-4 text-xs"
-								>
-									Returning
-								</Button>
-							</div>
-							<Button variant="outline" size="icon" className="size-9">
-								<Icon icon="lucide:sliders-horizontal" className="size-4" />
-							</Button>
-							
-							<Select value={filters.range} onValueChange={(val) => onFilterChange("range", val)}>
+							<Select
+								value={filters.range}
+								onValueChange={(val) => onFilterChange("range", val)}
+							>
 								<SelectTrigger className="h-9 w-[110px] text-sm">
 									<SelectValue placeholder="Time" />
 								</SelectTrigger>
@@ -115,30 +124,8 @@ export default function CustomerRetentionReport({ filters, onFilterChange }: Cus
 									<SelectItem value="today">Today</SelectItem>
 									<SelectItem value="weekly">Weekly</SelectItem>
 									<SelectItem value="monthly">Monthly</SelectItem>
-								</SelectContent>
-							</Select>
-
-							<Select value={filters.location || "all"} onValueChange={(val) => onFilterChange("location", val === "all" ? "" : val)}>
-								<SelectTrigger className="h-9 w-[130px] text-sm">
-									<SelectValue placeholder="Location" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">All Locations</SelectItem>
-									<SelectItem value="Lagos">Lagos</SelectItem>
-									<SelectItem value="VI">Victoria Island</SelectItem>
-									<SelectItem value="Lekki">Lekki</SelectItem>
-								</SelectContent>
-							</Select>
-
-							<Select value={filters.category || "all"} onValueChange={(val) => onFilterChange("category", val === "all" ? "" : val)}>
-								<SelectTrigger className="h-9 w-[110px] text-sm">
-									<SelectValue placeholder="Category" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">All</SelectItem>
-									<SelectItem value="food">Food</SelectItem>
-									<SelectItem value="groceries">Groceries</SelectItem>
-									<SelectItem value="pharmacy">Pharmacy</SelectItem>
+									<SelectItem value="yearly">Yearly</SelectItem>
+									<SelectItem value="all_time">All time</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -180,18 +167,6 @@ export default function CustomerRetentionReport({ filters, onFilterChange }: Cus
 								/>
 							</LineChart>
 						</ResponsiveContainer>
-					</div>
-
-					<div className="mt-6 flex flex-wrap gap-4">
-						<Button className="bg-secondary hover:bg-secondary/90 h-11 rounded-lg px-6 font-medium text-white">
-							Retention by city or campaign
-						</Button>
-						<Button className="h-11 rounded-lg bg-[#EF4444] px-6 font-medium text-white hover:bg-[#EF4444]/90">
-							Trigger Re-engagement Campaign
-						</Button>
-						<Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-11 rounded-lg px-6 font-medium">
-							Flag Drop-off Zone
-						</Button>
 					</div>
 				</div>
 			</div>

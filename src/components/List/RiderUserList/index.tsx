@@ -15,7 +15,7 @@ export default function RiderUserList() {
 	const tableData: RiderUserData[] = riders.map((r) => ({
 		id: r._id,
 		riderName: r.name,
-		riderId: r.riderProfile?.riderId || r._id.slice(-8).toUpperCase(),
+		riderId: r._id.slice(-8).toUpperCase(), // No separate rider ID on the backend
 		vehicleType: r.riderProfile?.vehicleType || "N/A",
 		phone: r.phone,
 		date: format(new Date(r.createdAt), "dd MMM yyyy | hh:mm a"),

@@ -5,11 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
-import {
-	useAdminProfile,
-	useUpdateAdminProfile,
-	useChangePassword,
-} from "@/hooks/userManagement";
+import { useAdminProfile, useUpdateAdminProfile, useChangePassword } from "@/hooks/userManagement";
 import { useToast } from "@/hooks/useToast";
 
 // Simple Switch Component for this view
@@ -119,7 +115,10 @@ export default function ProfileSettingsTab() {
 					<div className="relative">
 						<div className="size-20 overflow-hidden rounded-full bg-gray-200">
 							<img
-								src={formData.profilePicture || "https://ui-avatars.com/api/?name=" + (admin?.name || "User")}
+								src={
+									formData.profilePicture ||
+									"https://ui-avatars.com/api/?name=" + (admin?.name || "User")
+								}
 								alt="Profile"
 								className="size-full object-cover"
 							/>
@@ -304,8 +303,12 @@ export default function ProfileSettingsTab() {
 								</div>
 							</div>
 						)}
-						<Button className="bg-secondary/10 text-secondary hover:bg-secondary/20 h-14 w-full justify-center gap-3 rounded-xl font-medium">
-							<Icon icon="lucide:shield-check" className="size-5" /> Two-factor Auth (Coming Soon)
+						<Button
+							disabled
+							className="bg-secondary/10 text-secondary hover:bg-secondary/20 h-14 w-full justify-center gap-3 rounded-xl font-medium"
+						>
+							<Icon icon="lucide:shield-check" className="size-5" /> Two-factor Auth
+							(Coming Soon)
 						</Button>
 					</div>
 				</div>

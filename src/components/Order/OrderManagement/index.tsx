@@ -9,22 +9,13 @@ import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-	OrderListItem,
-	TimelineActor,
-	StatusCheck,
-	PanelHeader,
-} from "@/components/_atoms/OrderAtoms";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { OrderListItem, TimelineActor, StatusCheck } from "@/components/_atoms/OrderAtoms";
+import RefundPanel from "./RefundPanel";
 
 // Shadcn UI components (Assuming standard installation paths)
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -48,10 +39,9 @@ const OrderManagement = () => {
 				searchQuery === "" ||
 				o.orderId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				o._id?.toLowerCase().includes(searchQuery.toLowerCase());
-			
+
 			const matchesStatus =
-				statusFilter === "All" ||
-				o.status?.toLowerCase() === statusFilter.toLowerCase();
+				statusFilter === "All" || o.status?.toLowerCase() === statusFilter.toLowerCase();
 
 			const matchesDate = !date || (o.createdAt && isSameDay(new Date(o.createdAt), date));
 
@@ -69,7 +59,8 @@ const OrderManagement = () => {
 
 	// Utility to conditionally define visual color codes
 	const getStatusColor = (status: string) => {
-		if (["pending", "placed", "accepted", "preparing", "ready", "picked_up"].includes(status)) return "yellow";
+		if (["pending", "placed", "accepted", "preparing", "ready", "picked_up"].includes(status))
+			return "yellow";
 		if (["delivered"].includes(status)) return "green";
 		return "red";
 	};
@@ -90,9 +81,9 @@ const OrderManagement = () => {
 						icon="lucide:search"
 						className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2"
 					/>
-					<Input 
-						placeholder="Search by Order ID" 
-						className="bg-card border-border h-10 pl-9" 
+					<Input
+						placeholder="Search by Order ID"
+						className="bg-card border-border h-10 pl-9"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
@@ -106,7 +97,7 @@ const OrderManagement = () => {
 							size="icon"
 							className={cn(
 								"border-border bg-card text-foreground size-10 flex-shrink-0 transition-all",
-								date && "border-primary bg-primary/5 text-primary shadow-sm"
+								date && "border-primary bg-primary/5 text-primary shadow-sm",
 							)}
 						>
 							<CalendarIcon className="size-4" />
@@ -122,9 +113,9 @@ const OrderManagement = () => {
 						/>
 						{date && (
 							<div className="border-t p-2">
-								<Button 
-									variant="ghost" 
-									className="w-full h-8 text-xs font-medium hover:text-destructive transition-colors" 
+								<Button
+									variant="ghost"
+									className="w-full h-8 text-xs font-medium hover:text-destructive transition-colors"
 									onClick={() => setDate(undefined)}
 								>
 									Clear Date Filter
@@ -135,8 +126,8 @@ const OrderManagement = () => {
 				</Popover>
 
 				{/* Status Pills */}
-				<Button 
-					className={`h-10 px-6 ${statusFilter === 'All' ? 'bg-accent text-white hover:bg-accent/90' : 'bg-transparent border border-border text-foreground hover:bg-accent/20'}`}
+				<Button
+					className={`h-10 px-6 ${statusFilter === "All" ? "bg-accent text-white hover:bg-accent/90" : "bg-transparent border border-border text-foreground hover:bg-accent/20"}`}
 					onClick={() => setStatusFilter("All")}
 				>
 					All
@@ -154,14 +145,30 @@ const OrderManagement = () => {
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-[180px]">
-						<DropdownMenuItem onClick={() => setStatusFilter("All")}>All</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("preparing")}>Preparing</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("ready")}>Ready</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("picked_up")}>Picked Up</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("delivered")}>Delivered</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("rejected")}>Rejected</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>Cancelled</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("All")}>
+							All
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("pending")}>
+							Pending
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("preparing")}>
+							Preparing
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("ready")}>
+							Ready
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("picked_up")}>
+							Picked Up
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("delivered")}>
+							Delivered
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("rejected")}>
+							Rejected
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>
+							Cancelled
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
@@ -181,16 +188,20 @@ const OrderManagement = () => {
 
 						{/* List */}
 						{isLoading ? (
-							<div className="flex justify-center p-6"><Loader2 className="animate-spin text-secondary" /></div>
+							<div className="flex justify-center p-6">
+								<Loader2 className="animate-spin text-secondary" />
+							</div>
 						) : filteredOrders.length === 0 ? (
-							<div className="text-sm text-center text-muted-foreground mt-4">No matching orders</div>
+							<div className="text-sm text-center text-muted-foreground mt-4">
+								No matching orders
+							</div>
 						) : (
 							<div className="overflow-y-auto max-h-[600px] flex flex-col gap-3 pr-1 custom-scrollbar">
 								{filteredOrders.map((o: any) => (
 									<div key={o._id} onClick={() => setSelectedOrderId(o._id)}>
-										<OrderListItem 
-											orderId={o.orderId?.slice(-6) || o._id.slice(-6)} 
-											statusColor={getStatusColor(o.status)} 
+										<OrderListItem
+											orderId={o.orderId?.slice(-6) || o._id.slice(-6)}
+											statusColor={getStatusColor(o.status)}
 											isActive={activeOrder?._id === o._id}
 										/>
 									</div>
@@ -210,16 +221,26 @@ const OrderManagement = () => {
 								{/* Order Header */}
 								<div className="dark:bg-accent/10 border-accent/20 mb-8 flex items-center justify-between rounded-lg border bg-orange-50 p-3">
 									<div className="flex items-center gap-2">
-										<div className={`size-2.5 rounded-full ${getStatusColor(activeOrder.status) === 'green' ? 'bg-[#22C55E]' : getStatusColor(activeOrder.status) === 'red' ? 'bg-[#EF4444]' : 'bg-[#EAB308]'}`} />
+										<div
+											className={`size-2.5 rounded-full ${getStatusColor(activeOrder.status) === "green" ? "bg-[#22C55E]" : getStatusColor(activeOrder.status) === "red" ? "bg-[#EF4444]" : "bg-[#EAB308]"}`}
+										/>
 										<span className="text-foreground font-semibold flex items-center gap-2">
-											Order ID: #{activeOrder.orderId?.slice(-6) || activeOrder._id.slice(-6)}
-											<span className="text-[10px] font-normal uppercase text-muted-foreground ml-2 px-2 py-0.5 border rounded-sm">{activeOrder.status}</span>
+											Order ID: #
+											{activeOrder.orderId?.slice(-6) ||
+												activeOrder._id.slice(-6)}
+											<span className="text-[10px] font-normal uppercase text-muted-foreground ml-2 px-2 py-0.5 border rounded-sm">
+												{activeOrder.status}
+											</span>
 										</span>
 									</div>
 									<Icon
 										icon="lucide:copy"
 										className="text-muted-foreground hover:text-foreground size-4 cursor-pointer"
-										onClick={() => navigator.clipboard.writeText(activeOrder.orderId || activeOrder._id)}
+										onClick={() =>
+											navigator.clipboard.writeText(
+												activeOrder.orderId || activeOrder._id,
+											)
+										}
 									/>
 								</div>
 
@@ -229,22 +250,63 @@ const OrderManagement = () => {
 										name={activeOrder.customer?.name || "Unknown Customer"}
 										role="Customer"
 										idLabel="Customer ID Number"
-										idValue={activeOrder.customer?._id?.slice(-6).toUpperCase() || "N/A"}
-										time={activeOrder.createdAt ? new Date(activeOrder.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true}) : "N/A"}
+										idValue={
+											activeOrder.customer?._id?.slice(-6).toUpperCase() ||
+											"N/A"
+										}
+										time={
+											activeOrder.createdAt
+												? new Date(
+														activeOrder.createdAt,
+													).toLocaleTimeString([], {
+														hour: "2-digit",
+														minute: "2-digit",
+														hour12: true,
+													})
+												: "N/A"
+										}
 									/>
 									<TimelineActor
-										name={activeOrder.vendor?.vendorProfile?.businessName || activeOrder.vendor?.name || "Unknown Vendor"}
+										name={
+											activeOrder.vendor?.vendorProfile?.businessName ||
+											activeOrder.vendor?.name ||
+											"Unknown Vendor"
+										}
 										role="Vendor"
 										idLabel="Vendor ID Number"
-										idValue={activeOrder.vendor?._id?.slice(-6).toUpperCase() || "N/A"}
-										time={activeOrder.createdAt ? new Date(new Date(activeOrder.createdAt).getTime() + 2 * 60000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true}) : "N/A"}
+										idValue={
+											activeOrder.vendor?._id?.slice(-6).toUpperCase() ||
+											"N/A"
+										}
+										time={
+											activeOrder.createdAt
+												? new Date(
+														new Date(activeOrder.createdAt).getTime() +
+															2 * 60000,
+													).toLocaleTimeString([], {
+														hour: "2-digit",
+														minute: "2-digit",
+														hour12: true,
+													})
+												: "N/A"
+										}
 									/>
 									<TimelineActor
 										name={activeOrder.rider?.name || "Unassigned"}
 										role="Rider"
 										idLabel="Rider's ID Number"
-										idValue={activeOrder.rider?._id?.slice(-6).toUpperCase() || "N/A"}
-										time={activeOrder.status === 'pending' || !activeOrder.rider ? "Pending" : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}
+										idValue={
+											activeOrder.rider?._id?.slice(-6).toUpperCase() || "N/A"
+										}
+										time={
+											activeOrder.status === "pending" || !activeOrder.rider
+												? "Pending"
+												: new Date().toLocaleTimeString([], {
+														hour: "2-digit",
+														minute: "2-digit",
+														hour12: true,
+													})
+										}
 										isLast
 									/>
 								</div>
@@ -252,9 +314,26 @@ const OrderManagement = () => {
 								{/* Status Steps */}
 								<div className="space-y-3">
 									<StatusCheck label="Order Placed" isChecked={true} />
-									<StatusCheck label="Order Accepted" isChecked={["accepted", "preparing", "ready", "picked_up", "delivered"].includes(activeOrder.status)} />
-									<StatusCheck label="Picked Up" isChecked={["picked_up", "delivered"].includes(activeOrder.status)} />
-									<StatusCheck label="Delivered" isChecked={["delivered"].includes(activeOrder.status)} />
+									<StatusCheck
+										label="Order Accepted"
+										isChecked={[
+											"accepted",
+											"preparing",
+											"ready",
+											"picked_up",
+											"delivered",
+										].includes(activeOrder.status)}
+									/>
+									<StatusCheck
+										label="Picked Up"
+										isChecked={["picked_up", "delivered"].includes(
+											activeOrder.status,
+										)}
+									/>
+									<StatusCheck
+										label="Delivered"
+										isChecked={["delivered"].includes(activeOrder.status)}
+									/>
 								</div>
 							</>
 						)}
@@ -296,25 +375,7 @@ const OrderManagement = () => {
 						</div>
 						*/}
 
-						{/* Panel 2: Refund & Adjustment - HIDDEN/COMMENTED OUT BY REQUEST */}
-						{/*
-						<div className="bg-card border-border rounded-xl border p-6 shadow-sm">
-							<PanelHeader title="Refund & Adjustment panel" />
-
-							<div className="space-y-4">
-								<div className="space-y-1.5">
-									<label className="text-foreground text-sm font-medium">
-										Refund Amount
-									</label>
-									<Input defaultValue="#3500" className="h-11 bg-transparent" />
-								</div>
-
-								<Button className="bg-secondary hover:bg-secondary/90 h-11 w-full text-base font-medium text-white">
-									Process Refund
-								</Button>
-							</div>
-						</div>
-						*/}
+						<RefundPanel order={activeOrder} />
 					</div>
 				</div>
 			</div>

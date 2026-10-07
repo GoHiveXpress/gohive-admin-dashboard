@@ -18,7 +18,7 @@ export default function VendorUserList() {
 	const tableData: VendorUserData[] = vendors.map((v) => ({
 		id: v._id,
 		storeName: v.vendorProfile.businessName || v.name,
-		vendorId: v.vendorProfile.vendorId || v._id.slice(-8).toUpperCase(),
+		vendorId: v._id.slice(-8).toUpperCase(), // No separate vendor ID on the backend
 		location: v.vendorProfile.businessAddress || "N/A",
 		phone: v.phone,
 		date: format(new Date(v.createdAt), "dd MMM yyyy | hh:mm a"),

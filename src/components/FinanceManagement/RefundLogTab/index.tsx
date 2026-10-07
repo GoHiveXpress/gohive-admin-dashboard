@@ -23,9 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useRefundLogs, useProcessRefund } from "@/hooks/financeManagement";
+import { useRefundLogs } from "@/hooks/financeManagement";
 import { useDebounce } from "@/hooks/useDebounce";
-import { toast } from "sonner";
 import { type RefundLog } from "@/types/financeManagement";
 import TableExport from "@/components/_atoms/TableExport";
 
@@ -33,7 +32,7 @@ export default function RefundLogTab() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [date, setDate] = useState<Date | undefined>(undefined);
-	
+
 	const debouncedSearch = useDebounce(searchQuery, 500);
 
 	const [selectedLog, setSelectedLog] = useState<RefundLog | null>(null);
@@ -41,7 +40,6 @@ export default function RefundLogTab() {
 	const { data: logsResponse, isLoading } = useRefundLogs({
 		search: debouncedSearch,
 		status: statusFilter,
-		// @ts-ignore - added date to hook type
 		date: date ? format(date, "yyyy-MM-dd") : undefined,
 	});
 
@@ -87,7 +85,7 @@ export default function RefundLogTab() {
 								size="icon"
 								className={cn(
 									"border-border size-10 bg-transparent transition-colors",
-									date && "border-primary bg-primary/5 text-primary"
+									date && "border-primary bg-primary/5 text-primary",
 								)}
 							>
 								<Icon icon="lucide:sliders-horizontal" className="size-4" />
@@ -105,9 +103,9 @@ export default function RefundLogTab() {
 							/>
 							{date && (
 								<div className="border-border border-t p-2">
-									<Button 
-										variant="ghost" 
-										size="sm" 
+									<Button
+										variant="ghost"
+										size="sm"
 										className="w-full text-xs"
 										onClick={() => setDate(undefined)}
 									>
@@ -118,11 +116,13 @@ export default function RefundLogTab() {
 						</PopoverContent>
 					</Popover>
 
-					<Button 
+					<Button
 						onClick={() => setStatusFilter("all")}
 						className={cn(
 							"h-10 rounded-lg px-6 transition-colors",
-							statusFilter === "all" ? "bg-accent text-white" : "bg-transparent border border-border text-foreground"
+							statusFilter === "all"
+								? "bg-accent text-white"
+								: "bg-transparent border border-border text-foreground",
 						)}
 					>
 						All
@@ -163,19 +163,25 @@ export default function RefundLogTab() {
 						<TableBody>
 							{isLoading ? (
 								<TableRow>
-									<TableCell colSpan={4} className="h-24 text-center">Loading logs...</TableCell>
+									<TableCell colSpan={4} className="h-24 text-center">
+										Loading logs...
+									</TableCell>
 								</TableRow>
 							) : logs.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={4} className="h-24 text-center">No refund logs found</TableCell>
+									<TableCell colSpan={4} className="h-24 text-center">
+										No refund logs found
+									</TableCell>
 								</TableRow>
 							) : (
 								logs.map((log) => (
-									<TableRow 
-										key={log.id} 
+									<TableRow
+										key={log.id}
 										className={cn(
 											"border-border/50 h-16 border-b cursor-pointer transition-colors",
-											selectedLog?.id === log.id ? "bg-muted/50" : "hover:bg-muted/30"
+											selectedLog?.id === log.id
+												? "bg-muted/50"
+												: "hover:bg-muted/30",
 										)}
 										onClick={() => handleRowClick(log)}
 									>
@@ -193,11 +199,16 @@ export default function RefundLogTab() {
 											</div>
 										</TableCell>
 										<TableCell className="px-4">
-											<span className={cn(
-												"text-[11px] font-bold uppercase",
-												log.status === 'cancelled' ? 'text-accent' : 
-												log.status === 'rejected' ? 'text-destructive' : 'text-primary'
-											)}>
+											<span
+												className={cn(
+													"text-[11px] font-bold uppercase",
+													log.status === "cancelled"
+														? "text-accent"
+														: log.status === "rejected"
+															? "text-destructive"
+															: "text-primary",
+												)}
+											>
 												{log.status}
 											</span>
 										</TableCell>
@@ -220,9 +231,9 @@ export default function RefundLogTab() {
 						<Icon icon="lucide:download" className="size-4 text-secondary" />
 						Download Refund Logs
 					</div>
-					<TableExport 
-						data={logs} 
-						columns={exportColumns} 
+					<TableExport
+						data={logs}
+						columns={exportColumns}
 						filename={`Refund_Logs_${date ? format(date, "yyyy-MM-dd") : "Latest"}`}
 						title="Finance Management - Refund Logs"
 					/>
@@ -248,41 +259,68 @@ export default function RefundLogTab() {
 									</span>
 								</div>
 								<span className="text-muted-foreground text-[10px] font-medium uppercase tracking-tight">
-									{new Date(selectedLog.createdAt).toLocaleDateString('en-GB', {
-										day: '2-digit', month: 'short', year: 'numeric'
-									})} | {new Date(selectedLog.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+									{new Date(selectedLog.createdAt).toLocaleDateString("en-GB", {
+										day: "2-digit",
+										month: "short",
+										year: "numeric",
+									})}{" "}
+									|{" "}
+									{new Date(selectedLog.createdAt).toLocaleTimeString([], {
+										hour: "2-digit",
+										minute: "2-digit",
+										hour12: true,
+									})}
 								</span>
 							</div>
 
 							<div className="mb-6 space-y-3">
 								<div className="flex items-center gap-3 text-sm">
 									<Icon icon="lucide:user" className="text-secondary size-4" />
-									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">Customer ID</span>
+									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">
+										Customer ID
+									</span>
 									<span className="border-border rounded bg-muted/10 border px-2 py-0.5 text-[10px] font-mono">
-										{selectedLog.orderDetails?.customer?._id?.slice(-8).toUpperCase() || "N/A"}
+										{selectedLog.orderDetails?.customer?._id
+											?.slice(-8)
+											.toUpperCase() || "N/A"}
 									</span>
 								</div>
 								<div className="flex items-center gap-3 text-sm">
 									<Icon icon="lucide:store" className="text-secondary size-4" />
-									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">Vendor ID</span>
+									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">
+										Vendor ID
+									</span>
 									<span className="border-border rounded bg-muted/10 border px-2 py-0.5 text-[10px] font-mono">
-										{selectedLog.orderDetails?.vendor?._id?.slice(-8).toUpperCase() || "N/A"}
+										{selectedLog.orderDetails?.vendor?._id
+											?.slice(-8)
+											.toUpperCase() || "N/A"}
 									</span>
 								</div>
 								<div className="flex items-center gap-3 text-sm">
 									<Icon icon="lucide:bike" className="text-secondary size-4" />
-									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">Rider ID</span>
+									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">
+										Rider ID
+									</span>
 									<span className="border-border rounded bg-muted/10 border px-2 py-0.5 text-[10px] font-mono">
-										{selectedLog.orderDetails?.rider?._id?.slice(-8).toUpperCase() || "N/A"}
+										{selectedLog.orderDetails?.rider?._id
+											?.slice(-8)
+											.toUpperCase() || "N/A"}
 									</span>
 								</div>
 							</div>
 
 							<div className="border-border space-y-3 border-t pt-5">
 								{selectedLog.orderDetails?.items?.map((item: any, idx: number) => (
-									<div key={idx} className="flex justify-between text-sm items-center">
-										<span className="text-foreground font-medium">{item.quantity} X {item.name}</span>
-										<span className="font-bold">₦{item.price.toLocaleString()}</span>
+									<div
+										key={idx}
+										className="flex justify-between text-sm items-center"
+									>
+										<span className="text-foreground font-medium">
+											{item.quantity} X {item.name}
+										</span>
+										<span className="font-bold">
+											₦{item.price.toLocaleString()}
+										</span>
 									</div>
 								))}
 							</div>
@@ -290,25 +328,40 @@ export default function RefundLogTab() {
 							<div className="border-border mt-5 space-y-2 border-t pt-5">
 								<div className="text-muted-foreground flex justify-between text-[11px] font-medium uppercase">
 									<span>Service charge</span>
-									<span>₦{selectedLog.orderDetails?.serviceFee?.toLocaleString() || 0}</span>
+									<span>
+										₦
+										{selectedLog.orderDetails?.serviceFee?.toLocaleString() ||
+											0}
+									</span>
 								</div>
 								<div className="text-muted-foreground flex justify-between text-[11px] font-medium uppercase">
 									<span>Delivery fee</span>
-									<span>₦{selectedLog.orderDetails?.deliveryFee?.toLocaleString() || 0}</span>
+									<span>
+										₦
+										{selectedLog.orderDetails?.deliveryFee?.toLocaleString() ||
+											0}
+									</span>
 								</div>
 							</div>
 
 							<div className="mt-4 flex items-center justify-between border-t border-border pt-4">
 								<div className="text-muted-foreground flex items-center gap-1 text-[11px] font-bold uppercase">
-									Total amount: <Icon icon="lucide:chevron-up" className="size-3 text-accent" />
+									Total amount:{" "}
+									<Icon icon="lucide:chevron-up" className="size-3 text-accent" />
 								</div>
-								<span className="text-xl font-black text-foreground">₦{selectedLog.orderDetails?.totalAmount?.toLocaleString() || selectedLog.refundAmount}</span>
+								<span className="text-xl font-black text-foreground">
+									₦
+									{selectedLog.orderDetails?.totalAmount?.toLocaleString() ||
+										selectedLog.refundAmount}
+								</span>
 							</div>
 						</>
 					) : (
 						<div className="h-48 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center text-muted-foreground text-sm space-y-2">
 							<Icon icon="lucide:mouse-pointer-click" className="size-6 opacity-20" />
-							<span className="italic font-medium">Select a log to view order details</span>
+							<span className="italic font-medium">
+								Select a log to view order details
+							</span>
 						</div>
 					)}
 				</div>

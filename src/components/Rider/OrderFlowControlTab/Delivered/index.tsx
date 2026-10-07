@@ -29,8 +29,13 @@ export default function Delivered() {
 
 	// Compute Order Metrics
 	const { pending, enRoute, completed, rejected } = useMemo(() => {
-		const result = { pending: [] as any[], enRoute: [] as any[], completed: [] as any[], rejected: [] as any[] };
-		
+		const result = {
+			pending: [] as any[],
+			enRoute: [] as any[],
+			completed: [] as any[],
+			rejected: [] as any[],
+		};
+
 		orders.forEach((o: any) => {
 			if (["pending", "placed", "accepted"].includes(o.status)) {
 				result.pending.push(o);
@@ -58,20 +63,27 @@ export default function Delivered() {
 
 	// Compute Rider Metrics
 	const { online, offline } = useMemo(() => {
-		let o = 0, off = 0;
+		let o = 0,
+			off = 0;
 		riders.forEach((r: any) => {
 			if (r.riderProfile?.availabilityStatus?.toLowerCase() === "online") o++;
-			else off++; 
+			else off++;
 		});
-		return { online: o, offline: off }; 
+		return { online: o, offline: off };
 	}, [riders]);
 
 	// Display First Active En Route/Pending Order on Map seamlessly
 	const targetOrder = pending[0] || enRoute[0] || null;
 	const vendorLocation = { lat: 6.5244, lng: 3.3792 };
-	
-	const activeRider = riders.find((r: any) => r.riderProfile?.availabilityStatus?.toLowerCase() === "online" && r.location?.coordinates?.length === 2) as any;
-	const mapCenter = activeRider ? { lat: activeRider.location.coordinates[1], lng: activeRider.location.coordinates[0] } : vendorLocation;
+
+	const activeRider = riders.find(
+		(r: any) =>
+			r.riderProfile?.availabilityStatus?.toLowerCase() === "online" &&
+			r.location?.coordinates?.length === 2,
+	) as any;
+	const mapCenter = activeRider
+		? { lat: activeRider.location.coordinates[1], lng: activeRider.location.coordinates[0] }
+		: vendorLocation;
 
 	if (isLoadingOrders || isLoadingRiders) {
 		return (
@@ -98,16 +110,20 @@ export default function Delivered() {
 					<div className="border-border/40 flex items-center justify-between rounded-xl border bg-white p-4">
 						<div className="text-muted-foreground space-y-2 text-xs font-medium">
 							<div className="flex items-center gap-2">
-								<div className="size-2.5 rounded-full bg-[#EF4444]" /> Rejected ({rejected.length})
+								<div className="size-2.5 rounded-full bg-[#EF4444]" /> Rejected (
+								{rejected.length})
 							</div>
 							<div className="flex items-center gap-2">
-								<div className="size-2.5 rounded-full bg-[#EAB308]" /> Confirmed order ({pending.length})
+								<div className="size-2.5 rounded-full bg-[#EAB308]" /> Confirmed
+								order ({pending.length})
 							</div>
 							<div className="flex items-center gap-2">
-								<div className="size-2.5 rounded-full bg-[#84CC16]" /> Pick up order ({enRoute.length})
+								<div className="size-2.5 rounded-full bg-[#84CC16]" /> Pick up order
+								({enRoute.length})
 							</div>
 							<div className="flex items-center gap-2">
-								<div className="size-2.5 rounded-full bg-[#22C55E]" /> Delivered order ({completed.length})
+								<div className="size-2.5 rounded-full bg-[#22C55E]" /> Delivered
+								order ({completed.length})
 							</div>
 						</div>
 
@@ -128,17 +144,25 @@ export default function Delivered() {
 							</div>
 						) : (
 							completed.map((o: any) => (
-								<div key={o._id} className="space-y-3 rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5] p-4">
+								<div
+									key={o._id}
+									className="space-y-3 rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5] p-4"
+								>
 									<div className="flex items-start justify-between">
 										<div className="flex items-center gap-2 text-xs font-semibold text-[#059669]">
 											<div className="size-2 rounded-full bg-[#059669]" />
 											Order ID: #{o.orderId?.slice(-6)}
 										</div>
-										<Icon icon="ph:copy" className="text-muted-foreground/70 hover:text-foreground size-4 cursor-pointer" />
+										<Icon
+											icon="ph:copy"
+											className="text-muted-foreground/70 hover:text-foreground size-4 cursor-pointer"
+										/>
 									</div>
 									<div className="text-foreground/80 space-y-1 text-xs font-medium">
 										{o.items?.map((item: any, i: number) => (
-											<p key={i}>{item.quantity} X {item.name}</p>
+											<p key={i}>
+												{item.quantity} X {item.name}
+											</p>
 										))}
 									</div>
 								</div>
@@ -189,15 +213,25 @@ export default function Delivered() {
 									<p className="text-sm font-semibold">{rider.name}</p>
 									<div className="text-muted-foreground flex items-center gap-1.5 text-[10px] font-medium">
 										Status
-										<div className={`size-1.5 rounded-full ${rider.riderProfile?.availabilityStatus?.toLowerCase() === "online" ? "bg-[#22C55E]" : "bg-[#71717A]"}`} />
-										<span className="text-foreground capitalize">{rider.riderProfile?.availabilityStatus || "Offline"}</span>
+										<div
+											className={`size-1.5 rounded-full ${rider.riderProfile?.availabilityStatus?.toLowerCase() === "online" ? "bg-[#22C55E]" : "bg-[#71717A]"}`}
+										/>
+										<span className="text-foreground capitalize">
+											{rider.riderProfile?.availabilityStatus || "Offline"}
+										</span>
 									</div>
 								</div>
 								<div className="flex items-center gap-2">
-									<Badge variant="outline" className="text-muted-foreground border-border h-6 rounded-md bg-white px-2 text-[10px] font-normal">
+									<Badge
+										variant="outline"
+										className="text-muted-foreground border-border h-6 rounded-md bg-white px-2 text-[10px] font-normal"
+									>
 										{rider._id.slice(-6).toUpperCase()}
 									</Badge>
-									<Icon icon="ph:copy" className="size-4 cursor-pointer text-[#22C55E]" />
+									<Icon
+										icon="ph:copy"
+										className="size-4 cursor-pointer text-[#22C55E]"
+									/>
 								</div>
 							</div>
 						))}
@@ -224,23 +258,38 @@ export default function Delivered() {
 							options={{
 								disableDefaultUI: true,
 								zoomControl: true,
-								styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }],
+								styles: [
+									{
+										featureType: "poi",
+										elementType: "labels",
+										stylers: [{ visibility: "off" }],
+									},
+								],
 							}}
 						>
-							{riders.filter((r: any) => r.riderProfile?.availabilityStatus === "online" && r.location?.coordinates?.length === 2).map((rider: any) => (
-								<Marker
-									key={rider._id}
-									position={{ lat: rider.location.coordinates[1], lng: rider.location.coordinates[0] }}
-									icon={{
-										path: google.maps.SymbolPath.CIRCLE,
-										scale: 8,
-										fillColor: "#22C55E",
-										fillOpacity: 1,
-										strokeWeight: 2,
-										strokeColor: "#FFFFFF",
-									}}
-								/>
-							))}
+							{riders
+								.filter(
+									(r: any) =>
+										r.riderProfile?.availabilityStatus === "online" &&
+										r.location?.coordinates?.length === 2,
+								)
+								.map((rider: any) => (
+									<Marker
+										key={rider._id}
+										position={{
+											lat: rider.location.coordinates[1],
+											lng: rider.location.coordinates[0],
+										}}
+										icon={{
+											path: google.maps.SymbolPath.CIRCLE,
+											scale: 8,
+											fillColor: "#22C55E",
+											fillOpacity: 1,
+											strokeWeight: 2,
+											strokeColor: "#FFFFFF",
+										}}
+									/>
+								))}
 						</GoogleMap>
 					)}
 				</div>
@@ -250,7 +299,9 @@ export default function Delivered() {
 						<div className="space-y-1.5">
 							<label className="text-foreground text-xs font-medium">Order ID</label>
 							<div className="border-border text-muted-foreground flex h-11 items-center rounded-xl border bg-white px-4 text-sm font-semibold">
-								{targetOrder ? `#${targetOrder.orderId?.slice(-6)}` : "No Active Orders"}
+								{targetOrder
+									? `#${targetOrder.orderId?.slice(-6)}`
+									: "No Active Orders"}
 							</div>
 						</div>
 					</div>
@@ -260,27 +311,37 @@ export default function Delivered() {
 							<div className="flex items-start justify-between">
 								<div>
 									<div className="mb-1 flex items-center gap-2">
-										<span className="text-base font-bold">{targetOrder.rider.name}</span>
+										<span className="text-base font-bold">
+											{targetOrder.rider.name}
+										</span>
 									</div>
 									<p className="text-muted-foreground text-[11px] font-medium">
-										Current Location: En Route
+										Order status: {targetOrder.status?.replace("_", " ")}
 									</p>
 								</div>
 								<div className="text-right">
 									<div className="mb-1 flex items-center justify-end gap-1.5 text-xs font-medium">
-										Status <div className="size-2 rounded-full bg-[#22C55E]" /> Active
+										Status <div className="size-2 rounded-full bg-[#22C55E]" />{" "}
+										Active
 									</div>
 								</div>
 							</div>
 
-							<div className="grid grid-cols-2 gap-3 pt-2">
-								<Button className="h-11 rounded-lg bg-[#43A149] text-sm font-medium text-white shadow-sm hover:bg-[#43A149]/90">
-									Assign
+							{targetOrder.rider.phone ? (
+								<Button
+									asChild
+									className="h-11 w-full rounded-lg bg-[#4B5563] text-sm font-medium text-white shadow-sm hover:bg-[#4B5563]/90"
+								>
+									<a href={`tel:${targetOrder.rider.phone}`}>
+										<Icon icon="ph:phone-fill" className="size-4" /> Call{" "}
+										{targetOrder.rider.phone}
+									</a>
 								</Button>
-								<Button className="h-11 rounded-lg bg-[#4B5563] text-sm font-medium text-white shadow-sm hover:bg-[#4B5563]/90">
-									Contact Rider
-								</Button>
-							</div>
+							) : (
+								<p className="text-muted-foreground text-xs">
+									No phone number on file for this rider
+								</p>
+							)}
 						</div>
 					)}
 				</div>

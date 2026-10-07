@@ -18,6 +18,15 @@ import {
 	type ISupportUser,
 } from "@/types/supportManagement";
 import { toast } from "sonner";
+import { supportApi } from "@/app/api/supportManagement";
+import ChatMessageContent from "../ChatMessageContent";
+
+// Add a message unless it is already shown (socket + refetch can both deliver it)
+const addMessage = (list: ISupportMessage[], message: ISupportMessage) =>
+	list.some((m) => m._id === message._id) ? list : [...list, message];
+
+const isWaitingForAgent = (chat: ISupportChat) =>
+	chat.status === "active" && !!chat.agentRequestedAt && !chat.admin;
 
 export default function LiveChatTab() {
 	const [activeCategory, setActiveCategory] = useState<"customer" | "vendor" | "rider" | "all">(
@@ -25,23 +34,31 @@ export default function LiveChatTab() {
 	);
 	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [statusFilter, setStatusFilter] = useState<"active" | "closed">("active");
 	const [messageText, setMessageText] = useState("");
+	const [isUploading, setIsUploading] = useState(false);
+	const [userTyping, setUserTyping] = useState(false);
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// 1. Fetch all chats
 	const { data: chatsData, isLoading: chatsLoading } = useAllChats();
 	const chats = useMemo(() => chatsData?.data || [], [chatsData]);
 
-	// 2. Filter chats for the list (Only active and matching category/search)
+	// 2. Filter chats for the list (status, category, search); waiting chats first
 	const filteredChats = useMemo(() => {
-		return chats.filter((chat) => {
-			const matchesCategory = activeCategory === "all" || chat.role === activeCategory;
-			const matchesSearch =
-				chat.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				chat._id.toLowerCase().includes(searchQuery.toLowerCase());
-			return matchesCategory && matchesSearch && chat.status === "active";
-		});
-	}, [chats, activeCategory, searchQuery]);
+		const query = searchQuery.trim().toLowerCase();
+		return chats
+			.filter((chat) => {
+				const matchesCategory = activeCategory === "all" || chat.role === activeCategory;
+				const matchesSearch =
+					chat.user.name.toLowerCase().includes(query) ||
+					chat._id.toLowerCase().includes(query);
+				return matchesCategory && matchesSearch && chat.status === statusFilter;
+			})
+			.sort((a, b) => Number(isWaitingForAgent(b)) - Number(isWaitingForAgent(a)));
+	}, [chats, activeCategory, searchQuery, statusFilter]);
 
 	// 3. Selective Chat Data
 	const selectedChat = useMemo(
@@ -55,40 +72,49 @@ export default function LiveChatTab() {
 
 	// Ensure fresh interface when switching chats
 	useEffect(() => {
-		if (selectedChatId) {
-			setMessages([]); // Clear previous messages immediately
-		}
+		setMessages([]); // Clear previous messages immediately
+		setUserTyping(false);
+		setMessageText("");
 	}, [selectedChatId]);
 
 	useEffect(() => {
 		if (historyData?.data) {
-			setMessages(historyData.data);
+			// Keep live messages that arrived before the history request finished
+			setMessages((prev) => prev.reduce(addMessage, historyData.data));
 		}
 	}, [historyData]);
 
 	// 5. Socket for Real-time
-	const { socket } = useSupportSocket(selectedChatId || "");
+	const { socket, isConnected } = useSupportSocket(selectedChatId || "");
 
 	useEffect(() => {
-		if (socket) {
-			socket.on("new_support_message", (newMessage: ISupportMessage) => {
-				if (newMessage.chat === selectedChatId) {
-					setMessages((prev) => [...prev, newMessage]);
-				}
-			});
+		if (!socket || !selectedChatId) return undefined;
 
-			socket.on("chat_closed", (data: { chatId: string }) => {
-				if (data.chatId === selectedChatId) {
-					toast.info("This chat has been closed.");
-					setSelectedChatId(null);
-				}
-			});
-		}
-		return () => {
-			if (socket) {
-				socket.off("new_support_message");
-				socket.off("chat_closed");
+		const onMessage = (newMessage: ISupportMessage) => {
+			if (String(newMessage.chat) !== selectedChatId) return;
+			setMessages((prev) => addMessage(prev, newMessage));
+			if (!newMessage.isSupportResponse) setUserTyping(false);
+		};
+		const onClosed = (data: { chatId: string }) => {
+			if (String(data.chatId) === selectedChatId) {
+				toast.info("This chat has been closed.");
+				setUserTyping(false);
 			}
+		};
+		const onTyping = (data: { chatId?: string; isTyping: boolean; role?: string }) => {
+			if (data.chatId && String(data.chatId) !== selectedChatId) return;
+			// Only show the customer/vendor/rider typing, not other agents
+			if (data.role === "superadmin" || data.role === "staff") return;
+			setUserTyping(!!data.isTyping);
+		};
+
+		socket.on("new_support_message", onMessage);
+		socket.on("chat_closed", onClosed);
+		socket.on("typing_status", onTyping);
+		return () => {
+			socket.off("new_support_message", onMessage);
+			socket.off("chat_closed", onClosed);
+			socket.off("typing_status", onTyping);
 		};
 	}, [socket, selectedChatId]);
 
@@ -97,25 +123,88 @@ export default function LiveChatTab() {
 		if (scrollRef.current) {
 			scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
 		}
-	}, [messages]);
+	}, [messages, userTyping]);
 
 	// 6. Mutations
 	const { mutate: sendMessage, isPending: isSending } = useSendMessage();
 	const { mutate: joinChat, isPending: isJoining } = useJoinChat();
 	const { mutate: closeChat } = useCloseChat();
 
+	const isClosed = selectedChat?.status === "closed";
+
+	const emitTyping = (isTyping: boolean) => {
+		if (socket && selectedChatId) {
+			socket.emit("typing_status", { chatId: selectedChatId, isTyping });
+		}
+	};
+
+	const handleTextChange = (value: string) => {
+		setMessageText(value);
+		if (typingTimeout.current) clearTimeout(typingTimeout.current);
+		else emitTyping(true);
+		typingTimeout.current = setTimeout(() => {
+			typingTimeout.current = null;
+			emitTyping(false);
+		}, 2000);
+	};
+
+	const stopTyping = () => {
+		if (typingTimeout.current) {
+			clearTimeout(typingTimeout.current);
+			typingTimeout.current = null;
+			emitTyping(false);
+		}
+	};
+
 	const handleSendMessage = () => {
-		if (!messageText.trim() || !selectedChatId) return;
+		if (!messageText.trim() || !selectedChatId || isClosed) return;
+		stopTyping();
 
 		sendMessage(
 			{
 				chatId: selectedChatId,
-				content: messageText,
+				content: messageText.trim(),
 			},
 			{
-				onSuccess: () => setMessageText(""),
+				onSuccess: (res) => {
+					setMessageText("");
+					if (res?.data) setMessages((prev) => addMessage(prev, res.data));
+				},
 			},
 		);
+	};
+
+	const handleImagePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		e.target.value = ""; // allow picking the same file again
+		if (!file || !selectedChatId || isClosed) return;
+		if (!["image/png", "image/jpeg"].includes(file.type)) {
+			toast.error("Only PNG or JPEG images can be sent");
+			return;
+		}
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error("Image must be 10 MB or smaller");
+			return;
+		}
+
+		setIsUploading(true);
+		try {
+			const formData = new FormData();
+			formData.append("image", file);
+			const { url } = await supportApi.uploadFile(formData);
+			sendMessage(
+				{ chatId: selectedChatId, content: url, type: "image" },
+				{
+					onSuccess: (res) => {
+						if (res?.data) setMessages((prev) => addMessage(prev, res.data));
+					},
+				},
+			);
+		} catch {
+			toast.error("Image upload failed");
+		} finally {
+			setIsUploading(false);
+		}
 	};
 
 	const handleJoin = () => {
@@ -148,7 +237,7 @@ export default function LiveChatTab() {
 				<div className="flex shrink-0 flex-wrap gap-2">
 					{(["customer", "vendor", "rider"] as const).map((role) => {
 						const count = chats.filter(
-							(c) => c.role === role && c.status === "active",
+							(c) => c.role === role && c.status === statusFilter,
 						).length;
 						return (
 							<Button
@@ -180,9 +269,6 @@ export default function LiveChatTab() {
 							onChange={(e) => setSearchQuery(e.target.value)}
 						/>
 					</div>
-					<Button variant="outline" size="icon" className="size-10 shrink-0">
-						<Icon icon="lucide:sliders-horizontal" className="size-4" />
-					</Button>
 					<Button
 						onClick={() => {
 							setActiveCategory("all");
@@ -198,6 +284,24 @@ export default function LiveChatTab() {
 					</Button>
 				</div>
 
+				{/* Status */}
+				<div className="bg-muted flex shrink-0 rounded-lg p-1">
+					{(["active", "closed"] as const).map((status) => (
+						<button
+							key={status}
+							type="button"
+							onClick={() => setStatusFilter(status)}
+							className={`flex-1 rounded-md py-1.5 text-xs font-medium transition ${
+								statusFilter === status
+									? "bg-card text-foreground shadow-sm"
+									: "text-muted-foreground hover:text-foreground"
+							}`}
+						>
+							{status === "active" ? "Active" : "Closed"}
+						</button>
+					))}
+				</div>
+
 				{/* List Header */}
 				<div className="mt-2 flex shrink-0 items-center gap-2">
 					<Icon
@@ -208,6 +312,10 @@ export default function LiveChatTab() {
 						{activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}{" "}
 						Conversations
 					</h3>
+					<span
+						title={isConnected ? "Live updates on" : "Reconnecting..."}
+						className={`ml-auto size-2 rounded-full ${isConnected ? "bg-green-500" : "bg-amber-500"}`}
+					/>
 				</div>
 
 				{/* List Items (Scrollable) */}
@@ -218,7 +326,7 @@ export default function LiveChatTab() {
 						</div>
 					) : filteredChats.length === 0 ? (
 						<div className="text-muted-foreground py-10 text-center text-sm">
-							No active conversations
+							No {statusFilter} conversations
 						</div>
 					) : (
 						filteredChats.map((chat) => (
@@ -260,6 +368,11 @@ export default function LiveChatTab() {
 										<span className="text-muted-foreground truncate text-xs">
 											{chat.lastMessage || "No messages yet"}
 										</span>
+										{isWaitingForAgent(chat) && (
+											<span className="ml-2 shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+												Waiting
+											</span>
+										)}
 									</div>
 								</div>
 							</div>
@@ -281,6 +394,12 @@ export default function LiveChatTab() {
 									<div className="text-muted-foreground flex items-center gap-2 text-xs">
 										<span>{selectedChat?.user.name}</span>
 										<span className="bg-secondary size-1.5 rounded-full" />
+										{selectedChat && isWaitingForAgent(selectedChat) && (
+											<span className="flex items-center gap-1.5 rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
+												<Icon icon="lucide:clock" className="size-3" />
+												Waiting for an agent
+											</span>
+										)}
 										{selectedChat?.admin && (
 											<span className="text-secondary bg-secondary/10 flex items-center gap-1.5 rounded px-2 py-0.5 font-medium">
 												<Icon icon="lucide:user-check" className="size-3" />
@@ -294,7 +413,7 @@ export default function LiveChatTab() {
 								</div>
 							</div>
 							<div className="flex items-center gap-2">
-								{!selectedChat?.admin ? (
+								{isClosed ? null : !selectedChat?.admin ? (
 									<Button
 										size="sm"
 										className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
@@ -316,16 +435,11 @@ export default function LiveChatTab() {
 								<Button
 									variant="outline"
 									size="sm"
-									className={`text-xs ${selectedChat?.status === "closed" ? "cursor-not-allowed opacity-50" : "text-destructive border-destructive/20 hover:bg-destructive/5"}`}
+									className={`text-xs ${isClosed ? "cursor-not-allowed opacity-50" : "text-destructive border-destructive/20 hover:bg-destructive/5"}`}
 									onClick={handleClose}
-									disabled={selectedChat?.status === "closed"}
+									disabled={isClosed}
 								>
-									{selectedChat?.status === "closed"
-										? "Session Ended"
-										: "End Session"}
-								</Button>
-								<Button variant="ghost" size="icon">
-									<Icon icon="lucide:more-vertical" />
+									{isClosed ? "Session Ended" : "End Session"}
 								</Button>
 							</div>
 						</div>
@@ -360,15 +474,10 @@ export default function LiveChatTab() {
 											</div>
 										)}
 										<div>
-											<div
-												className={`max-w-sm rounded-2xl px-4 py-2 text-sm ${
-													msg.isSupportResponse
-														? "bg-primary text-primary-foreground rounded-br-none shadow-sm"
-														: "bg-muted text-foreground rounded-tl-none"
-												}`}
-											>
-												{msg.content}
-											</div>
+											<ChatMessageContent
+												message={msg}
+												mine={msg.isSupportResponse}
+											/>
 											<span
 												className={`text-muted-foreground mt-1 block text-[10px] ${
 													msg.isSupportResponse ? "text-right" : ""
@@ -387,7 +496,8 @@ export default function LiveChatTab() {
 															className="size-full object-contain"
 														/>
 													</div>
-												) : typeof msg.sender === "object" && msg.sender.profilePicture ? (
+												) : typeof msg.sender === "object" &&
+												  msg.sender.profilePicture ? (
 													<img
 														src={msg.sender.profilePicture}
 														className="size-full object-cover"
@@ -408,37 +518,56 @@ export default function LiveChatTab() {
 									</div>
 								))
 							)}
+							{userTyping && !isClosed && (
+								<div className="text-muted-foreground flex items-center gap-2 text-xs italic">
+									<Icon
+										icon="lucide:more-horizontal"
+										className="size-5 animate-pulse"
+									/>
+									{selectedChat?.user.name} is typing...
+								</div>
+							)}
 						</div>
 
 						{/* Input Area */}
 						<div className="border-border flex shrink-0 items-center gap-3 border-t p-4">
-							<button className="text-muted-foreground hover:text-foreground">
-								<Icon icon="lucide:camera" className="size-6" />
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept="image/png,image/jpeg"
+								className="hidden"
+								onChange={handleImagePicked}
+							/>
+							<button
+								type="button"
+								title="Send an image"
+								onClick={() => fileInputRef.current?.click()}
+								disabled={isClosed || isUploading}
+								className="text-muted-foreground hover:text-foreground disabled:opacity-50"
+							>
+								<Icon
+									icon={isUploading ? "lucide:loader-2" : "lucide:image-plus"}
+									className={`size-6 ${isUploading ? "animate-spin" : ""}`}
+								/>
 							</button>
 							<div className="relative flex-1">
 								<Input
 									placeholder={
-										selectedChat?.status === "closed"
+										isClosed
 											? "This chat session has ended"
 											: "Type a message..."
 									}
 									value={messageText}
-									onChange={(e) => setMessageText(e.target.value)}
+									onChange={(e) => handleTextChange(e.target.value)}
+									onBlur={stopTyping}
 									onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-									disabled={selectedChat?.status === "closed"}
-									className="border-border rounded-full bg-transparent pr-10 disabled:opacity-50"
+									disabled={isClosed}
+									className="border-border rounded-full bg-transparent disabled:opacity-50"
 								/>
-								<button className="text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2">
-									<Icon icon="lucide:smile" className="size-5" />
-								</button>
 							</div>
 							<button
 								onClick={handleSendMessage}
-								disabled={
-									isSending ||
-									!messageText.trim() ||
-									selectedChat?.status === "closed"
-								}
+								disabled={isSending || !messageText.trim() || isClosed}
 								className="bg-accent hover:bg-accent/90 flex size-10 items-center justify-center rounded-full text-white shadow-md transition disabled:opacity-50"
 							>
 								<Icon icon="lucide:send" className="ml-0.5 size-5" />
@@ -460,9 +589,6 @@ export default function LiveChatTab() {
 						<div className="border-border mb-6 flex gap-4 border-b pb-4">
 							<span className="text-primary border-primary -mb-4 border-b-2 px-1 pb-4 font-semibold">
 								Profile
-							</span>
-							<span className="text-muted-foreground cursor-pointer">
-								Order history
 							</span>
 						</div>
 
@@ -502,16 +628,20 @@ export default function LiveChatTab() {
 										className="text-muted-foreground size-4"
 									/>
 									<span className="text-muted-foreground flex-1 truncate text-sm">
-										{selectedChat.user.email}
+										{selectedChat.user.email || "No email"}
 									</span>
-									<Icon
-										icon="lucide:copy"
-										onClick={() => {
-											navigator.clipboard.writeText(selectedChat.user.email);
-											toast.success("Email copied");
-										}}
-										className="text-muted-foreground hover:text-foreground size-3.5 cursor-pointer"
-									/>
+									{selectedChat.user.email && (
+										<Icon
+											icon="lucide:copy"
+											onClick={() => {
+												navigator.clipboard.writeText(
+													selectedChat.user.email,
+												);
+												toast.success("Email copied");
+											}}
+											className="text-muted-foreground hover:text-foreground size-3.5 cursor-pointer"
+										/>
+									)}
 								</div>
 								<div className="flex items-center gap-3">
 									<Icon

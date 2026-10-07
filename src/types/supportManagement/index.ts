@@ -9,7 +9,7 @@ export interface ISupportUser {
 	name: string;
 	email: string;
 	phone?: string;
-	role: ChatRole | "superadmin";
+	role: ChatRole | "superadmin" | "staff";
 	profilePicture?: string;
 	dob?: string;
 	location?: {
@@ -30,6 +30,8 @@ export interface ISupportChat {
 	role: ChatRole;
 	admin?: ISupportUser | string;
 	adminName?: string;
+	// Set when the user asked for a live agent
+	agentRequestedAt?: string | null;
 	lastMessage: string;
 	status: ChatStatus;
 	createdAt: string;

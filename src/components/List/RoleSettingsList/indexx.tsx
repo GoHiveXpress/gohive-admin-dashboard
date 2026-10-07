@@ -11,6 +11,12 @@ import {
 import { useAdmins, useInvitations, useDeleteAdmin, useAdminProfile } from "@/hooks/userManagement";
 import AddNewAdminModal from "@/components/_modals/AddNewAdminModal";
 import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function RoleSettingsList() {
 	const { data: adminsResponse, isLoading: isLoadingAdmins } = useAdmins();
@@ -20,6 +26,8 @@ export default function RoleSettingsList() {
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [sortByName, setSortByName] = useState(false);
 
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const [idToDelete, setIdToDelete] = useState<string | null>(null);
@@ -85,13 +93,22 @@ export default function RoleSettingsList() {
 		});
 	}, [adminsResponse, invitationsResponse]);
 
+	const statuses = useMemo(
+		() => Array.from(new Set(adminData.map((admin) => String(admin.status)))),
+		[adminData],
+	);
+
 	const filteredData = useMemo(() => {
-		return adminData.filter(
+		const query = searchQuery.toLowerCase();
+		const result = adminData.filter(
 			(admin) =>
-				admin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				admin.email?.toLowerCase().includes(searchQuery.toLowerCase()),
+				(statusFilter === "all" || String(admin.status) === statusFilter) &&
+				(admin.name.toLowerCase().includes(query) ||
+					admin.email?.toLowerCase().includes(query)),
 		);
-	}, [adminData, searchQuery]);
+		// A-Z sorts purely by name; otherwise pending invitations stay on top
+		return sortByName ? [...result].sort((a, b) => a.name.localeCompare(b.name)) : result;
+	}, [adminData, searchQuery, statusFilter, sortByName]);
 
 	if (isLoadingAdmins || isLoadingInvites) {
 		return <div className="flex h-64 items-center justify-center">Loading Role Data...</div>;
@@ -125,45 +142,79 @@ export default function RoleSettingsList() {
 				</div>
 
 				<Button
-					variant="outline"
-					size="icon"
-					className="border-border size-10 rounded-lg bg-white"
+					onClick={() => {
+						setStatusFilter("all");
+						setSortByName(false);
+						setSearchQuery("");
+					}}
+					variant={statusFilter === "all" && !sortByName ? "default" : "outline"}
+					className={
+						statusFilter === "all" && !sortByName
+							? "bg-accent hover:bg-accent/90 h-10 rounded-lg px-6 text-white"
+							: "border-border h-10 rounded-lg bg-white px-6"
+					}
 				>
-					<Icon icon="lucide:sliders-horizontal" className="size-4" />
-				</Button>
-
-				<Button className="bg-accent hover:bg-accent/90 h-10 rounded-lg px-6 text-white">
 					All
 				</Button>
 
 				<Button
 					variant="outline"
-					className="border-border h-10 rounded-lg bg-white px-4 text-sm font-medium"
+					onClick={() => setSortByName((prev) => !prev)}
+					className={`h-10 rounded-lg px-4 text-sm font-medium ${
+						sortByName
+							? "bg-[#123614] text-white hover:bg-[#123614]/90"
+							: "border-border bg-white"
+					}`}
 				>
 					A-Z
 				</Button>
 
-				<Button
-					variant="outline"
-					className="border-border flex h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-medium"
-				>
-					Status <Icon icon="lucide:chevron-down" className="size-4" />
-				</Button>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							variant="outline"
+							className="border-border flex h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-medium capitalize"
+						>
+							{statusFilter === "all" ? "Status" : statusFilter}
+							<Icon icon="lucide:chevron-down" className="size-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent>
+						<DropdownMenuCheckboxItem
+							checked={statusFilter === "all"}
+							onCheckedChange={() => setStatusFilter("all")}
+						>
+							All statuses
+						</DropdownMenuCheckboxItem>
+						{statuses.map((status) => (
+							<DropdownMenuCheckboxItem
+								key={status}
+								checked={statusFilter === status}
+								onCheckedChange={() => setStatusFilter(status)}
+								className="capitalize"
+							>
+								{status}
+							</DropdownMenuCheckboxItem>
+						))}
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			<div className="border-border overflow-hidden rounded-[20px] border bg-white p-0 shadow-sm">
-				<DataTable 
-					columns={getColumns(getRoleSettingsColumns(handleActionDelete, currentUserRole))} 
-					data={filteredData} 
+				<DataTable
+					columns={getColumns(
+						getRoleSettingsColumns(handleActionDelete, currentUserRole),
+					)}
+					data={filteredData}
 				/>
 			</div>
 
 			<AddNewAdminModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-			<ConfirmDeleteModal 
-				isOpen={isDeleteOpen} 
-				onOpenChange={setIsDeleteOpen} 
-				onConfirm={handleConfirmDelete} 
+			<ConfirmDeleteModal
+				isOpen={isDeleteOpen}
+				onOpenChange={setIsDeleteOpen}
+				onConfirm={handleConfirmDelete}
 				isLoading={deleteAdminMutation.isPending}
 				title="Delete Admin Account?"
 				description="Are you sure you want to permanently delete this admin account? This action cannot be undone."

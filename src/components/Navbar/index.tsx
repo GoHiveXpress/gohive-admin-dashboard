@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Search, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -54,14 +54,6 @@ export default function Navbar() {
 			</div>
 
 			<div className="flex items-center gap-3 lg:gap-6">
-				<Button
-					variant="ghost"
-					size="icon"
-					className="border-border hover:bg-muted size-10 rounded-full border"
-				>
-					<Search className="text-muted-foreground size-5" />
-				</Button>
-
 				<NotificationPopover />
 
 				<div className="flex items-center gap-3 border-l pl-3 lg:pl-6">

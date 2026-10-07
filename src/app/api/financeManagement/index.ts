@@ -46,12 +46,17 @@ export const financeApi = {
 		);
 	},
 
-	processRefund: (data: { orderId: string; amount: number; reason: string }) =>
-		apiClient.post<{ success: boolean; message: string }>(
-			`${ADMIN_BASE}/process-refund`,
-			data,
-			"Failed to process refund",
-		),
+	processRefund: (data: {
+		orderId: string;
+		amount: number;
+		reason: string;
+		cancelOrder?: boolean;
+	}) =>
+		apiClient.post<{
+			success: boolean;
+			message: string;
+			data: { orderId: string; amount: number; cancelled: boolean };
+		}>(`${ADMIN_BASE}/process-refund`, data, "Failed to process refund"),
 };
 
 /* eslint-enable */

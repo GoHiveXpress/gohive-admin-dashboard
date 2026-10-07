@@ -4,17 +4,35 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supportApi } from "@/app/api/supportManagement";
 import { useToast } from "@/hooks/useToast";
 import { io, type Socket } from "socket.io-client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { getAuthToken } from "@/utils/auth";
+import { type ISupportChat, type ISupportUser } from "@/types/supportManagement";
 
 const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
 
 // Socket URL logic: Remove /api from the base URL
 const SOCKET_URL = adminApiBaseUrl.replace("/api", "");
 
+// Chats whose user account was deleted come back with user: null
+const deletedUser = (chat: ISupportChat): ISupportUser => ({
+	_id: "",
+	name: "Deleted user",
+	email: "",
+	role: chat.role,
+});
+
 export const useAllChats = () => {
 	return useQuery({
 		queryKey: ["support-chats"],
 		queryFn: supportApi.getAllChats,
+		select: (res) => ({
+			...res,
+			data: (res.data ?? []).map((chat) =>
+				chat.user ? chat : { ...chat, user: deletedUser(chat) },
+			),
+		}),
+		// The socket keeps the list live; this is a fallback if it drops
+		refetchInterval: 30_000,
 	});
 };
 
@@ -83,40 +101,57 @@ export const useCloseChat = () => {
 };
 
 /**
- * Socket Hook for real-time support
+ * Socket Hook for real-time support.
+ * Signs in with the dashboard token (the server rejects sockets without one), keeps the
+ * chat list live through "support_chat_activity", and listens to the selected chat's room.
  */
 export const useSupportSocket = (chatId?: string) => {
-	const socketRef = useRef<Socket | null>(null);
+	const queryClient = useQueryClient();
+	const [socket, setSocket] = useState<Socket | null>(null);
 	const [isConnected, setIsConnected] = useState(false);
 
 	useEffect(() => {
-		// Create socket instance
-		const socket = io(SOCKET_URL, {
+		const s = io(SOCKET_URL, {
 			transports: ["websocket", "polling"],
 			withCredentials: true,
+			// Called on every (re)connect, so a refreshed token is picked up
+			auth: (cb) => {
+				getAuthToken()
+					.then((token) => cb({ token: token ?? "" }))
+					.catch(() => cb({ token: "" }));
+			},
 		});
 
-		socketRef.current = socket;
-
-		socket.on("connect", () => {
-			console.log("🔌 Connected to Support Socket");
-			setIsConnected(true);
-			if (chatId) {
-				socket.emit("join_chat_room", chatId);
-			}
+		s.on("connect", () => setIsConnected(true));
+		s.on("disconnect", () => setIsConnected(false));
+		s.on("connect_error", (err) => {
+			console.warn("Support socket connection failed:", err.message);
+		});
+		// Any chat changed (new chat, message, agent request, join, close)
+		s.on("support_chat_activity", () => {
+			queryClient.invalidateQueries({ queryKey: ["support-chats"] });
 		});
 
-		socket.on("disconnect", () => {
-			console.log("🔌 Disconnected from Support Socket");
-			setIsConnected(false);
-		});
-
+		setSocket(s);
 		return () => {
-			if (socket) socket.disconnect();
+			s.disconnect();
+			setSocket(null);
 		};
-	}, [chatId]);
+	}, [queryClient]);
 
-	return { socket: socketRef.current, isConnected };
+	// Listen to the selected chat's room; rejoin after a reconnect
+	useEffect(() => {
+		if (!socket || !chatId) return undefined;
+		const join = () => socket.emit("join_chat_room", chatId);
+		if (socket.connected) join();
+		socket.on("connect", join);
+		return () => {
+			socket.off("connect", join);
+			socket.emit("leave_chat_room", chatId);
+		};
+	}, [socket, chatId]);
+
+	return { socket, isConnected };
 };
 
 /* eslint-enable */

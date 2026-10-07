@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -120,16 +121,26 @@ export const activeUsersColumnConfig: BaseColumnSchema<ActiveUserData>[] = [
 		render: (row) => (
 			<div className="text-foreground flex items-center gap-1 font-semibold">
 				<Icon icon="ph:star-fill" className="text-primary" width="16" />
-				{row.rating.toFixed(1)}
+				{Number(row.rating || 0).toFixed(1)}
 			</div>
 		),
 	},
 	{
 		key: "action",
 		header: "",
-		render: () => (
-			<Button variant="ghost" size="icon" className="text-foreground hover:bg-muted size-8">
-				<Icon icon="ph:dots-three-vertical-bold" width="20" />
+		render: (row) => (
+			<Button
+				asChild
+				variant="ghost"
+				size="icon"
+				className="text-foreground hover:bg-muted size-8"
+			>
+				<Link
+					href={`/${row.userType === "Rider" ? "rider" : "vendor"}-management/${row.id}`}
+					aria-label="View profile"
+				>
+					<Icon icon="lucide:arrow-up-right" width="18" />
+				</Link>
 			</Button>
 		),
 	},

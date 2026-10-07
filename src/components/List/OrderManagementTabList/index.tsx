@@ -33,6 +33,7 @@ export default function OrderManagementTabList() {
 	const [status, setStatus] = useState<string>("all");
 	const [search, setSearch] = useState("");
 	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
+	const [vendorId, setVendorId] = useState<string>("all");
 
 	const { data: orderResponse, isLoading, error } = useOrders({ status, search });
 	const { data: statsResponse } = useOrderStats();
@@ -52,15 +53,30 @@ export default function OrderManagementTabList() {
 		expired: 0,
 	};
 
+	// Vendors that appear in the loaded orders, for the Vendor filter
+	const vendors = useMemo(() => {
+		const byId = new Map<string, string>();
+		orders.forEach((order: any) => {
+			const id = order.vendor?._id;
+			if (id) byId.set(id, order.vendor?.vendorProfile?.businessName || "Unnamed vendor");
+		});
+		return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
+	}, [orders]);
+
 	const processedOrders = useMemo(() => {
-		const result = [...orders];
+		const result =
+			vendorId === "all"
+				? [...orders]
+				: orders.filter((order: any) => order.vendor?._id === vendorId);
 		if (sortMode === "asc") {
 			result.sort((a, b) => (a.customer?.name || "").localeCompare(b.customer?.name || ""));
 		} else if (sortMode === "desc") {
 			result.sort((a, b) => (b.customer?.name || "").localeCompare(a.customer?.name || ""));
 		}
 		return result;
-	}, [orders, sortMode]);
+	}, [orders, sortMode, vendorId]);
 
 	const handleViewOrder = (order: OrderData) => {
 		setSelectedOrder(order);
@@ -161,6 +177,12 @@ export default function OrderManagementTabList() {
 							Placed
 						</DropdownMenuCheckboxItem>
 						<DropdownMenuCheckboxItem
+							checked={status === "accepted"}
+							onCheckedChange={() => setStatus("accepted")}
+						>
+							Accepted
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
 							checked={status === "preparing"}
 							onCheckedChange={() => setStatus("preparing")}
 						>
@@ -190,17 +212,32 @@ export default function OrderManagementTabList() {
 						>
 							Cancelled
 						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "rejected"}
+							onCheckedChange={() => setStatus("rejected")}
+						>
+							Rejected
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "pending"}
+							onCheckedChange={() => setStatus("pending")}
+						>
+							Awaiting payment
+						</DropdownMenuCheckboxItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 
 				{/* Quick Filters */}
 				<Button
-					onClick={() => setStatus("all")}
+					onClick={() => {
+						setStatus("all");
+						setVendorId("all");
+					}}
 					className={cn(
 						"h-10 rounded-lg px-6 font-medium transition-colors",
 						status === "all"
 							? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
-							: "border-border bg-white text-foreground hover:bg-muted/80"
+							: "border-border bg-white text-foreground hover:bg-muted/80",
 					)}
 				>
 					All
@@ -208,10 +245,16 @@ export default function OrderManagementTabList() {
 
 				<Button
 					variant={sortMode !== null ? "default" : "outline"}
-					onClick={() => setSortMode((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
+					onClick={() =>
+						setSortMode((prev) =>
+							prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+						)
+					}
 					className={cn(
 						"h-10 rounded-lg bg-white px-4 font-medium",
-						sortMode !== null ? "bg-[#123614] text-white hover:bg-[#123614]/90" : "border-border"
+						sortMode !== null
+							? "bg-[#123614] text-white hover:bg-[#123614]/90"
+							: "border-border",
 					)}
 				>
 					A-Z {sortMode === "asc" ? "↓" : sortMode === "desc" ? "↑" : ""}
@@ -219,24 +262,47 @@ export default function OrderManagementTabList() {
 
 				<div className="bg-border mx-1 hidden h-6 w-px sm:block" />
 
-				<Button
-					variant="outline"
-					className="border-border h-10 rounded-lg bg-white px-4 font-medium"
-				>
-					Vendor
-				</Button>
-				<Button
-					variant="outline"
-					className="border-border h-10 rounded-lg bg-white px-4 font-medium"
-				>
-					Location
-				</Button>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							variant="outline"
+							className={cn(
+								"border-border h-10 max-w-[220px] rounded-lg bg-white px-4 font-medium",
+								vendorId !== "all" && "border-[#F97316] text-[#F97316]",
+							)}
+						>
+							<span className="truncate">
+								{vendors.find((v) => v.id === vendorId)?.name ?? "Vendor"}
+							</span>
+							<Icon icon="ph:caret-down" className="ml-2 shrink-0" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent className="max-h-80 w-56 overflow-y-auto">
+						<DropdownMenuLabel>Filter by vendor</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						<DropdownMenuCheckboxItem
+							checked={vendorId === "all"}
+							onCheckedChange={() => setVendorId("all")}
+						>
+							All vendors
+						</DropdownMenuCheckboxItem>
+						{vendors.map((vendor) => (
+							<DropdownMenuCheckboxItem
+								key={vendor.id}
+								checked={vendorId === vendor.id}
+								onCheckedChange={() => setVendorId(vendor.id)}
+							>
+								{vendor.name}
+							</DropdownMenuCheckboxItem>
+						))}
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{/* Google Map Tracker for Active Orders */}
 			<div className="w-full">
 				<GoogleRoutesMap orders={orders} />
-			</div> 
+			</div>
 
 			{/* Legend */}
 			<div className="text-foreground flex justify-end gap-4 text-[10px] font-medium">

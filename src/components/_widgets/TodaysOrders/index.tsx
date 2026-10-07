@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { useDashboardOverview } from "@/hooks/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,36 +17,42 @@ export default function TodaysOrders() {
 		return () => window.clearTimeout(timer);
 	}, []);
 
+	// Counts by order status for today. "pending" orders are unpaid, so they aren't shown;
+	// "placed" is a paid order waiting for the vendor.
+	const count = (...statuses: string[]) =>
+		statuses.reduce((sum, status) => sum + (Number(stats[status]) || 0), 0);
 	const statusCards = [
-		{
-			label: "Pending",
-			count: stats.pending || 0,
-			icon: "ph:clock-fill",
-			color: "text-accent",
-		},
+		{ label: "New", count: count("placed"), icon: "ph:clock-fill", color: "text-accent" },
 		{
 			label: "Accepted",
-			count: stats.accepted || 0,
+			count: count("accepted"),
 			icon: "ph:check-square-fill",
 			color: "text-secondary",
 		},
 		{
 			label: "Preparing",
-			count: stats.preparing || 0,
+			count: count("preparing"),
 			icon: "ph:cooking-pot-fill",
 			color: "text-primary",
 		},
+		{ label: "Ready", count: count("ready"), icon: "ph:package-fill", color: "text-primary" },
 		{
 			label: "Picked Up",
-			count: stats.picked_up || 0,
+			count: count("picked_up"),
 			icon: "ph:moped-fill",
 			color: "text-primary",
 		},
 		{
 			label: "Delivered",
-			count: stats.delivered || 0,
+			count: count("delivered"),
 			icon: "ph:check-circle-fill",
 			color: "text-secondary",
+		},
+		{
+			label: "Cancelled",
+			count: count("cancelled", "rejected", "expired"),
+			icon: "ph:x-circle-fill",
+			color: "text-destructive",
 		},
 	];
 
@@ -58,34 +63,20 @@ export default function TodaysOrders() {
 				{isLoading ? (
 					<Skeleton className="h-9 w-20" />
 				) : (
-					<h2 className="text-foreground text-3xl font-bold">
-						{stats.total || 0}
-					</h2>
+					<h2 className="text-foreground text-3xl font-bold">{stats.total || 0}</h2>
 				)}
 			</div>
 
 			<div className="flex flex-col gap-6 lg:flex-row">
 				{/* Left Side Stats */}
 				<div className="flex w-full shrink-0 flex-col gap-3 lg:w-[200px]">
-					<div className="mb-2 flex gap-2">
-						<Button variant="outline" size="sm" className="h-8 w-10 p-0">
-							<Icon icon="ph:sliders-horizontal" />
-						</Button>
-						<Button
-							variant="outline"
-							size="sm"
-							className="h-8 w-full justify-between text-xs font-normal"
-						>
-							Location <Icon icon="ph:caret-down" />
-						</Button>
-					</div>
 					{isLoading
-						? Array.from({ length: 5 }).map((_, i) => (
+						? Array.from({ length: statusCards.length }).map((_, i) => (
 								<Skeleton key={i} className="h-[52px] w-full rounded-xl" />
 							))
-						: statusCards.map((stat, i) => (
+						: statusCards.map((stat) => (
 								<div
-									key={i}
+									key={stat.label}
 									className="border-border flex items-center justify-between rounded-xl border bg-white p-3 shadow-sm"
 								>
 									<div className="flex items-center gap-3">

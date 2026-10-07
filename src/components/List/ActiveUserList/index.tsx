@@ -37,8 +37,11 @@ export default function ActiveUserList() {
 	const [locationFilter, setLocationFilter] = useState("all");
 	const [ratingFilter, setRatingFilter] = useState("all");
 
-	const { data: ridersResponse, isLoading: isLoadingRiders, isError: isRidersError } =
-		useRiders();
+	const {
+		data: ridersResponse,
+		isLoading: isLoadingRiders,
+		isError: isRidersError,
+	} = useRiders();
 	const {
 		data: vendorsResponse,
 		isLoading: isLoadingVendors,
@@ -51,10 +54,10 @@ export default function ActiveUserList() {
 			const availability = rider.riderProfile?.availabilityStatus;
 			const isOnline = availability === "online" || availability === "busy";
 			const location = (rider as { location?: { address?: string } }).location?.address;
+			// Ratings live on the profile (riderProfile.averageRating)
 			const rating =
-				(rider as { rating?: { average?: number } }).rating?.average ??
-				(rider as { averageRating?: number }).averageRating ??
-				0;
+				(rider as { riderProfile?: { averageRating?: number } }).riderProfile
+					?.averageRating ?? 0;
 
 			return {
 				id: rider._id,
@@ -75,10 +78,10 @@ export default function ActiveUserList() {
 		const vendors = vendorsResponse?.data ?? [];
 		return vendors.map((vendor) => {
 			const isOnline = vendor.vendorProfile?.availabilityStatus === "online";
+			// Ratings live on the profile (vendorProfile.averageRating)
 			const rating =
-				(vendor as { rating?: { average?: number } }).rating?.average ??
-				(vendor as { averageRating?: number }).averageRating ??
-				0;
+				(vendor as { vendorProfile?: { averageRating?: number } }).vendorProfile
+					?.averageRating ?? 0;
 
 			return {
 				id: vendor._id,
@@ -90,7 +93,8 @@ export default function ActiveUserList() {
 				phone: vendor.phone || "N/A",
 				status: isOnline ? "Online" : "Offline",
 				activeOrder:
-					(vendor as { activeOrdersCount?: number }).activeOrdersCount ?? (isOnline ? "Yes" : "No"),
+					(vendor as { activeOrdersCount?: number }).activeOrdersCount ??
+					(isOnline ? "Yes" : "No"),
 				rating,
 			};
 		});

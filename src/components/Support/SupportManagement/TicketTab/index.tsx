@@ -24,6 +24,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import ChatMessageContent from "../ChatMessageContent";
 
 export default function TicketTab() {
 	const [activeCategory, setActiveCategory] = useState<"customer" | "vendor" | "rider" | "all">(
@@ -58,7 +59,9 @@ export default function TicketTab() {
 			result.sort((a, b) => b.user.name.localeCompare(a.user.name));
 		} else {
 			// default to latest first if no sort selected
-			result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+			result.sort(
+				(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+			);
 		}
 		return result;
 	}, [chats, activeCategory, searchQuery, statusFilter, sortOrder]);
@@ -83,15 +86,17 @@ export default function TicketTab() {
 	const { socket } = useSupportSocket(selectedChatId || "");
 
 	useEffect(() => {
-		if (socket) {
-			socket.on("new_support_message", (newMessage: ISupportMessage) => {
-				if (newMessage.chat === selectedChatId) {
-					setMessages((prev) => [...prev, newMessage]);
-				}
-			});
-		}
+		if (!socket) return undefined;
+		const onMessage = (newMessage: ISupportMessage) => {
+			if (String(newMessage.chat) !== selectedChatId) return;
+			// The socket and a refetch can both deliver the same message
+			setMessages((prev) =>
+				prev.some((m) => m._id === newMessage._id) ? prev : [...prev, newMessage],
+			);
+		};
+		socket.on("new_support_message", onMessage);
 		return () => {
-			if (socket) socket.off("new_support_message");
+			socket.off("new_support_message", onMessage);
 		};
 	}, [socket, selectedChatId]);
 
@@ -224,7 +229,7 @@ export default function TicketTab() {
 						"h-10 rounded-lg px-6 font-medium transition-colors",
 						activeCategory === "all" && statusFilter === "all"
 							? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
-							: "bg-muted text-foreground hover:bg-muted/80"
+							: "bg-muted text-foreground hover:bg-muted/80",
 					)}
 				>
 					All
@@ -233,10 +238,16 @@ export default function TicketTab() {
 				{/* A-Z Sort Toggle */}
 				<Button
 					variant={sortOrder !== null ? "default" : "outline"}
-					onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
+					onClick={() =>
+						setSortOrder((prev) =>
+							prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+						)
+					}
 					className={cn(
 						"h-10 rounded-lg bg-transparent px-4 font-medium",
-						sortOrder !== null ? "bg-[#123614] text-white hover:bg-[#123614]/90" : "border-border"
+						sortOrder !== null
+							? "bg-[#123614] text-white hover:bg-[#123614]/90"
+							: "border-border",
 					)}
 				>
 					A-Z {sortOrder === "asc" ? "↓" : sortOrder === "desc" ? "↑" : ""}
@@ -348,7 +359,10 @@ export default function TicketTab() {
 											/>
 											{selectedChat?.admin && (
 												<span className="text-secondary bg-secondary/10 ml-2 flex items-center gap-1.5 rounded px-2 py-0.5 font-medium">
-													<Icon icon="lucide:user-check" className="size-3" />
+													<Icon
+														icon="lucide:user-check"
+														className="size-3"
+													/>
 													Connected with{" "}
 													{typeof selectedChat.admin === "object"
 														? selectedChat.admin.name
@@ -368,9 +382,6 @@ export default function TicketTab() {
 										{selectedChat?.status === "closed"
 											? "Session Ended"
 											: "Active Session"}
-									</Button>
-									<Button variant="ghost" size="icon">
-										<Icon icon="lucide:more-vertical" />
 									</Button>
 								</div>
 							</div>
@@ -404,15 +415,10 @@ export default function TicketTab() {
 												</div>
 											)}
 											<div>
-												<div
-													className={`max-w-sm rounded-2xl px-4 py-2 text-sm ${
-														msg.isSupportResponse
-															? "bg-primary text-primary-foreground rounded-br-none"
-															: "bg-muted text-foreground rounded-tl-none"
-													}`}
-												>
-													{msg.content}
-												</div>
+												<ChatMessageContent
+													message={msg}
+													mine={msg.isSupportResponse}
+												/>
 												<span
 													className={`text-muted-foreground mt-1 block text-[10px] ${msg.isSupportResponse ? "text-right" : ""}`}
 												>
@@ -429,7 +435,8 @@ export default function TicketTab() {
 																className="size-full object-contain"
 															/>
 														</div>
-													) : typeof msg.sender === "object" && msg.sender.profilePicture ? (
+													) : typeof msg.sender === "object" &&
+													  msg.sender.profilePicture ? (
 														<img
 															src={msg.sender.profilePicture}
 															className="size-full object-cover"
@@ -453,9 +460,6 @@ export default function TicketTab() {
 							</div>
 
 							<div className="border-border flex items-center gap-3 border-t p-4">
-								<button className="text-muted-foreground">
-									<Icon icon="lucide:camera" className="size-6" />
-								</button>
 								<div className="relative flex-1">
 									<Input
 										placeholder={
@@ -467,11 +471,8 @@ export default function TicketTab() {
 										onChange={(e) => setMessageText(e.target.value)}
 										onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
 										disabled={selectedChat?.status === "closed"}
-										className="border-border rounded-full bg-transparent pr-10 disabled:opacity-50"
+										className="border-border rounded-full bg-transparent disabled:opacity-50"
 									/>
-									<button className="text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2">
-										<Icon icon="lucide:smile" className="size-5" />
-									</button>
 								</div>
 								<button
 									onClick={handleSendMessage}
