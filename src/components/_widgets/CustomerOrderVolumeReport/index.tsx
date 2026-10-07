@@ -48,7 +48,7 @@ export default function CustomerOrderVolumeReport({
 		return (
 			<div className="border-border flex h-full flex-col rounded-[20px] border bg-white p-6 shadow-sm">
 				<Skeleton className="mb-4 h-8 w-48" />
-				<Skeleton className="flex-1 w-full" />
+				<Skeleton className="w-full flex-1" />
 			</div>
 		);
 	}

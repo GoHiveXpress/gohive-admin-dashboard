@@ -97,9 +97,9 @@ export default function TodaysOrders() {
 				</div>
 
 				{/* Right Side Map Integration */}
-				<div className="bg-muted/30 relative min-h-[350px] flex-1 overflow-hidden rounded-2xl border border-border/50">
+				<div className="bg-muted/30 border-border/50 relative min-h-[350px] flex-1 overflow-hidden rounded-2xl border">
 					{isLoading || !loadMap ? (
-						<Skeleton className="h-full w-full" />
+						<Skeleton className="size-full" />
 					) : (
 						<GoogleRoutesMap orders={activeOrders} />
 					)}
@@ -108,5 +108,3 @@ export default function TodaysOrders() {
 		</div>
 	);
 }
-
-/* eslint-enable */

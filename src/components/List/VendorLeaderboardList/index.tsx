@@ -23,7 +23,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { VendorLeaderboardData } from "@/types/analytics";
+import { type VendorLeaderboardData } from "@/types/analytics";
 
 interface VendorLeaderboardListProps {
 	filters: any;
@@ -35,7 +35,7 @@ export default function VendorLeaderboardList({
 	onFilterChange,
 }: VendorLeaderboardListProps) {
 	const { data: leaderboardResponse, isLoading } = useVendorLeaderboard(filters);
-	const leaderboardData = (leaderboardResponse?.data as VendorLeaderboardData[]) || [];
+	const leaderboardData = leaderboardResponse?.data! || [];
 	// Vendors pick their business type from these categories
 	const { data: categoriesData } = useVendorCategories();
 	const categories = categoriesData?.data ?? [];
@@ -103,7 +103,7 @@ export default function VendorLeaderboardList({
 			<div className="overflow-x-auto">
 				<Table>
 					<TableHeader>
-						<TableRow className="bg-muted/30 border-none hover:bg-muted/30">
+						<TableRow className="bg-muted/30 hover:bg-muted/30 border-none">
 							<TableHead className="w-[80px] text-xs font-semibold uppercase">
 								Rank
 							</TableHead>
@@ -129,7 +129,7 @@ export default function VendorLeaderboardList({
 								Revenue
 							</TableHead>
 							<TableHead className="text-xs font-semibold uppercase">Trend</TableHead>
-							<TableHead className="w-[50px]"></TableHead>
+							<TableHead className="w-[50px]" />
 						</TableRow>
 					</TableHeader>
 					<TableBody>

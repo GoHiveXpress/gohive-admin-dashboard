@@ -1,8 +1,8 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-nested-ternary */
+/* eslint-disable no-nested-ternary */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import GoogleRoutesMap from "@/components/Map/GoogleRoutesMap";
-import { useMemo } from "react";
 
 export default function OrderManagementTabList() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -161,7 +160,7 @@ export default function OrderManagementTabList() {
 							)}
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+					<DropdownMenuContent align="start" className="z-50 w-48 bg-white">
 						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuCheckboxItem

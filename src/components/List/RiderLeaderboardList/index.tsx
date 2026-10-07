@@ -22,7 +22,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { RiderLeaderboardData } from "@/types/analytics";
+import { type RiderLeaderboardData } from "@/types/analytics";
 
 interface RiderLeaderboardListProps {
 	filters: any;
@@ -34,7 +34,7 @@ export default function RiderLeaderboardList({
 	onFilterChange,
 }: RiderLeaderboardListProps) {
 	const { data: leaderboardResponse, isLoading } = useRiderLeaderboard(filters);
-	const leaderboardData = (leaderboardResponse?.data as RiderLeaderboardData[]) || [];
+	const leaderboardData = leaderboardResponse?.data! || [];
 
 	return (
 		<div className="border-border mt-6 rounded-[20px] border bg-white p-6 shadow-sm">
@@ -115,7 +115,7 @@ export default function RiderLeaderboardList({
 			<div className="overflow-x-auto">
 				<Table>
 					<TableHeader>
-						<TableRow className="bg-muted/30 border-none hover:bg-muted/30">
+						<TableRow className="bg-muted/30 hover:bg-muted/30 border-none">
 							<TableHead className="w-[80px] text-xs font-semibold uppercase">
 								Rank
 							</TableHead>
@@ -141,7 +141,7 @@ export default function RiderLeaderboardList({
 								Total Earnings
 							</TableHead>
 							<TableHead className="text-xs font-semibold uppercase">Trend</TableHead>
-							<TableHead className="w-[50px]"></TableHead>
+							<TableHead className="w-[50px]" />
 						</TableRow>
 					</TableHeader>
 					<TableBody>

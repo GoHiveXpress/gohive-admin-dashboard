@@ -63,8 +63,8 @@ export default function PendingOrders() {
 
 	// Compute Rider Metrics
 	const { online, offline } = useMemo(() => {
-		let o = 0,
-			off = 0;
+		let o = 0;
+		let off = 0;
 		riders.forEach((r: any) => {
 			if (r.riderProfile?.availabilityStatus?.toLowerCase() === "online") o++;
 			else off++;
@@ -237,8 +237,8 @@ export default function PendingOrders() {
 
 				<div className="border-border/50 relative min-h-[300px] flex-1 overflow-hidden rounded-2xl border bg-[#EBF0F0]">
 					{!isMapLoaded ? (
-						<div className="flex h-full w-full items-center justify-center rounded-2xl bg-muted/20">
-							<Loader2 className="size-6 animate-spin text-muted-foreground" />
+						<div className="bg-muted/20 flex size-full items-center justify-center rounded-2xl">
+							<Loader2 className="text-muted-foreground size-6 animate-spin" />
 						</div>
 					) : (
 						<GoogleMap

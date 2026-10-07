@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { OrderListItem, TimelineActor, StatusCheck } from "@/components/_atoms/OrderAtoms";
-import RefundPanel from "./RefundPanel";
 
 // Shadcn UI components (Assuming standard installation paths)
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import RefundPanel from "./RefundPanel";
 
 const OrderManagement = () => {
 	const { data: orderResponse, isLoading } = useOrders({});
@@ -115,7 +115,7 @@ const OrderManagement = () => {
 							<div className="border-t p-2">
 								<Button
 									variant="ghost"
-									className="w-full h-8 text-xs font-medium hover:text-destructive transition-colors"
+									className="hover:text-destructive h-8 w-full text-xs font-medium transition-colors"
 									onClick={() => setDate(undefined)}
 								>
 									Clear Date Filter
@@ -127,7 +127,7 @@ const OrderManagement = () => {
 
 				{/* Status Pills */}
 				<Button
-					className={`h-10 px-6 ${statusFilter === "All" ? "bg-accent text-white hover:bg-accent/90" : "bg-transparent border border-border text-foreground hover:bg-accent/20"}`}
+					className={`h-10 px-6 ${statusFilter === "All" ? "bg-accent hover:bg-accent/90 text-white" : "border-border text-foreground hover:bg-accent/20 border bg-transparent"}`}
 					onClick={() => setStatusFilter("All")}
 				>
 					All
@@ -189,14 +189,14 @@ const OrderManagement = () => {
 						{/* List */}
 						{isLoading ? (
 							<div className="flex justify-center p-6">
-								<Loader2 className="animate-spin text-secondary" />
+								<Loader2 className="text-secondary animate-spin" />
 							</div>
 						) : filteredOrders.length === 0 ? (
-							<div className="text-sm text-center text-muted-foreground mt-4">
+							<div className="text-muted-foreground mt-4 text-center text-sm">
 								No matching orders
 							</div>
 						) : (
-							<div className="overflow-y-auto max-h-[600px] flex flex-col gap-3 pr-1 custom-scrollbar">
+							<div className="custom-scrollbar flex max-h-[600px] flex-col gap-3 overflow-y-auto pr-1">
 								{filteredOrders.map((o: any) => (
 									<div key={o._id} onClick={() => setSelectedOrderId(o._id)}>
 										<OrderListItem
@@ -213,7 +213,7 @@ const OrderManagement = () => {
 					{/* === COLUMN 2: TIMELINE DETAILS (Middle) === */}
 					<div className="bg-card border-border rounded-xl border p-6 shadow-sm lg:col-span-5">
 						{!activeOrder ? (
-							<div className="text-center text-muted-foreground flex items-center justify-center h-[300px]">
+							<div className="text-muted-foreground flex h-[300px] items-center justify-center text-center">
 								Select an order to view Timeline
 							</div>
 						) : (
@@ -224,11 +224,11 @@ const OrderManagement = () => {
 										<div
 											className={`size-2.5 rounded-full ${getStatusColor(activeOrder.status) === "green" ? "bg-[#22C55E]" : getStatusColor(activeOrder.status) === "red" ? "bg-[#EF4444]" : "bg-[#EAB308]"}`}
 										/>
-										<span className="text-foreground font-semibold flex items-center gap-2">
+										<span className="text-foreground flex items-center gap-2 font-semibold">
 											Order ID: #
 											{activeOrder.orderId?.slice(-6) ||
 												activeOrder._id.slice(-6)}
-											<span className="text-[10px] font-normal uppercase text-muted-foreground ml-2 px-2 py-0.5 border rounded-sm">
+											<span className="text-muted-foreground ml-2 rounded-sm border px-2 py-0.5 text-[10px] font-normal uppercase">
 												{activeOrder.status}
 											</span>
 										</span>
@@ -313,7 +313,7 @@ const OrderManagement = () => {
 
 								{/* Status Steps */}
 								<div className="space-y-3">
-									<StatusCheck label="Order Placed" isChecked={true} />
+									<StatusCheck label="Order Placed" isChecked />
 									<StatusCheck
 										label="Order Accepted"
 										isChecked={[

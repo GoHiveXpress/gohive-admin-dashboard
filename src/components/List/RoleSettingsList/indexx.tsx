@@ -60,7 +60,7 @@ export default function RoleSettingsList() {
 					id: admin._id,
 					name: admin.name,
 					adminId: admin._id.slice(-8).toUpperCase(),
-					status: (admin.accountStatus as any) || "Active",
+					status: admin.accountStatus || "Active",
 					phone: admin.phone || "N/A",
 					role: admin.role,
 					profilePicture: admin.profilePicture,

@@ -22,7 +22,7 @@ export default function VendorUserList() {
 		location: v.vendorProfile.businessAddress || "N/A",
 		phone: v.phone,
 		date: format(new Date(v.createdAt), "dd MMM yyyy | hh:mm a"),
-		status: v.accountStatus === "Suspend" ? "Inactive" : "Active" as any,
+		status: v.accountStatus === "Suspend" ? "Inactive" : ("Active" as any),
 	}));
 
 	if (isLoading) {

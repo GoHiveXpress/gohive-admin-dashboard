@@ -142,7 +142,7 @@ export default function RefundLogTab() {
 				</div>
 
 				{/* Table */}
-				<div className="border-border border-t overflow-hidden">
+				<div className="border-border overflow-hidden border-t">
 					<Table>
 						<TableHeader>
 							<TableRow className="border-border border-b hover:bg-transparent">
@@ -189,10 +189,10 @@ export default function RefundLogTab() {
 											<div className="flex items-center gap-2">
 												<div className="border-primary size-2.5 shrink-0 rounded-full border-2" />
 												<div className="flex flex-col">
-													<span className="text-muted-foreground text-[10px] leading-none mb-1">
+													<span className="text-muted-foreground mb-1 text-[10px] leading-none">
 														Order ID
 													</span>
-													<span className="border-border rounded border bg-muted/20 px-1.5 py-0.5 text-xs font-semibold">
+													<span className="border-border bg-muted/20 rounded border px-1.5 py-0.5 text-xs font-semibold">
 														#{log.orderId}
 													</span>
 												</div>
@@ -212,10 +212,10 @@ export default function RefundLogTab() {
 												{log.status}
 											</span>
 										</TableCell>
-										<TableCell className="px-4 text-sm max-w-[200px] truncate text-muted-foreground font-medium">
+										<TableCell className="text-muted-foreground max-w-[200px] truncate px-4 text-sm font-medium">
 											{log.reason}
 										</TableCell>
-										<TableCell className="px-4 text-accent text-right font-bold">
+										<TableCell className="text-accent px-4 text-right font-bold">
 											{log.refundAmount}
 										</TableCell>
 									</TableRow>
@@ -226,9 +226,9 @@ export default function RefundLogTab() {
 				</div>
 
 				{/* Footer / Export */}
-				<div className="mt-8 border-t border-border pt-6">
+				<div className="border-border mt-8 border-t pt-6">
 					<div className="text-foreground mb-4 flex items-center gap-2 text-sm font-semibold">
-						<Icon icon="lucide:download" className="size-4 text-secondary" />
+						<Icon icon="lucide:download" className="text-secondary size-4" />
 						Download Refund Logs
 					</div>
 					<TableExport
@@ -279,7 +279,7 @@ export default function RefundLogTab() {
 									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">
 										Customer ID
 									</span>
-									<span className="border-border rounded bg-muted/10 border px-2 py-0.5 text-[10px] font-mono">
+									<span className="border-border bg-muted/10 rounded border px-2 py-0.5 font-mono text-[10px]">
 										{selectedLog.orderDetails?.customer?._id
 											?.slice(-8)
 											.toUpperCase() || "N/A"}
@@ -290,7 +290,7 @@ export default function RefundLogTab() {
 									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">
 										Vendor ID
 									</span>
-									<span className="border-border rounded bg-muted/10 border px-2 py-0.5 text-[10px] font-mono">
+									<span className="border-border bg-muted/10 rounded border px-2 py-0.5 font-mono text-[10px]">
 										{selectedLog.orderDetails?.vendor?._id
 											?.slice(-8)
 											.toUpperCase() || "N/A"}
@@ -301,7 +301,7 @@ export default function RefundLogTab() {
 									<span className="text-muted-foreground w-20 text-[11px] font-medium uppercase">
 										Rider ID
 									</span>
-									<span className="border-border rounded bg-muted/10 border px-2 py-0.5 text-[10px] font-mono">
+									<span className="border-border bg-muted/10 rounded border px-2 py-0.5 font-mono text-[10px]">
 										{selectedLog.orderDetails?.rider?._id
 											?.slice(-8)
 											.toUpperCase() || "N/A"}
@@ -313,7 +313,7 @@ export default function RefundLogTab() {
 								{selectedLog.orderDetails?.items?.map((item: any, idx: number) => (
 									<div
 										key={idx}
-										className="flex justify-between text-sm items-center"
+										className="flex items-center justify-between text-sm"
 									>
 										<span className="text-foreground font-medium">
 											{item.quantity} X {item.name}
@@ -344,12 +344,12 @@ export default function RefundLogTab() {
 								</div>
 							</div>
 
-							<div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+							<div className="border-border mt-4 flex items-center justify-between border-t pt-4">
 								<div className="text-muted-foreground flex items-center gap-1 text-[11px] font-bold uppercase">
 									Total amount:{" "}
-									<Icon icon="lucide:chevron-up" className="size-3 text-accent" />
+									<Icon icon="lucide:chevron-up" className="text-accent size-3" />
 								</div>
-								<span className="text-xl font-black text-foreground">
+								<span className="text-foreground text-xl font-black">
 									₦
 									{selectedLog.orderDetails?.totalAmount?.toLocaleString() ||
 										selectedLog.refundAmount}
@@ -357,9 +357,9 @@ export default function RefundLogTab() {
 							</div>
 						</>
 					) : (
-						<div className="h-48 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center text-muted-foreground text-sm space-y-2">
+						<div className="border-border text-muted-foreground flex h-48 flex-col items-center justify-center space-y-2 rounded-xl border-2 border-dashed text-sm">
 							<Icon icon="lucide:mouse-pointer-click" className="size-6 opacity-20" />
-							<span className="italic font-medium">
+							<span className="font-medium italic">
 								Select a log to view order details
 							</span>
 						</div>
@@ -369,5 +369,3 @@ export default function RefundLogTab() {
 		</div>
 	);
 }
-
-/* eslint-enable */
