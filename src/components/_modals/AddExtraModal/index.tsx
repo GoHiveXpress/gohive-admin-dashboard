@@ -69,7 +69,7 @@ export default function AddExtraModal({
 							</span>
 							<Input
 								defaultValue={initialData?.price}
-								placeholder="00.00"
+								placeholder="0"
 								className="border-border h-12 rounded-xl bg-white pl-8"
 							/>
 						</div>
