@@ -1,13 +1,14 @@
 // src/components/_widgets/OpsKpiStrip/index.tsx
-// Today's figures so far, each compared with the same hours last week, with a
-// 14-day trend line. Data: GET /admin/ops/kpis (refreshed by socket events).
+// Today's figures so far, each compared with the same weekday last week up to
+// the same time (e.g. "vs 12 last Monday"), with a 14-day trend line.
+// Data: GET /admin/ops/kpis (refreshed by socket events).
 
 "use client";
 
 import { Icon } from "@iconify/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOpsKpis } from "@/hooks/useOps";
-import { type OpsChange, type OpsTrendPoint } from "@/types/ops";
+import { type OpsChange, type OpsTrendPoint, type OpsWindowStats } from "@/types/ops";
 
 const naira = new Intl.NumberFormat("en-NG", {
 	style: "currency",
@@ -20,6 +21,10 @@ interface Card {
 	icon: string;
 	value: string;
 	change: number | null;
+	// Raw figures behind the change, so it can be shown as "vs 12 last Monday".
+	current: number;
+	previous: number;
+	previousText: string;
 	// Cancellations going up is bad news, so its colours flip.
 	higherIsWorse?: boolean;
 	footnote?: string;
@@ -53,15 +58,36 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 function ChangeLabel({
-	change,
-	higherIsWorse,
+	card,
+	lastWeekDay,
 }: {
-	change: number | null;
-	higherIsWorse?: boolean;
+	card: Card;
+	// "last Monday": the same weekday as today, up to the same time.
+	lastWeekDay: string;
 }) {
-	if (change === null) {
-		return <span className="text-muted-foreground text-xs">No data last week</span>;
+	const { change, current, previous, previousText, higherIsWorse } = card;
+
+	if (current === 0 && previous === 0) {
+		return (
+			<span className="text-muted-foreground text-xs">
+				Same as {lastWeekDay} ({previousText})
+			</span>
+		);
 	}
+
+	// Last week had none, so there's no percentage to show.
+	if (change === null) {
+		return (
+			<span
+				className={`flex items-center gap-1 text-xs font-medium ${higherIsWorse ? "text-destructive" : "text-secondary"}`}
+			>
+				<Icon icon="ph:arrow-up-right-bold" width="12" />
+				Up from {previousText}
+				<span className="text-muted-foreground font-normal">{lastWeekDay}</span>
+			</span>
+		);
+	}
+
 	const isUp = change > 0;
 	const isGood = change === 0 || (higherIsWorse ? !isUp : isUp);
 	return (
@@ -70,19 +96,23 @@ function ChangeLabel({
 		>
 			<Icon icon={isUp ? "ph:arrow-up-right-bold" : "ph:arrow-down-right-bold"} width="12" />
 			{isUp ? "+" : ""}
-			{change}%<span className="text-muted-foreground font-normal">vs last week</span>
+			{change}%
+			<span className="text-muted-foreground font-normal">
+				vs {previousText} {lastWeekDay}
+			</span>
 		</span>
 	);
 }
 
+const lastWeekDayLabel = (generatedAt: string) =>
+	`last ${new Date(generatedAt).toLocaleDateString("en-NG", {
+		weekday: "long",
+		timeZone: "Africa/Lagos",
+	})}`;
+
 const buildCards = (
-	today: {
-		orders: number;
-		gmv: number;
-		delivered: number;
-		cancelled: number;
-		avgDeliveryMinutes: number | null;
-	},
+	today: OpsWindowStats,
+	lastWeek: OpsWindowStats,
 	change: OpsChange,
 	trend: OpsTrendPoint[],
 ): Card[] => [
@@ -91,6 +121,9 @@ const buildCards = (
 		icon: "ph:shopping-bag-fill",
 		value: today.orders.toLocaleString(),
 		change: change.orders,
+		current: today.orders,
+		previous: lastWeek.orders,
+		previousText: lastWeek.orders.toLocaleString(),
 		series: trend.map((point) => point.orders),
 	},
 	{
@@ -98,6 +131,9 @@ const buildCards = (
 		icon: "ph:wallet-fill",
 		value: naira.format(today.gmv),
 		change: change.gmv,
+		current: today.gmv,
+		previous: lastWeek.gmv,
+		previousText: naira.format(lastWeek.gmv),
 		series: trend.map((point) => point.gmv),
 	},
 	{
@@ -105,6 +141,9 @@ const buildCards = (
 		icon: "ph:check-circle-fill",
 		value: today.delivered.toLocaleString(),
 		change: change.delivered,
+		current: today.delivered,
+		previous: lastWeek.delivered,
+		previousText: lastWeek.delivered.toLocaleString(),
 		footnote:
 			today.avgDeliveryMinutes === null
 				? undefined
@@ -116,6 +155,9 @@ const buildCards = (
 		icon: "ph:x-circle-fill",
 		value: today.cancelled.toLocaleString(),
 		change: change.cancelled,
+		current: today.cancelled,
+		previous: lastWeek.cancelled,
+		previousText: lastWeek.cancelled.toLocaleString(),
 		higherIsWorse: true,
 		series: trend.map((point) => point.cancelled),
 	},
@@ -133,7 +175,8 @@ export default function OpsKpiStrip() {
 		);
 	}
 
-	const cards = kpis ? buildCards(kpis.today, kpis.change, kpis.trend) : [];
+	const lastWeekDay = kpis ? lastWeekDayLabel(kpis.generatedAt) : "";
+	const cards = kpis ? buildCards(kpis.today, kpis.lastWeek, kpis.change, kpis.trend) : [];
 
 	return (
 		<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -165,10 +208,7 @@ export default function OpsKpiStrip() {
 								{card.value}
 							</h2>
 							<div className="flex flex-wrap items-center justify-between gap-2">
-								<ChangeLabel
-									change={card.change}
-									higherIsWorse={card.higherIsWorse}
-								/>
+								<ChangeLabel card={card} lastWeekDay={lastWeekDay} />
 								{card.footnote && (
 									<span className="text-muted-foreground text-xs">
 										{card.footnote}
