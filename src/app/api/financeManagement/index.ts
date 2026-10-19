@@ -5,6 +5,9 @@ import {
 	type VendorPayoutResponse,
 	type RiderEarningResponse,
 	type RefundLogResponse,
+	type RefundRequestListResponse,
+	type RefundRequestStatus,
+	type ProcessRefundResponse,
 } from "@/types/financeManagement";
 
 const ADMIN_BASE = "/admin";
@@ -52,11 +55,24 @@ export const financeApi = {
 		reason: string;
 		cancelOrder?: boolean;
 	}) =>
-		apiClient.post<{
-			success: boolean;
-			message: string;
-			data: { orderId: string; amount: number; cancelled: boolean };
-		}>(`${ADMIN_BASE}/process-refund`, data, "Failed to process refund"),
+		apiClient.post<ProcessRefundResponse>(
+			`${ADMIN_BASE}/process-refund`,
+			data,
+			"Failed to process refund",
+		),
+
+	getRefundRequests: (status: RefundRequestStatus | "all") =>
+		apiClient.get<RefundRequestListResponse>(
+			`${ADMIN_BASE}/refund-requests?status=${status}`,
+			"Failed to load refund approvals",
+		),
+
+	decideRefundRequest: (id: string, decision: "approve" | "reject", note?: string) =>
+		apiClient.post<{ success: boolean; message: string }>(
+			`${ADMIN_BASE}/refund-requests/${id}/${decision}`,
+			{ note },
+			decision === "approve" ? "Failed to approve refund" : "Failed to reject refund",
+		),
 };
 
 /* eslint-enable */

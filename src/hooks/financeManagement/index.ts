@@ -1,6 +1,9 @@
 // src/hooks/financeManagement/index.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { financeApi } from "@/app/api/financeManagement";
+import { type RefundRequestStatus } from "@/types/financeManagement";
+
+export const REFUND_REQUESTS_KEY = ["refundRequests"];
 
 export const useVendorPayouts = (filters: { search?: string; range?: string; date?: string }) => {
 	return useQuery({
@@ -36,10 +39,45 @@ export const useProcessRefund = () => {
 			reason: string;
 			cancelOrder?: boolean;
 		}) => financeApi.processRefund(data),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["refundLogs"] });
-			// A refund can cancel the order
-			queryClient.invalidateQueries({ queryKey: ["admin_orders"] });
-		},
+		// A refund can cancel the order, so orders are refetched too
+		onSuccess: () =>
+			Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["refundLogs"] }),
+				queryClient.invalidateQueries({ queryKey: REFUND_REQUESTS_KEY }),
+				queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+			]),
+	});
+};
+
+export const useRefundRequests = (
+	status: RefundRequestStatus | "all",
+	options: { enabled?: boolean } = {},
+) =>
+	useQuery({
+		queryKey: [...REFUND_REQUESTS_KEY, status],
+		queryFn: () => financeApi.getRefundRequests(status),
+		enabled: options.enabled ?? true,
+		refetchInterval: 60 * 1000,
+	});
+
+export const useDecideRefundRequest = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			id,
+			decision,
+			note,
+		}: {
+			id: string;
+			decision: "approve" | "reject";
+			note?: string;
+		}) => financeApi.decideRefundRequest(id, decision, note),
+		// Refetch whatever happened: a failed approval also changes the request.
+		onSettled: () =>
+			Promise.all([
+				queryClient.invalidateQueries({ queryKey: REFUND_REQUESTS_KEY }),
+				queryClient.invalidateQueries({ queryKey: ["refundLogs"] }),
+				queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+			]),
 	});
 };

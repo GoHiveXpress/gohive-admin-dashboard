@@ -32,6 +32,7 @@ export type RefundLog = {
 	reason: string;
 	refundAmount: string;
 	createdAt: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped order snapshot read by RefundLogTab
 	orderDetails?: any;
 };
 
@@ -48,4 +49,51 @@ export interface RiderEarningResponse {
 export interface RefundLogResponse {
 	success: boolean;
 	data: RefundLog[];
+}
+
+// Refunds over the approval threshold wait for a second admin with Finance access.
+export type RefundRequestStatus = "pending" | "approved" | "rejected" | "withdrawn" | "failed";
+
+export interface RefundRequest {
+	_id: string;
+	order: {
+		_id: string;
+		orderId: string;
+		status: string;
+		totalAmount: number;
+		paymentMethod?: string;
+		createdAt: string;
+	} | null;
+	orderCode?: string;
+	customer: { _id: string; name?: string; phone?: string; email?: string } | null;
+	amount: number;
+	reason?: string;
+	cancelOrder: boolean;
+	status: RefundRequestStatus;
+	requestedBy: string;
+	requestedByName?: string;
+	decidedBy?: string;
+	decidedByName?: string;
+	decidedAt?: string;
+	decisionNote?: string;
+	failureReason?: string;
+	createdAt: string;
+	// Computed for the signed-in admin
+	canApprove: boolean;
+	isMine: boolean;
+}
+
+export interface RefundRequestListResponse {
+	success: boolean;
+	data: RefundRequest[];
+	threshold: number;
+	pendingCount: number;
+}
+
+export interface ProcessRefundResponse {
+	success: boolean;
+	message: string;
+	// true when the refund was held for a second admin instead of paid
+	pendingApproval?: boolean;
+	data: { orderId: string; amount: number; cancelled?: boolean; requestId?: string };
 }

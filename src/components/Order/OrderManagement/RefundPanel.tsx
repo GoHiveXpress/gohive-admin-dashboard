@@ -18,10 +18,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useProcessRefund, useRefundLogs } from "@/hooks/financeManagement";
+import { useProcessRefund, useRefundLogs, useRefundRequests } from "@/hooks/financeManagement";
 
 // Same list as the backend: an order can be cancelled with its refund until delivery
 const CANCELLABLE_STATUSES = ["pending", "placed", "accepted", "preparing", "ready", "picked_up"];
+// Same as REFUND_APPROVAL_THRESHOLD on the backend: above this a second admin approves.
+export const REFUND_APPROVAL_THRESHOLD = 5000;
 
 const naira = (value: number) => `₦${value.toLocaleString()}`;
 
@@ -57,6 +59,12 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 		{ enabled: isSuperAdmin && Boolean(order?.orderId) },
 	);
 	const existingRefund = logs?.data?.find((log) => String(log.dbOrderId) === order?._id);
+	const { data: pendingRequests, isLoading: requestsLoading } = useRefundRequests("pending", {
+		enabled: isSuperAdmin && Boolean(order?._id),
+	});
+	const pendingRequest = pendingRequests?.data?.find(
+		(request) => request.order?._id === order?._id,
+	);
 
 	// Start fresh whenever another order is selected
 	useEffect(() => {
@@ -69,16 +77,13 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 	if (!isSuperAdmin || !order) return null;
 
 	const value = Number(amount);
-	const amountError =
-		amount === ""
-			? "Enter an amount"
-			: !Number.isFinite(value) || value <= 0
-				? "Enter an amount above ₦0"
-				: value > total
-					? `Can't be more than the order total of ${naira(total)}`
-					: null;
+	let amountError: string | null = null;
+	if (amount === "") amountError = "Enter an amount";
+	else if (!Number.isFinite(value) || value <= 0) amountError = "Enter an amount above ₦0";
+	else if (value > total) amountError = `Can't be more than the order total of ${naira(total)}`;
 	const canCancel = CANCELLABLE_STATUSES.includes(order.status);
 	const canSubmit = !amountError && reason.trim().length > 0;
+	const needsApproval = !amountError && value > REFUND_APPROVAL_THRESHOLD;
 
 	const submit = () => {
 		processRefund(
@@ -102,7 +107,7 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 	};
 
 	let body: React.ReactNode;
-	if (logsLoading) {
+	if (logsLoading || requestsLoading) {
 		body = (
 			<div className="flex justify-center py-4">
 				<Loader2 className="text-secondary animate-spin" />
@@ -121,10 +126,25 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 				</p>
 			</div>
 		);
+	} else if (pendingRequest) {
+		body = (
+			<div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
+				<p className="text-foreground font-medium">
+					{naira(pendingRequest.amount)} refund waiting for a second admin
+				</p>
+				<p className="text-muted-foreground mt-1">
+					Requested by {pendingRequest.requestedByName ?? "an admin"} on{" "}
+					{new Date(pendingRequest.createdAt).toLocaleString()}
+				</p>
+				<p className="text-muted-foreground mt-2 text-xs">
+					Approve or reject it in Finance → Refund Approvals.
+				</p>
+			</div>
+		);
 	} else if (order.paymentStatus !== "completed") {
 		body = (
 			<p className="text-muted-foreground rounded-lg border p-4 text-sm">
-				This order hasn&apos;t been paid (payment {order.paymentStatus || "unknown"}), so
+				This order hasn&apos;t been paid (payment {order.paymentStatus ?? "unknown"}), so
 				there is nothing to refund.
 			</p>
 		);
@@ -149,7 +169,7 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 					>
 						{amountError && amount !== ""
 							? amountError
-							: `Order total ${naira(total)}, paid by ${order.paymentMethod || "unknown"}`}
+							: `Order total ${naira(total)}, paid by ${order.paymentMethod ?? "unknown"}`}
 					</p>
 				</div>
 
@@ -167,6 +187,13 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 						The customer sees this in their wallet history.
 					</p>
 				</div>
+
+				{needsApproval && (
+					<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800">
+						Refunds over {naira(REFUND_APPROVAL_THRESHOLD)} need a second admin with
+						Finance access to approve them before the money moves.
+					</p>
+				)}
 
 				{canCancel && (
 					<div className="flex items-start gap-2">
@@ -186,7 +213,7 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 					onClick={() => setConfirming(true)}
 					className="bg-secondary hover:bg-secondary/90 h-11 w-full text-base font-medium text-white"
 				>
-					Process Refund
+					{needsApproval ? "Request Refund" : "Process Refund"}
 				</Button>
 			</div>
 		);
@@ -201,15 +228,28 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>
-							Refund {Number.isFinite(value) ? naira(value) : ""}?
+							{needsApproval ? "Request a refund of " : "Refund "}
+							{Number.isFinite(value) ? naira(value) : ""}?
 						</DialogTitle>
-						<DialogDescription>
-							{naira(value || 0)} goes to {order.customer?.name || "the customer"}
-							&apos;s GoHive wallet straight away for order #
-							{order.orderId?.slice(-6) || order._id.slice(-6)}.
-							{canCancel && cancelOrder && " The order will also be cancelled."} This
-							can&apos;t be undone.
-						</DialogDescription>
+						{needsApproval ? (
+							<DialogDescription>
+								Nothing is paid yet. Another admin with Finance access must approve
+								this before {naira(value || 0)} goes to{" "}
+								{order.customer?.name ?? "the customer"}&apos;s wallet for order #
+								{order.orderId?.slice(-6) ?? order._id.slice(-6)}.
+								{canCancel &&
+									cancelOrder &&
+									" The order is cancelled when the refund is approved."}
+							</DialogDescription>
+						) : (
+							<DialogDescription>
+								{naira(value || 0)} goes to {order.customer?.name ?? "the customer"}
+								&apos;s GoHive wallet straight away for order #
+								{order.orderId?.slice(-6) ?? order._id.slice(-6)}.
+								{canCancel && cancelOrder && " The order will also be cancelled."}{" "}
+								This can&apos;t be undone.
+							</DialogDescription>
+						)}
 					</DialogHeader>
 					<DialogFooter>
 						<Button
@@ -225,7 +265,7 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 							className="bg-secondary hover:bg-secondary/90 text-white"
 						>
 							{isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-							Confirm refund
+							{needsApproval ? "Send for approval" : "Confirm refund"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

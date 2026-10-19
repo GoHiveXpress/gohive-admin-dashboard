@@ -5,18 +5,26 @@
 import React, { useState } from "react";
 import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { Icon } from "@iconify/react";
+import { useRefundRequests } from "@/hooks/financeManagement";
 import VendorPayoutTab from "./VendorPayoutTab";
 import RiderEarningTab from "./RiderEarningTab";
 import RefundLogTab from "./RefundLogTab";
-
-const MAIN_TABS: TabItem[] = [
-	{ id: "vendor-payouts", label: "Vendor Payouts" },
-	{ id: "rider-earnings", label: "Rider Earnings" },
-	{ id: "refund-logs", label: "Refund Logs" },
-];
+import RefundApprovalTab from "./RefundApprovalTab";
 
 export default function FinanceManagement() {
 	const [activeTab, setActiveTab] = useState("vendor-payouts");
+	const { data: pendingRefunds } = useRefundRequests("pending");
+	const pendingCount = pendingRefunds?.pendingCount ?? 0;
+
+	const MAIN_TABS: TabItem[] = [
+		{ id: "vendor-payouts", label: "Vendor Payouts" },
+		{ id: "rider-earnings", label: "Rider Earnings" },
+		{ id: "refund-logs", label: "Refund Logs" },
+		{
+			id: "refund-approvals",
+			label: pendingCount ? `Refund Approvals (${pendingCount})` : "Refund Approvals",
+		},
+	];
 
 	return (
 		<div className="flex size-full flex-col gap-6">
@@ -43,6 +51,7 @@ export default function FinanceManagement() {
 				{activeTab === "vendor-payouts" && <VendorPayoutTab />}
 				{activeTab === "rider-earnings" && <RiderEarningTab />}
 				{activeTab === "refund-logs" && <RefundLogTab />}
+				{activeTab === "refund-approvals" && <RefundApprovalTab />}
 			</div>
 		</div>
 	);
