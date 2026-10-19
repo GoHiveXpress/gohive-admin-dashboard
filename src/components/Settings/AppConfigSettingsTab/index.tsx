@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useFeeConfig, useUpdateFeeConfig } from "@/hooks/integrationSettings";
 import { useToast } from "@/hooks/useToast";
+import FeeHistory from "./FeeHistory";
 
 type FeeFormState = {
 	serviceFeePercent: string;
@@ -76,10 +77,7 @@ export default function AppConfigSettingsTab() {
 		const serviceFeePercent = parseField(form.serviceFeePercent, "Service fee %");
 		const deliveryBaseFee = parseField(form.deliveryBaseFee, "Base delivery fee");
 		const baseDistanceKm = parseField(form.baseDistanceKm, "Base distance");
-		const extraBlockDistanceKm = parseField(
-			form.extraBlockDistanceKm,
-			"Extra block distance",
-		);
+		const extraBlockDistanceKm = parseField(form.extraBlockDistanceKm, "Extra block distance");
 		const extraBlockFee = parseField(form.extraBlockFee, "Extra block fee");
 		const maxDistanceKm = parseField(form.maxDistanceKm, "Max distance");
 
@@ -112,7 +110,9 @@ export default function AppConfigSettingsTab() {
 	return (
 		<div className="border-border rounded-[24px] border bg-white p-8 shadow-sm">
 			<div className="mb-8 flex items-center justify-between">
-				<h3 className="text-foreground/80 text-xl font-medium">Delivery and Service Fees</h3>
+				<h3 className="text-foreground/80 text-xl font-medium">
+					Delivery and Service Fees
+				</h3>
 				{/* Using a relative container for the avatar to match screenshot position roughly */}
 				<div className="relative">
 					<div className="size-12 overflow-hidden rounded-full border-2 border-white bg-gray-200 shadow-sm">
@@ -168,7 +168,9 @@ export default function AppConfigSettingsTab() {
 				</div>
 
 				<div className="space-y-2">
-					<label className="text-muted-foreground text-sm">Extra block distance (km)</label>
+					<label className="text-muted-foreground text-sm">
+						Extra block distance (km)
+					</label>
 					<Input
 						value={form.extraBlockDistanceKm}
 						onChange={(e) => setField("extraBlockDistanceKm", e.target.value)}
@@ -188,7 +190,9 @@ export default function AppConfigSettingsTab() {
 				</div>
 
 				<div className="space-y-2">
-					<label className="text-muted-foreground text-sm">Max billable distance (km)</label>
+					<label className="text-muted-foreground text-sm">
+						Max billable distance (km)
+					</label>
 					<Input
 						value={form.maxDistanceKm}
 						onChange={(e) => setField("maxDistanceKm", e.target.value)}
@@ -199,22 +203,21 @@ export default function AppConfigSettingsTab() {
 			</div>
 
 			<div className="text-muted-foreground mt-4 text-xs">
-				Distance pricing uses: base fee for base distance, then extra block fee per extra block distance.
+				Distance pricing uses: base fee for base distance, then extra block fee per extra
+				block distance.
 			</div>
 
 			<div className="mt-10 flex justify-center">
 				<Button
 					onClick={handleSave}
-					disabled={
-						isLoading ||
-						updateFeeConfigMutation.isPending ||
-						!formChanged
-					}
+					disabled={isLoading || updateFeeConfigMutation.isPending || !formChanged}
 					className="bg-secondary hover:bg-secondary/90 h-12 w-full max-w-md rounded-lg text-base font-medium text-white"
 				>
 					{updateFeeConfigMutation.isPending ? "Saving..." : "Apply Changes"}
 				</Button>
 			</div>
+
+			<FeeHistory />
 		</div>
 	);
 }

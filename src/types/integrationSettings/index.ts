@@ -68,3 +68,27 @@ export interface IntegrationSingleResponse<T> {
 	message?: string;
 	data: T;
 }
+
+export type FeeField =
+	| "serviceFeePercent"
+	| "deliveryBaseFee"
+	| "baseDistanceKm"
+	| "extraBlockDistanceKm"
+	| "extraBlockFee"
+	| "maxDistanceKm";
+
+export interface FeeChange {
+	// "default" or a state name
+	scope: string;
+	// A fee field, or "added" / "removed" for a whole state override
+	field: FeeField | "added" | "removed";
+	from: number | FeeStateOverride | null;
+	to: number | FeeStateOverride | null;
+}
+
+export interface FeeHistoryEntry {
+	_id: string;
+	changedByName?: string;
+	changes: FeeChange[];
+	createdAt: string;
+}

@@ -5,11 +5,14 @@ import {
 	type IntegrationListResponse,
 	type IntegrationSingleResponse,
 	type UpdateFeeConfigPayload,
+	type FeeHistoryEntry,
 	type WebhookItem,
 } from "@/types/integrationSettings";
 
 const ADMIN_BASE = "/admin";
 
+// Named export: hooks import it as { integrationSettingsApi }.
+// eslint-disable-next-line import/prefer-default-export
 export const integrationSettingsApi = {
 	getApiKeys: () =>
 		apiClient.get<IntegrationListResponse<ApiKeyItem>>(
@@ -43,6 +46,12 @@ export const integrationSettingsApi = {
 			"Failed to fetch fee configuration",
 		),
 
+	getFeeHistory: () =>
+		apiClient.get<IntegrationListResponse<FeeHistoryEntry>>(
+			`${ADMIN_BASE}/fee-config/history`,
+			"Failed to fetch fee history",
+		),
+
 	updateFeeConfig: (payload: UpdateFeeConfigPayload) =>
 		apiClient.put<IntegrationSingleResponse<FeeConfig>, UpdateFeeConfigPayload>(
 			`${ADMIN_BASE}/fee-config`,
@@ -57,18 +66,19 @@ export const integrationSettingsApi = {
 		),
 
 	createWebhook: (payload: { url: string; description?: string }) =>
-		apiClient.post<IntegrationSingleResponse<WebhookItem>, { url: string; description?: string }>(
-			`${ADMIN_BASE}/webhooks`,
-			payload,
-			"Failed to create webhook",
-		),
+		apiClient.post<
+			IntegrationSingleResponse<WebhookItem>,
+			{ url: string; description?: string }
+		>(`${ADMIN_BASE}/webhooks`, payload, "Failed to create webhook"),
 
-	updateWebhook: (id: string, payload: { url?: string; description?: string; status?: "Active" | "Inactive" }) =>
-		apiClient.put<IntegrationSingleResponse<WebhookItem>, { url?: string; description?: string; status?: "Active" | "Inactive" }>(
-			`${ADMIN_BASE}/webhooks/${id}`,
-			payload,
-			"Failed to update webhook",
-		),
+	updateWebhook: (
+		id: string,
+		payload: { url?: string; description?: string; status?: "Active" | "Inactive" },
+	) =>
+		apiClient.put<
+			IntegrationSingleResponse<WebhookItem>,
+			{ url?: string; description?: string; status?: "Active" | "Inactive" }
+		>(`${ADMIN_BASE}/webhooks/${id}`, payload, "Failed to update webhook"),
 
 	deleteWebhook: (id: string) =>
 		apiClient.delete<{ success: boolean; message: string }>(

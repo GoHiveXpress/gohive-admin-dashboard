@@ -18,7 +18,7 @@ export const useCreateApiKey = () => {
 		mutationFn: (description: string) => integrationSettingsApi.createApiKey(description),
 		onSuccess: () => {
 			toast.success("API key generated successfully");
-			queryClient.invalidateQueries({ queryKey: ["integration-api-keys"] });
+			return queryClient.invalidateQueries({ queryKey: ["integration-api-keys"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
@@ -35,7 +35,7 @@ export const useUpdateApiKeyStatus = () => {
 			integrationSettingsApi.updateApiKeyStatus(id, status),
 		onSuccess: () => {
 			toast.success("API key status updated");
-			queryClient.invalidateQueries({ queryKey: ["integration-api-keys"] });
+			return queryClient.invalidateQueries({ queryKey: ["integration-api-keys"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
@@ -51,7 +51,7 @@ export const useDeleteApiKey = () => {
 		mutationFn: (id: string) => integrationSettingsApi.deleteApiKey(id),
 		onSuccess: () => {
 			toast.success("API key deleted");
-			queryClient.invalidateQueries({ queryKey: ["integration-api-keys"] });
+			return queryClient.invalidateQueries({ queryKey: ["integration-api-keys"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
@@ -66,6 +66,13 @@ export const useFeeConfig = () => {
 	});
 };
 
+export const useFeeHistory = () => {
+	return useQuery({
+		queryKey: ["integration-fee-history"],
+		queryFn: integrationSettingsApi.getFeeHistory,
+	});
+};
+
 export const useUpdateFeeConfig = () => {
 	const queryClient = useQueryClient();
 	const toast = useToast();
@@ -75,7 +82,10 @@ export const useUpdateFeeConfig = () => {
 			integrationSettingsApi.updateFeeConfig(payload),
 		onSuccess: () => {
 			toast.success("Fee configuration updated");
-			queryClient.invalidateQueries({ queryKey: ["integration-fee-config"] });
+			return Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["integration-fee-config"] }),
+				queryClient.invalidateQueries({ queryKey: ["integration-fee-history"] }),
+			]);
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
@@ -99,7 +109,7 @@ export const useCreateWebhook = () => {
 			integrationSettingsApi.createWebhook(payload),
 		onSuccess: () => {
 			toast.success("Webhook created");
-			queryClient.invalidateQueries({ queryKey: ["integration-webhooks"] });
+			return queryClient.invalidateQueries({ queryKey: ["integration-webhooks"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
@@ -112,11 +122,16 @@ export const useUpdateWebhook = () => {
 	const toast = useToast();
 
 	return useMutation({
-		mutationFn: ({ id, payload }: { id: string; payload: { url?: string; description?: string; status?: "Active" | "Inactive" } }) =>
-			integrationSettingsApi.updateWebhook(id, payload),
+		mutationFn: ({
+			id,
+			payload,
+		}: {
+			id: string;
+			payload: { url?: string; description?: string; status?: "Active" | "Inactive" };
+		}) => integrationSettingsApi.updateWebhook(id, payload),
 		onSuccess: () => {
 			toast.success("Webhook updated");
-			queryClient.invalidateQueries({ queryKey: ["integration-webhooks"] });
+			return queryClient.invalidateQueries({ queryKey: ["integration-webhooks"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
@@ -132,7 +147,7 @@ export const useDeleteWebhook = () => {
 		mutationFn: (id: string) => integrationSettingsApi.deleteWebhook(id),
 		onSuccess: () => {
 			toast.success("Webhook deleted");
-			queryClient.invalidateQueries({ queryKey: ["integration-webhooks"] });
+			return queryClient.invalidateQueries({ queryKey: ["integration-webhooks"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
