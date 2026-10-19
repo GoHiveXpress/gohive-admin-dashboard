@@ -1,12 +1,25 @@
 // src/hooks/supportManagement/index.ts
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, no-console */
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
+import {
+	type InfiniteData,
+	type QueryClient,
+	useInfiniteQuery,
+	useQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { supportApi } from "@/app/api/supportManagement";
 import { useToast } from "@/hooks/useToast";
 import { io, type Socket } from "socket.io-client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAuthToken } from "@/utils/auth";
-import { type ISupportChat, type ISupportUser } from "@/types/supportManagement";
+import {
+	type IChatActivity,
+	type IChatListParams,
+	type IGetAllChatsResponse,
+	type ISupportChat,
+	type ISupportUser,
+} from "@/types/supportManagement";
 
 const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
 
@@ -21,18 +34,109 @@ const deletedUser = (chat: ISupportChat): ISupportUser => ({
 	role: chat.role,
 });
 
-export const useAllChats = () => {
-	return useQuery({
-		queryKey: ["support-chats"],
-		queryFn: supportApi.getAllChats,
+type ChatPages = InfiniteData<IGetAllChatsResponse, string | undefined>;
+
+const USER_ROLES = new Set(["customer", "vendor", "rider"]);
+
+/**
+ * One page of chats at a time (newest activity first), filtered on the server by
+ * status, role and search. "Load more" fetches the next page.
+ */
+export const useAllChats = (params: IChatListParams) => {
+	return useInfiniteQuery({
+		queryKey: ["support-chats", params],
+		queryFn: ({ pageParam }) => supportApi.getAllChats({ ...params, before: pageParam }),
+		initialPageParam: undefined as string | undefined,
+		getNextPageParam: (last) => (last.hasMore ? (last.nextBefore ?? undefined) : undefined),
 		select: (res) => ({
-			...res,
-			data: (res.data ?? []).map((chat) =>
-				chat.user ? chat : { ...chat, user: deletedUser(chat) },
-			),
+			chats: res.pages
+				.flatMap((page) => page.data ?? [])
+				.map((chat) => (chat.user ? chat : { ...chat, user: deletedUser(chat) })),
+			counts: res.pages[0]?.counts,
 		}),
 		// The socket keeps the list live; this is a fallback if it drops
-		refetchInterval: 30_000,
+		refetchInterval: 60_000,
+	});
+};
+
+// Apply a change to every cached copy of one chat. Returns false if no list has it.
+const patchCachedChat = (
+	queryClient: QueryClient,
+	chatId: string,
+	patch: (chat: ISupportChat) => ISupportChat,
+) => {
+	let found = false;
+	queryClient.setQueriesData<ChatPages>({ queryKey: ["support-chats"] }, (old) => {
+		if (!old) return old;
+		return {
+			...old,
+			pages: old.pages.map((page) => ({
+				...page,
+				data: (page.data ?? []).map((chat) => {
+					if (chat._id !== chatId) return chat;
+					found = true;
+					return patch(chat);
+				}),
+			})),
+		};
+	});
+	return found;
+};
+
+/** Marks the chat read for this agent and clears its unread badge straight away. */
+export const useMarkChatRead = () => {
+	const queryClient = useQueryClient();
+	return (chatId: string) => {
+		patchCachedChat(queryClient, chatId, (chat) => ({ ...chat, unreadCount: 0 }));
+		supportApi.markRead(chatId).catch(() => {
+			// Not worth bothering the agent; the badge comes back on the next refresh
+		});
+	};
+};
+
+export const useChatContext = (chatId?: string) => {
+	return useQuery({
+		queryKey: ["support-chat-context", chatId],
+		queryFn: () => supportApi.getChatContext(chatId!),
+		enabled: !!chatId,
+		staleTime: 60_000,
+	});
+};
+
+export const useQuickReplies = () => {
+	return useQuery({
+		queryKey: ["support-quick-replies"],
+		queryFn: supportApi.getQuickReplies,
+		staleTime: 5 * 60_000,
+	});
+};
+
+export const useCreateQuickReply = () => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	return useMutation({
+		mutationFn: supportApi.createQuickReply,
+		onSuccess: () => {
+			toast.success("Quick reply saved");
+			queryClient.invalidateQueries({ queryKey: ["support-quick-replies"] });
+		},
+		onError: (error: any) => {
+			toast.error(error.response?.data?.message ?? "Couldn't save the quick reply");
+		},
+	});
+};
+
+export const useDeleteQuickReply = () => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	return useMutation({
+		mutationFn: supportApi.deleteQuickReply,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["support-quick-replies"] });
+		},
+		onError: (error: any) => {
+			toast.error(error.response?.data?.message ?? "Couldn't delete the quick reply");
+		},
 	});
 };
 
@@ -109,6 +213,9 @@ export const useSupportSocket = (chatId?: string) => {
 	const queryClient = useQueryClient();
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [isConnected, setIsConnected] = useState(false);
+	// The open chat, read inside the socket handler without reconnecting
+	const openChatId = useRef(chatId);
+	openChatId.current = chatId;
 
 	useEffect(() => {
 		const s = io(SOCKET_URL, {
@@ -128,8 +235,28 @@ export const useSupportSocket = (chatId?: string) => {
 			console.warn("Support socket connection failed:", err.message);
 		});
 		// Any chat changed (new chat, message, agent request, join, close)
-		s.on("support_chat_activity", () => {
-			queryClient.invalidateQueries({ queryKey: ["support-chats"] });
+		// Patch the chat in place; only refetch when it isn't in the list yet (a new chat)
+		s.on("support_chat_activity", (activity: IChatActivity) => {
+			const changedId = String(activity.chatId);
+			const fromUser = !!activity.senderRole && USER_ROLES.has(activity.senderRole);
+			const found = patchCachedChat(queryClient, changedId, (chat) => ({
+				...chat,
+				status: activity.status ?? chat.status,
+				lastMessage: activity.lastMessage ?? chat.lastMessage,
+				admin: activity.admin ?? undefined,
+				adminName: activity.adminName ?? undefined,
+				agentRequestedAt: activity.agentRequestedAt,
+				waitingSince: activity.waitingSince,
+				lastUserMessageAt: activity.lastUserMessageAt ?? chat.lastUserMessageAt,
+				updatedAt: activity.updatedAt ?? chat.updatedAt,
+				unreadCount:
+					fromUser && changedId !== openChatId.current
+						? (chat.unreadCount ?? 0) + 1
+						: chat.unreadCount,
+			}));
+			if (!found || activity.isNew) {
+				queryClient.invalidateQueries({ queryKey: ["support-chats"] });
+			}
 		});
 
 		setSocket(s);

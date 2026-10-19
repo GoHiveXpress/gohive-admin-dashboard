@@ -2,14 +2,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, import/prefer-default-export */
 import axiosInstance from "@/lib/axiosInstance";
 import {
+	type IChatContext,
+	type IChatListParams,
+	type IQuickReply,
 	type IGetAllChatsResponse,
 	type IGetChatHistoryResponse,
 	type ISendMessageResponse,
 } from "@/types/supportManagement";
 
 export const supportApi = {
-	getAllChats: async (): Promise<IGetAllChatsResponse> => {
-		const response = await axiosInstance.get("/support-chat/admin/all");
+	getAllChats: async (
+		params: IChatListParams & { before?: string } = {},
+	): Promise<IGetAllChatsResponse> => {
+		const response = await axiosInstance.get("/support-chat/admin/all", { params });
+		return response.data;
+	},
+
+	markRead: async (chatId: string): Promise<any> => {
+		const response = await axiosInstance.post(`/support-chat/admin/read/${chatId}`);
+		return response.data;
+	},
+
+	getChatContext: async (chatId: string): Promise<{ success: boolean; data: IChatContext }> => {
+		const response = await axiosInstance.get(`/support-chat/admin/context/${chatId}`);
+		return response.data;
+	},
+
+	getQuickReplies: async (): Promise<{ success: boolean; data: IQuickReply[] }> => {
+		const response = await axiosInstance.get("/support-chat/admin/quick-replies");
+		return response.data;
+	},
+
+	createQuickReply: async (payload: {
+		title: string;
+		body: string;
+	}): Promise<{ success: boolean; data: IQuickReply }> => {
+		const response = await axiosInstance.post("/support-chat/admin/quick-replies", payload);
+		return response.data;
+	},
+
+	deleteQuickReply: async (id: string): Promise<any> => {
+		const response = await axiosInstance.delete(`/support-chat/admin/quick-replies/${id}`);
 		return response.data;
 	},
 

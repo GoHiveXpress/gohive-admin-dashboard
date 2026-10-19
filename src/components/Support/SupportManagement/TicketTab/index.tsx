@@ -37,9 +37,15 @@ export default function TicketTab() {
 	const [messageText, setMessageText] = useState("");
 	const scrollRef = useRef<HTMLDivElement>(null);
 
-	// 1. Fetch all chats
-	const { data: chatsData, isLoading: chatsLoading } = useAllChats();
-	const chats = useMemo(() => chatsData?.data || [], [chatsData]);
+	// 1. Fetch chats (newest first, a page at a time)
+	const {
+		data: chatsData,
+		isLoading: chatsLoading,
+		hasNextPage,
+		fetchNextPage,
+		isFetchingNextPage,
+	} = useAllChats({ status: statusFilter === "all" ? undefined : statusFilter });
+	const chats = useMemo(() => chatsData?.chats ?? [], [chatsData]);
 
 	// 2. Filter chats for the category
 	const filteredChats = useMemo(() => {
@@ -149,7 +155,7 @@ export default function TicketTab() {
 			<div className="flex flex-wrap items-start gap-3 xl:items-center xl:gap-4">
 				<div className="flex gap-2">
 					{(["customer", "vendor", "rider"] as const).map((role) => {
-						const count = chats.filter((c) => c.role === role).length;
+						const count = chatsData?.counts?.[role] ?? 0;
 						return (
 							<Button
 								key={role}
@@ -193,7 +199,7 @@ export default function TicketTab() {
 							)}
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+					<DropdownMenuContent align="start" className="z-50 w-48 bg-white">
 						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuCheckboxItem
@@ -338,6 +344,16 @@ export default function TicketTab() {
 								</div>
 							</div>
 						))
+					)}
+					{hasNextPage && (
+						<Button
+							variant="outline"
+							className="w-full"
+							onClick={() => fetchNextPage()}
+							disabled={isFetchingNextPage}
+						>
+							{isFetchingNextPage ? "Loading..." : "Load older tickets"}
+						</Button>
 					)}
 				</div>
 

@@ -10,6 +10,7 @@ import {
 	useSupportSocket,
 	useJoinChat,
 	useCloseChat,
+	useMarkChatRead,
 } from "@/hooks/supportManagement";
 import { useAdminProfile } from "@/hooks/userManagement";
 import { format } from "date-fns";
@@ -21,13 +22,42 @@ import {
 import { toast } from "sonner";
 import { supportApi } from "@/app/api/supportManagement";
 import ChatMessageContent from "../ChatMessageContent";
+import QuickReplies from "./QuickReplies";
+import ChatContext from "./ChatContext";
+
+const SEARCH_DELAY_MS = 350;
+const MIN_SEARCH_LENGTH = 2;
 
 // Add a message unless it is already shown (socket + refetch can both deliver it)
 const addMessage = (list: ISupportMessage[], message: ISupportMessage) =>
 	list.some((m) => m._id === message._id) ? list : [...list, message];
 
 const isWaitingForAgent = (chat: ISupportChat) =>
-	chat.status === "active" && !!chat.agentRequestedAt && !chat.admin;
+	chat.status === "active" && !chat.admin && !!(chat.waitingSince ?? chat.agentRequestedAt);
+
+// "Waiting 4m", "Waiting 1h 20m" for chats nobody has picked up
+const waitingLabel = (chat: ISupportChat, now: number) => {
+	const since = chat.waitingSince ?? chat.agentRequestedAt;
+	if (!since) return "Waiting";
+	const minutes = Math.max(0, Math.floor((now - new Date(since).getTime()) / 60_000));
+	if (minutes < 1) return "Waiting <1m";
+	if (minutes < 60) return `Waiting ${minutes}m`;
+	const hours = Math.floor(minutes / 60);
+	const rest = minutes % 60;
+	return rest ? `Waiting ${hours}h ${rest}m` : `Waiting ${hours}h`;
+};
+
+const waitingStart = (chat: ISupportChat) =>
+	new Date(chat.waitingSince ?? chat.agentRequestedAt ?? chat.updatedAt).getTime();
+
+// Waiting chats first (longest wait at the top), then newest activity
+const compareChats = (a: ISupportChat, b: ISupportChat) => {
+	const aWaiting = isWaitingForAgent(a);
+	const bWaiting = isWaitingForAgent(b);
+	if (aWaiting !== bWaiting) return aWaiting ? -1 : 1;
+	if (aWaiting) return waitingStart(a) - waitingStart(b);
+	return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+};
 
 const chatAdminId = (chat?: ISupportChat) => {
 	if (!chat?.admin) return null;
@@ -60,30 +90,65 @@ export default function LiveChatTab() {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const [debouncedSearch, setDebouncedSearch] = useState("");
+	// Ticks so the "Waiting Xm" badges stay current
+	const [now, setNow] = useState(() => Date.now());
 
-	// 1. Fetch all chats
-	const { data: chatsData, isLoading: chatsLoading } = useAllChats();
-	const chats = useMemo(() => chatsData?.data || [], [chatsData]);
+	useEffect(() => {
+		const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), SEARCH_DELAY_MS);
+		return () => clearTimeout(timer);
+	}, [searchQuery]);
 
-	// 2. Filter chats for the list (status, category, search); waiting chats first
-	const filteredChats = useMemo(() => {
-		const query = searchQuery.trim().toLowerCase();
-		return chats
-			.filter((chat) => {
-				const matchesCategory = activeCategory === "all" || chat.role === activeCategory;
-				const matchesSearch =
-					chat.user.name.toLowerCase().includes(query) ||
-					chat._id.toLowerCase().includes(query);
-				return matchesCategory && matchesSearch && chat.status === statusFilter;
-			})
-			.sort((a, b) => Number(isWaitingForAgent(b)) - Number(isWaitingForAgent(a)));
-	}, [chats, activeCategory, searchQuery, statusFilter]);
+	useEffect(() => {
+		const timer = setInterval(() => setNow(Date.now()), 30_000);
+		return () => clearInterval(timer);
+	}, []);
 
-	// 3. Selective Chat Data
-	const selectedChat = useMemo(
-		() => chats.find((c) => c._id === selectedChatId),
-		[chats, selectedChatId],
+	// 1. Fetch chats: the server filters by status, role and search (name, email,
+	// business name, phone or message text), a page at a time
+	const {
+		data: chatsData,
+		isLoading: chatsLoading,
+		isFetching: chatsFetching,
+		hasNextPage,
+		fetchNextPage,
+		isFetchingNextPage,
+	} = useAllChats({
+		status: statusFilter,
+		role: activeCategory === "all" ? undefined : activeCategory,
+		search: debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined,
+	});
+	const chats = useMemo(() => chatsData?.chats ?? [], [chatsData]);
+
+	// 2. Live updates patch chats in place, so re-check status/role and re-sort here
+	const filteredChats = useMemo(
+		() =>
+			chats
+				.filter(
+					(chat) =>
+						chat.status === statusFilter &&
+						(activeCategory === "all" || chat.role === activeCategory),
+				)
+				.sort(compareChats),
+		[chats, activeCategory, statusFilter],
 	);
+
+	// 3. The open chat; kept even if a new search or filter hides it from the list
+	const lastSelected = useRef<ISupportChat | undefined>(undefined);
+	const selectedChat = useMemo(() => {
+		const found = chats.find((c) => c._id === selectedChatId);
+		if (found) return found;
+		return lastSelected.current?._id === selectedChatId ? lastSelected.current : undefined;
+	}, [chats, selectedChatId]);
+	lastSelected.current = selectedChat;
+
+	// Opening a chat marks it read for this agent
+	const markRead = useMarkChatRead();
+	useEffect(() => {
+		if (selectedChatId) markRead(selectedChatId);
+		// markRead is a new function each render; only re-run when the chat changes
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedChatId]);
 
 	// 4. Fetch History
 	const { data: historyData, isLoading: historyLoading } = useChatHistory(selectedChatId || "");
@@ -112,7 +177,11 @@ export default function LiveChatTab() {
 		const onMessage = (newMessage: ISupportMessage) => {
 			if (String(newMessage.chat) !== selectedChatId) return;
 			setMessages((prev) => addMessage(prev, newMessage));
-			if (!newMessage.isSupportResponse) setUserTyping(false);
+			if (!newMessage.isSupportResponse) {
+				setUserTyping(false);
+				// The agent is looking at it, so it's read
+				markRead(selectedChatId);
+			}
 		};
 		const onClosed = (data: { chatId: string }) => {
 			if (String(data.chatId) === selectedChatId) {
@@ -135,6 +204,7 @@ export default function LiveChatTab() {
 			socket.off("chat_closed", onClosed);
 			socket.off("typing_status", onTyping);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [socket, selectedChatId]);
 
 	// Auto-scroll to bottom
@@ -259,9 +329,7 @@ export default function LiveChatTab() {
 				{/* Filters */}
 				<div className="flex shrink-0 flex-wrap gap-2">
 					{(["customer", "vendor", "rider"] as const).map((role) => {
-						const count = chats.filter(
-							(c) => c.role === role && c.status === statusFilter,
-						).length;
+						const count = chatsData?.counts?.[role] ?? 0;
 						return (
 							<Button
 								key={role}
@@ -286,7 +354,8 @@ export default function LiveChatTab() {
 							className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2"
 						/>
 						<Input
-							placeholder="Search"
+							placeholder="Name, email, phone or message"
+							aria-label="Search conversations"
 							className="h-10 bg-transparent pl-9"
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
@@ -339,6 +408,12 @@ export default function LiveChatTab() {
 						title={isConnected ? "Live updates on" : "Reconnecting..."}
 						className={`ml-auto size-2 rounded-full ${isConnected ? "bg-green-500" : "bg-amber-500"}`}
 					/>
+					{chatsFetching && !chatsLoading && (
+						<Icon
+							icon="lucide:loader-2"
+							className="text-muted-foreground size-4 animate-spin"
+						/>
+					)}
 				</div>
 
 				{/* List Items (Scrollable) */}
@@ -349,7 +424,9 @@ export default function LiveChatTab() {
 						</div>
 					) : filteredChats.length === 0 ? (
 						<div className="text-muted-foreground py-10 text-center text-sm">
-							No {statusFilter} conversations
+							{debouncedSearch.length >= MIN_SEARCH_LENGTH
+								? `No ${statusFilter} conversations match "${debouncedSearch}"`
+								: `No ${statusFilter} conversations`}
 						</div>
 					) : (
 						filteredChats.map((chat) => (
@@ -382,27 +459,56 @@ export default function LiveChatTab() {
 									/>
 								</div>
 								<div className="min-w-0 flex-1">
-									<div className="mb-0.5 flex items-center justify-between">
-										<span className="truncate text-sm font-medium">
-											{chat.user.name}
+									<div className="mb-0.5 flex items-center justify-between gap-2">
+										<span
+											className={`truncate text-sm ${chat.unreadCount ? "font-semibold" : "font-medium"}`}
+										>
+											{chat.user.vendorProfile?.businessName ??
+												chat.user.name}
 										</span>
-										<span className="text-muted-foreground text-[10px]">
+										<span
+											className={`shrink-0 text-[10px] ${chat.unreadCount ? "text-primary font-semibold" : "text-muted-foreground"}`}
+										>
 											{format(new Date(chat.updatedAt), "h:mm a")}
 										</span>
 									</div>
-									<div className="flex items-center justify-between">
-										<span className="text-muted-foreground truncate text-xs">
+									<div className="flex items-center justify-between gap-2">
+										<span
+											className={`truncate text-xs ${chat.unreadCount ? "text-foreground" : "text-muted-foreground"}`}
+										>
 											{chat.lastMessage || "No messages yet"}
 										</span>
-										{isWaitingForAgent(chat) && (
-											<span className="ml-2 shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-												Waiting
-											</span>
-										)}
+										<span className="flex shrink-0 items-center gap-1">
+											{isWaitingForAgent(chat) && (
+												<span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+													{waitingLabel(chat, now)}
+												</span>
+											)}
+											{!!chat.unreadCount && (
+												<span
+													title={`${chat.unreadCount} unread`}
+													className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold"
+												>
+													{chat.unreadCount > 99
+														? "99+"
+														: chat.unreadCount}
+												</span>
+											)}
+										</span>
 									</div>
 								</div>
 							</div>
 						))
+					)}
+					{hasNextPage && (
+						<Button
+							variant="outline"
+							className="w-full"
+							onClick={() => fetchNextPage()}
+							disabled={isFetchingNextPage}
+						>
+							{isFetchingNextPage ? "Loading..." : "Load older conversations"}
+						</Button>
 					)}
 				</div>
 			</div>
@@ -428,7 +534,7 @@ export default function LiveChatTab() {
 										{selectedChat && isWaitingForAgent(selectedChat) && (
 											<span className="flex items-center gap-1.5 rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
 												<Icon icon="lucide:clock" className="size-3" />
-												Waiting for an agent
+												{waitingLabel(selectedChat, now)} for an agent
 											</span>
 										)}
 										{selectedChat?.admin && (
@@ -586,6 +692,14 @@ export default function LiveChatTab() {
 									className={`size-6 ${isUploading ? "animate-spin" : ""}`}
 								/>
 							</button>
+							<QuickReplies
+								disabled={isClosed}
+								onPick={(text) =>
+									setMessageText((current) =>
+										current ? `${current} ${text}` : text,
+									)
+								}
+							/>
 							<div className="relative flex-1">
 								<Input
 									placeholder={
@@ -727,6 +841,8 @@ export default function LiveChatTab() {
 									</span>
 								</div>
 							</div>
+
+							<ChatContext key={selectedChat._id} chat={selectedChat} />
 						</div>
 					</>
 				) : (
