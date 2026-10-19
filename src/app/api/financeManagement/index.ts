@@ -8,6 +8,7 @@ import {
 	type RefundRequestListResponse,
 	type RefundRequestStatus,
 	type ProcessRefundResponse,
+	type WalletReconciliationResponse,
 } from "@/types/financeManagement";
 
 const ADMIN_BASE = "/admin";
@@ -59,6 +60,12 @@ export const financeApi = {
 			`${ADMIN_BASE}/process-refund`,
 			data,
 			"Failed to process refund",
+		),
+
+	getWalletReconciliation: () =>
+		apiClient.get<WalletReconciliationResponse>(
+			`${ADMIN_BASE}/reconciliation/wallets`,
+			"Failed to reconcile wallets",
 		),
 
 	getRefundRequests: (status: RefundRequestStatus | "all") =>

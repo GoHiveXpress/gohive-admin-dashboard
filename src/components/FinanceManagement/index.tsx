@@ -10,6 +10,7 @@ import VendorPayoutTab from "./VendorPayoutTab";
 import RiderEarningTab from "./RiderEarningTab";
 import RefundLogTab from "./RefundLogTab";
 import RefundApprovalTab from "./RefundApprovalTab";
+import ReconciliationTab from "./ReconciliationTab";
 
 export default function FinanceManagement() {
 	const [activeTab, setActiveTab] = useState("vendor-payouts");
@@ -24,6 +25,7 @@ export default function FinanceManagement() {
 			id: "refund-approvals",
 			label: pendingCount ? `Refund Approvals (${pendingCount})` : "Refund Approvals",
 		},
+		{ id: "reconciliation", label: "Reconciliation" },
 	];
 
 	return (
@@ -52,6 +54,7 @@ export default function FinanceManagement() {
 				{activeTab === "rider-earnings" && <RiderEarningTab />}
 				{activeTab === "refund-logs" && <RefundLogTab />}
 				{activeTab === "refund-approvals" && <RefundApprovalTab />}
+				{activeTab === "reconciliation" && <ReconciliationTab />}
 			</div>
 		</div>
 	);

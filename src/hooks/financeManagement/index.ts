@@ -81,3 +81,12 @@ export const useDecideRefundRequest = () => {
 			]),
 	});
 };
+
+// Reads every wallet and transaction, so it only refetches when asked.
+export const useWalletReconciliation = () =>
+	useQuery({
+		queryKey: ["walletReconciliation"],
+		queryFn: () => financeApi.getWalletReconciliation(),
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+	});

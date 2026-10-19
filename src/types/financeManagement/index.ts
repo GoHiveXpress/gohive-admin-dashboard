@@ -97,3 +97,39 @@ export interface ProcessRefundResponse {
 	pendingApproval?: boolean;
 	data: { orderId: string; amount: number; cancelled?: boolean; requestId?: string };
 }
+
+export interface WalletMismatch {
+	userId: string;
+	name: string | null;
+	email: string | null;
+	phone: string | null;
+	role: string | null;
+	// What the wallet holds vs what its records say it should
+	actual: number;
+	expected: number;
+	// actual - expected: positive means more money than the records explain
+	difference: number;
+	completedCredits: number;
+	returnedRefundCredits: number;
+	activeDebits: number;
+	walletOrderSpend: number;
+}
+
+export interface WalletReconciliationResponse {
+	success: boolean;
+	data: {
+		checkedAt: string;
+		tolerance: number;
+		summary: {
+			walletCount: number;
+			totalActual: number;
+			totalExpected: number;
+			netDifference: number;
+			mismatchCount: number;
+			surplus: number;
+			shortfall: number;
+		};
+		mismatches: WalletMismatch[];
+		truncated: boolean;
+	};
+}
