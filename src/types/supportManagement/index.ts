@@ -32,6 +32,8 @@ export interface ISupportChat {
 	adminName?: string;
 	// Set when the user asked for a live agent
 	agentRequestedAt?: string | null;
+	// The user has the app open right now (sent by GET /support-chat/admin/all)
+	userOnline?: boolean;
 	lastMessage: string;
 	status: ChatStatus;
 	createdAt: string;

@@ -11,6 +11,7 @@ import {
 	useJoinChat,
 	useCloseChat,
 } from "@/hooks/supportManagement";
+import { useAdminProfile } from "@/hooks/userManagement";
 import { format } from "date-fns";
 import {
 	type ISupportChat,
@@ -27,6 +28,24 @@ const addMessage = (list: ISupportMessage[], message: ISupportMessage) =>
 
 const isWaitingForAgent = (chat: ISupportChat) =>
 	chat.status === "active" && !!chat.agentRequestedAt && !chat.admin;
+
+const chatAdminId = (chat?: ISupportChat) => {
+	if (!chat?.admin) return null;
+	return typeof chat.admin === "object" ? chat.admin._id : chat.admin;
+};
+
+const chatAdminName = (chat: ISupportChat) =>
+	typeof chat.admin === "object" ? chat.admin.name : chat.adminName || "Support Staff";
+
+// Green while the user has the app open, grey otherwise
+function OnlineDot({ online, className }: { online?: boolean; className: string }) {
+	return (
+		<span
+			title={online ? "Online now" : "Offline"}
+			className={`border-card absolute rounded-full border-2 ${online ? "bg-secondary" : "bg-gray-300"} ${className}`}
+		/>
+	);
+}
 
 export default function LiveChatTab() {
 	const [activeCategory, setActiveCategory] = useState<"customer" | "vendor" | "rider" | "all">(
@@ -129,8 +148,12 @@ export default function LiveChatTab() {
 	const { mutate: sendMessage, isPending: isSending } = useSendMessage();
 	const { mutate: joinChat, isPending: isJoining } = useJoinChat();
 	const { mutate: closeChat } = useCloseChat();
+	const { data: profileData } = useAdminProfile();
+	const myAdminId = profileData?.data?._id;
 
 	const isClosed = selectedChat?.status === "closed";
+	const handlerId = chatAdminId(selectedChat);
+	const isMine = !!handlerId && handlerId === myAdminId;
 
 	const emitTyping = (isTyping: boolean) => {
 		if (socket && selectedChatId) {
@@ -353,7 +376,10 @@ export default function LiveChatTab() {
 											</div>
 										)}
 									</div>
-									<span className="bg-secondary border-card absolute bottom-0 right-0 size-2.5 rounded-full border-2" />
+									<OnlineDot
+										online={chat.userOnline}
+										className="bottom-0 right-0 size-2.5"
+									/>
 								</div>
 								<div className="min-w-0 flex-1">
 									<div className="mb-0.5 flex items-center justify-between">
@@ -393,7 +419,12 @@ export default function LiveChatTab() {
 									<h3 className="text-lg font-semibold">Live Support Chat</h3>
 									<div className="text-muted-foreground flex items-center gap-2 text-xs">
 										<span>{selectedChat?.user.name}</span>
-										<span className="bg-secondary size-1.5 rounded-full" />
+										<span
+											className={`size-1.5 rounded-full ${selectedChat?.userOnline ? "bg-secondary" : "bg-gray-300"}`}
+										/>
+										<span>
+											{selectedChat?.userOnline ? "Online" : "Offline"}
+										</span>
 										{selectedChat && isWaitingForAgent(selectedChat) && (
 											<span className="flex items-center gap-1.5 rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
 												<Icon icon="lucide:clock" className="size-3" />
@@ -403,10 +434,9 @@ export default function LiveChatTab() {
 										{selectedChat?.admin && (
 											<span className="text-secondary bg-secondary/10 flex items-center gap-1.5 rounded px-2 py-0.5 font-medium">
 												<Icon icon="lucide:user-check" className="size-3" />
-												Connected with{" "}
-												{typeof selectedChat.admin === "object"
-													? selectedChat.admin.name
-													: selectedChat.adminName || "Support Staff"}
+												{isMine
+													? "You're handling this chat"
+													: `Handled by ${chatAdminName(selectedChat)}`}
 											</span>
 										)}
 									</div>
@@ -428,8 +458,13 @@ export default function LiveChatTab() {
 										variant="secondary"
 										className="cursor-not-allowed text-xs opacity-70"
 										disabled
+										title={
+											isMine
+												? undefined
+												: "Another agent is handling this chat"
+										}
 									>
-										Joined
+										{isMine ? "Joined" : "Taken"}
 									</Button>
 								)}
 								<Button
@@ -535,6 +570,7 @@ export default function LiveChatTab() {
 								ref={fileInputRef}
 								type="file"
 								accept="image/png,image/jpeg"
+								aria-label="Choose an image to send"
 								className="hidden"
 								onChange={handleImagePicked}
 							/>
@@ -566,6 +602,8 @@ export default function LiveChatTab() {
 								/>
 							</div>
 							<button
+								type="button"
+								aria-label="Send message"
 								onClick={handleSendMessage}
 								disabled={isSending || !messageText.trim() || isClosed}
 								className="bg-accent hover:bg-accent/90 flex size-10 items-center justify-center rounded-full text-white shadow-md transition disabled:opacity-50"
@@ -608,7 +646,10 @@ export default function LiveChatTab() {
 											</div>
 										)}
 									</div>
-									<span className="bg-secondary border-card absolute bottom-1 right-1 size-3.5 rounded-full border-2" />
+									<OnlineDot
+										online={selectedChat.userOnline}
+										className="bottom-1 right-1 size-3.5"
+									/>
 								</div>
 								<h2 className="text-xl font-bold">{selectedChat.user.name}</h2>
 								<div className="mt-1 flex items-center gap-2">
