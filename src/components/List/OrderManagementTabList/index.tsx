@@ -2,7 +2,7 @@
 
 /* eslint-disable no-nested-ternary */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,12 @@ export default function OrderManagementTabList() {
 	const [vendorId, setVendorIdState] = useState<string>("all");
 	const [page, setPage] = useState(1);
 	const { can } = usePermissions();
+
+	// Links from the detail panel arrive as /order-management?search=<code>.
+	useEffect(() => {
+		const initial = new URLSearchParams(window.location.search).get("search");
+		if (initial) setSearch(initial);
+	}, []);
 
 	// Search, status and vendor filter on the server, one page at a time.
 	const debouncedSearch = useDebounce(search.trim(), 400);

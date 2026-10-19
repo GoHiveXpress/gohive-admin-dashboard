@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Sidebar from "@/components/Sidebar";
 import NotificationPopover from "@/components/Notifications/NotificationPopover";
+import GlobalSearch from "@/components/GlobalSearch";
 import { useAdminProfile } from "@/hooks/userManagement";
 
 export default function Navbar() {
@@ -45,22 +46,23 @@ export default function Navbar() {
 
 				<div className="flex flex-col">
 					<h1 className="text-foreground text-lg font-bold leading-tight lg:text-xl">
-						{user?.name || "Admin"}
+						{user?.name ?? "Admin"}
 					</h1>
 					<p className="text-muted-foreground text-xs font-medium">
-						{formatRole(user?.role || "")}
+						{formatRole(user?.role ?? "")}
 					</p>
 				</div>
 			</div>
 
 			<div className="flex items-center gap-3 lg:gap-6">
+				<GlobalSearch />
 				<NotificationPopover />
 
 				<div className="flex items-center gap-3 border-l pl-3 lg:pl-6">
 					<div className="hidden flex-col items-end lg:flex">
 						<span className="text-foreground text-sm font-semibold">{user?.name}</span>
 						<span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
-							{formatRole(user?.role || "")}
+							{formatRole(user?.role ?? "")}
 						</span>
 					</div>
 
@@ -70,7 +72,7 @@ export default function Navbar() {
 								<AvatarImage src={user.profilePicture} alt={user.name} />
 							)}
 							<AvatarFallback className="bg-primary/10 text-primary font-bold">
-								{getInitials(user?.name || "Admin")}
+								{getInitials(user?.name ?? "Admin")}
 							</AvatarFallback>
 						</Avatar>
 
