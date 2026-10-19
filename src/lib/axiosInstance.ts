@@ -44,6 +44,15 @@ axiosInstance.interceptors.response.use(
 			if (typeof window !== "undefined") window.location.href = "/login";
 		}
 
+		// Permission denied: show the backend's reason ("Requires permission: ...").
+		// The toast id is the message, so callers that also toast error.message
+		// update this toast instead of stacking a second one.
+		if (errResponse?.status === 403) {
+			const errorMessage =
+				errResponse.data?.message ?? "You don't have permission to do that.";
+			toast.error(errorMessage, { id: errorMessage });
+		}
+
 		return Promise.reject(error);
 	},
 );

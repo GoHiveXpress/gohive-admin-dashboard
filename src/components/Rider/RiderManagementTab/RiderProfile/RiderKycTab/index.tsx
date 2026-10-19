@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { type RiderUser } from "@/types/riderManagement";
 import { useUpdateRiderStatus } from "@/hooks/riderManagement";
+import PermissionGate from "@/components/PermissionGate";
+import { ACTION_RULES } from "@/lib/permissions";
 import { Loader2 } from "lucide-react";
 
 interface RiderKycTabProps {
@@ -58,7 +60,7 @@ export default function RiderKycTab({ rider }: RiderKycTabProps) {
 				<div className="space-y-1">
 					<DocumentRow
 						number="1"
-						label={`NIN: ${profile.nin || "N/A"}`}
+						label={profile.nin ? `NIN: ${profile.nin}` : "NIN: N/A"}
 						status={profile.nin ? "view" : "missing"}
 						viewLink="#"
 					/>
@@ -130,22 +132,26 @@ export default function RiderKycTab({ rider }: RiderKycTabProps) {
 					</div>
 
 					{/* Action Buttons */}
-					<div className="flex gap-4 pt-2">
-						<Button
-							variant="outline"
-							className="border-border text-foreground h-12 flex-1 rounded-full bg-[#F9FAFB] font-medium hover:bg-[#F3F4F6]"
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={handleSave}
-							disabled={isPending}
-							className="bg-secondary hover:bg-secondary/90 h-12 flex-1 rounded-full font-medium text-white"
-						>
-							{isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-							Save
-						</Button>
-					</div>
+					<PermissionGate rule={ACTION_RULES.updateRiderStatus}>
+						<div className="flex gap-4 pt-2">
+							<Button
+								variant="outline"
+								className="border-border text-foreground h-12 flex-1 rounded-full bg-[#F9FAFB] font-medium hover:bg-[#F3F4F6]"
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={handleSave}
+								disabled={isPending}
+								className="bg-secondary hover:bg-secondary/90 h-12 flex-1 rounded-full font-medium text-white"
+							>
+								{isPending ? (
+									<Loader2 className="mr-2 size-4 animate-spin" />
+								) : null}
+								Save
+							</Button>
+						</div>
+					</PermissionGate>
 				</div>
 			</div>
 		</div>

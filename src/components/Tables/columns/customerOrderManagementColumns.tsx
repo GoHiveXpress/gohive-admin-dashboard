@@ -11,6 +11,9 @@ export type OrderData = {
 	vendor: { vendorProfile: { businessName: string } };
 	rider?: { name: string; phone: string };
 	status: string;
+	createdAt: string;
+	totalAmount: number;
+	deliveryAddress?: { address: string };
 	// Extra fields if needed for the modal
 	item?: string;
 	date?: string;

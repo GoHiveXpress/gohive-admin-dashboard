@@ -1,11 +1,25 @@
 // src/hooks/customerManagement/index.ts
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
 import { customerApi } from "@/app/api/customerManagement";
 
 export const useCustomers = (filters: { search?: string; status?: string }) => {
 	return useQuery({
 		queryKey: ["admin_customers", filters],
 		queryFn: () => customerApi.getAllCustomers(filters),
+	});
+};
+
+// Server-paginated variant; keeps the previous page on screen while the next loads.
+export const usePaginatedCustomers = (filters: {
+	search?: string;
+	status?: string;
+	page: number;
+	limit: number;
+}) => {
+	return useQuery({
+		queryKey: ["admin_customers", "paged", filters],
+		queryFn: () => customerApi.getAllCustomers(filters),
+		placeholderData: keepPreviousData,
 	});
 };
 
@@ -37,6 +51,20 @@ export const useOrders = (filters: { search?: string; status?: string; vendor?: 
 	return useQuery({
 		queryKey: ["admin_orders", filters],
 		queryFn: () => customerApi.getAllOrders(filters),
+	});
+};
+
+export const usePaginatedOrders = (filters: {
+	search?: string;
+	status?: string;
+	vendor?: string;
+	page: number;
+	limit: number;
+}) => {
+	return useQuery({
+		queryKey: ["admin_orders", "paged", filters],
+		queryFn: () => customerApi.getAllOrders(filters),
+		placeholderData: keepPreviousData,
 	});
 };
 

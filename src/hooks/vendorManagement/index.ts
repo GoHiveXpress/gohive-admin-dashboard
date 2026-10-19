@@ -4,10 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { vendorApi } from "@/app/api/vendorManagement";
 
-export const useVendors = () => {
+export const useVendors = (enabled = true) => {
 	return useQuery({
 		queryKey: ["vendors"],
 		queryFn: vendorApi.getAllVendors,
+		enabled,
 	});
 };
 

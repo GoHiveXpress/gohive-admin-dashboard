@@ -1,5 +1,4 @@
 // src/components/Vendor/VendorDetails/ProfileManagement/StaffProfile/index.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
 
@@ -8,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ACTION_RULES } from "@/lib/permissions";
 import {
 	Dialog,
 	DialogContent,
@@ -54,6 +55,8 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 	const createMutation = useCreateVendorStaff(vendorId);
 	const updateMutation = useUpdateVendorStaff(vendorId);
 	const deleteMutation = useDeleteVendorStaff(vendorId);
+	const { allows } = usePermissions();
+	const canManageStaff = allows(ACTION_RULES.manageVendorStaff);
 
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const [selectedStaff, setSelectedStaff] = useState<StaffData | null>(null);
@@ -88,7 +91,7 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 			name: staff.name,
 			role: staff.role,
 			email: staff.email,
-			phone: staff.phone || "",
+			phone: staff.phone ?? "",
 			status: staff.status,
 		});
 		setIsEditOpen(true);
@@ -137,12 +140,17 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex justify-end">
-				<Button onClick={openCreate} className="bg-secondary hover:bg-secondary/90 gap-2 rounded-full px-6 text-white">
-					<Icon icon="ph:plus-circle" className="size-5" />
-					Add New Staff
-				</Button>
-			</div>
+			{canManageStaff && (
+				<div className="flex justify-end">
+					<Button
+						onClick={openCreate}
+						className="bg-secondary hover:bg-secondary/90 gap-2 rounded-full px-6 text-white"
+					>
+						<Icon icon="ph:plus-circle" className="size-5" />
+						Add New Staff
+					</Button>
+				</div>
+			)}
 
 			<div className="space-y-4">
 				{staffList.map((staff) => (
@@ -178,20 +186,22 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 							</Badge>
 
 							{/* Actions */}
-							<div className="flex items-center gap-4">
-								<button
-									onClick={() => openEdit(staff)}
-									className="text-muted-foreground hover:text-foreground transition-colors"
-								>
-									<Icon icon="ph:pencil-simple-bold" width="20" />
-								</button>
-								<button 
-									onClick={() => handleDeleteClick(staff)}
-									className="text-muted-foreground hover:text-destructive transition-colors"
-								>
-									<Icon icon="ph:trash-bold" width="20" />
-								</button>
-							</div>
+							{canManageStaff && (
+								<div className="flex items-center gap-4">
+									<button
+										onClick={() => openEdit(staff)}
+										className="text-muted-foreground hover:text-foreground transition-colors"
+									>
+										<Icon icon="ph:pencil-simple-bold" width="20" />
+									</button>
+									<button
+										onClick={() => handleDeleteClick(staff)}
+										className="text-muted-foreground hover:text-destructive transition-colors"
+									>
+										<Icon icon="ph:trash-bold" width="20" />
+									</button>
+								</div>
+							)}
 						</div>
 					</div>
 				))}
@@ -208,14 +218,45 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 						<DialogTitle>Add New Staff</DialogTitle>
 					</DialogHeader>
 					<div className="space-y-3">
-						<Input placeholder="Full Name" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} />
-						<Input placeholder="Email" type="email" value={formData.email} onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))} />
-						<Input placeholder="Phone Number" value={formData.phone} onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))} />
-						<Input placeholder="Role" value={formData.role} onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))} />
+						<Input
+							placeholder="Full Name"
+							value={formData.name}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, name: e.target.value }))
+							}
+						/>
+						<Input
+							placeholder="Email"
+							type="email"
+							value={formData.email}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, email: e.target.value }))
+							}
+						/>
+						<Input
+							placeholder="Phone Number"
+							value={formData.phone}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, phone: e.target.value }))
+							}
+						/>
+						<Input
+							placeholder="Role"
+							value={formData.role}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, role: e.target.value }))
+							}
+						/>
 					</div>
 					<DialogFooter>
-						<Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-						<Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-secondary text-white hover:bg-secondary/90">
+						<Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							onClick={handleCreate}
+							disabled={createMutation.isPending}
+							className="bg-secondary hover:bg-secondary/90 text-white"
+						>
 							{createMutation.isPending ? "Saving..." : "Add Staff"}
 						</Button>
 					</DialogFooter>
@@ -228,11 +269,44 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 						<DialogTitle>Edit Staff</DialogTitle>
 					</DialogHeader>
 					<div className="space-y-3">
-						<Input placeholder="Full Name" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} />
-						<Input placeholder="Email" type="email" value={formData.email} onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))} />
-						<Input placeholder="Phone Number" value={formData.phone} onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))} />
-						<Input placeholder="Role" value={formData.role} onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))} />
-						<Select value={formData.status} onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value as "Active" | "Inactive" }))}>
+						<Input
+							placeholder="Full Name"
+							value={formData.name}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, name: e.target.value }))
+							}
+						/>
+						<Input
+							placeholder="Email"
+							type="email"
+							value={formData.email}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, email: e.target.value }))
+							}
+						/>
+						<Input
+							placeholder="Phone Number"
+							value={formData.phone}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, phone: e.target.value }))
+							}
+						/>
+						<Input
+							placeholder="Role"
+							value={formData.role}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, role: e.target.value }))
+							}
+						/>
+						<Select
+							value={formData.status}
+							onValueChange={(value) =>
+								setFormData((prev) => ({
+									...prev,
+									status: value as "Active" | "Inactive",
+								}))
+							}
+						>
 							<SelectTrigger>
 								<SelectValue placeholder="Status" />
 							</SelectTrigger>
@@ -243,17 +317,23 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 						</Select>
 					</div>
 					<DialogFooter>
-						<Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-						<Button onClick={handleUpdate} disabled={updateMutation.isPending} className="bg-secondary text-white hover:bg-secondary/90">
+						<Button variant="outline" onClick={() => setIsEditOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							onClick={handleUpdate}
+							disabled={updateMutation.isPending}
+							className="bg-secondary hover:bg-secondary/90 text-white"
+						>
 							{updateMutation.isPending ? "Saving..." : "Save Changes"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
 
-			<ConfirmDeleteModal 
-				isOpen={isDeleteOpen} 
-				onOpenChange={setIsDeleteOpen} 
+			<ConfirmDeleteModal
+				isOpen={isDeleteOpen}
+				onOpenChange={setIsDeleteOpen}
 				onConfirm={handleConfirmDelete}
 				isLoading={deleteMutation.isPending}
 				title="Remove Staff?"
@@ -262,5 +342,3 @@ export default function StaffProfile({ vendorId }: { vendorId: string }) {
 		</div>
 	);
 }
-
-/* eslint-enable */

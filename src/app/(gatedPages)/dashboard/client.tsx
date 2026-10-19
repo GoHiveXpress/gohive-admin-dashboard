@@ -11,6 +11,13 @@ import OrderVolume from "@/components/_widgets/OrderVolume";
 import TotalUsers from "@/components/_widgets/TotalUsers";
 import TodaysOrders from "@/components/_widgets/TodaysOrders";
 import TopVendorsList from "@/components/List/TopVendorsList";
+import PermissionGate from "@/components/PermissionGate";
+import { PERMISSIONS } from "@/lib/permissions";
+
+// Order volume and the vendor leaderboard read analytics endpoints; the
+// leaderboard also loads vendors. Staff without those permissions skip them.
+const ANALYTICS_RULE = { all: [PERMISSIONS.ANALYTICS] };
+const TOP_VENDORS_RULE = { all: [PERMISSIONS.ANALYTICS, PERMISSIONS.VENDORS] };
 
 export default function DashboardClient() {
 	return (
@@ -25,9 +32,11 @@ export default function DashboardClient() {
 			<RouteWrapper
 				middleSlot={
 					<div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
-						<div className="h-[400px] lg:col-span-2">
-							<OrderVolume />
-						</div>
+						<PermissionGate rule={ANALYTICS_RULE}>
+							<div className="h-[400px] lg:col-span-2">
+								<OrderVolume />
+							</div>
+						</PermissionGate>
 						<div className="h-[400px]">
 							<TotalUsers />
 						</div>
@@ -43,13 +52,15 @@ export default function DashboardClient() {
 				}
 			/>
 
-			<RouteWrapper
-				middleSlot={
-					<div className="w-full">
-						<TopVendorsList />
-					</div>
-				}
-			/>
+			<PermissionGate rule={TOP_VENDORS_RULE}>
+				<RouteWrapper
+					middleSlot={
+						<div className="w-full">
+							<TopVendorsList />
+						</div>
+					}
+				/>
+			</PermissionGate>
 		</div>
 	);
 }

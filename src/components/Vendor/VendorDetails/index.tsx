@@ -14,6 +14,8 @@ import { ROUTES } from "@/constants/routes";
 import { useVendor, useUpdateAccountStatus } from "@/hooks/userManagement";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import PermissionGate from "@/components/PermissionGate";
+import { ACTION_RULES } from "@/lib/permissions";
 import KycVerificationTab from "./KycVerification";
 import MenuManagementTab from "./MenuManagement";
 import ProfileManagementTab from "./ProfileManagement";
@@ -38,10 +40,12 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 	const handleStatusToggle = async (newStatus: "Active" | "Suspend") => {
 		try {
 			await updateStatus.mutateAsync({ userId: vendorId, status: newStatus });
-			toast.success(`Account ${newStatus === "Active" ? "reactivated" : "suspended"} successfully`);
-			refetch();
-		} catch (error: any) {
-			toast.error(error.message || "Action failed");
+			toast.success(
+				`Account ${newStatus === "Active" ? "reactivated" : "suspended"} successfully`,
+			);
+			await refetch();
+		} catch (error: unknown) {
+			toast.error(error instanceof Error && error.message ? error.message : "Action failed");
 		}
 	};
 
@@ -62,7 +66,7 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 			{/* Header / Banner Card */}
 			<div className="border-border/50 relative overflow-hidden rounded-[20px] border bg-white shadow-sm">
 				{/* Banner Image */}
-				<div className="relative h-48 w-full bg-muted">
+				<div className="bg-muted relative h-48 w-full">
 					{vendor.vendorProfile?.businessBanner ? (
 						<img
 							src={vendor.vendorProfile.businessBanner}
@@ -88,9 +92,11 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 						<div className="flex size-32 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#E8E6D9] text-[#8E8B7B] shadow-sm">
 							{vendor.profilePicture || vendor.vendorProfile.passportPhoto ? (
 								<img
-									src={vendor.profilePicture || vendor.vendorProfile.passportPhoto}
+									src={
+										vendor.profilePicture || vendor.vendorProfile.passportPhoto
+									}
 									alt="Vendor"
-									className="size-full object-cover bg-white"
+									className="size-full bg-white object-cover"
 								/>
 							) : (
 								<div className="size-full bg-[#D9D7C8]" />
@@ -113,30 +119,38 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 								<div
 									className={`size-2 rounded-full ${vendor.accountStatus === "Active" ? "bg-secondary" : "bg-destructive"}`}
 								/>
-								<span className={`${vendor.accountStatus === "Active" ? "text-secondary" : "text-destructive"} mr-2 text-sm font-medium`}>
+								<span
+									className={`${vendor.accountStatus === "Active" ? "text-secondary" : "text-destructive"} mr-2 text-sm font-medium`}
+								>
 									{vendor.accountStatus === "Active" ? "Active" : "Suspended"}
 								</span>
-								{vendor.accountStatus === "Suspend" && (
-									<Button 
-										size="sm" 
-										className="bg-secondary hover:bg-secondary/80 h-7 rounded-full px-3 text-[10px]"
-										onClick={() => handleStatusToggle("Active")}
-										disabled={updateStatus.isPending}
-									>
-										{updateStatus.isPending ? "Activating..." : "Activate Account"}
-									</Button>
-								)}
-								{vendor.accountStatus === "Active" && (
-									<Button 
-										variant="outline"
-										size="sm" 
-										className="border-destructive/30 text-destructive hover:bg-destructive/5 h-7 rounded-full px-3 text-[10px]"
-										onClick={() => handleStatusToggle("Suspend")}
-										disabled={updateStatus.isPending}
-									>
-										{updateStatus.isPending ? "Suspending..." : "Suspend Account"}
-									</Button>
-								)}
+								<PermissionGate rule={ACTION_RULES.updateAccountStatus}>
+									{vendor.accountStatus === "Suspend" && (
+										<Button
+											size="sm"
+											className="bg-secondary hover:bg-secondary/80 h-7 rounded-full px-3 text-[10px]"
+											onClick={() => handleStatusToggle("Active")}
+											disabled={updateStatus.isPending}
+										>
+											{updateStatus.isPending
+												? "Activating..."
+												: "Activate Account"}
+										</Button>
+									)}
+									{vendor.accountStatus === "Active" && (
+										<Button
+											variant="outline"
+											size="sm"
+											className="border-destructive/30 text-destructive hover:bg-destructive/5 h-7 rounded-full px-3 text-[10px]"
+											onClick={() => handleStatusToggle("Suspend")}
+											disabled={updateStatus.isPending}
+										>
+											{updateStatus.isPending
+												? "Suspending..."
+												: "Suspend Account"}
+										</Button>
+									)}
+								</PermissionGate>
 							</div>
 						</div>
 
@@ -145,7 +159,9 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 							<span
 								className={`text-sm font-medium ${vendor?.vendorProfile?.availabilityStatus === "online" ? "text-secondary" : "text-muted-foreground"}`}
 							>
-								{vendor?.vendorProfile?.availabilityStatus === "online" ? "Active" : "Inactive"}
+								{vendor?.vendorProfile?.availabilityStatus === "online"
+									? "Active"
+									: "Inactive"}
 							</span>
 							<Switch
 								checked={vendor?.vendorProfile?.availabilityStatus === "online"}
@@ -156,7 +172,7 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 					</div>
 
 					{/* Tab Switcher */}
-					<div className="bg-muted/30 mt-8 w-full sm:w-fit max-w-full overflow-hidden rounded-[2rem] p-1.5">
+					<div className="bg-muted/30 mt-8 w-full max-w-full overflow-hidden rounded-[2rem] p-1.5 sm:w-fit">
 						<CustomTabs
 							items={TAB_ITEMS}
 							activeTab={activeTab}

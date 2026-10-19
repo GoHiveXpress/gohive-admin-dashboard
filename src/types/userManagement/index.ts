@@ -22,6 +22,7 @@ export type { Customer as CustomerUser, VendorUser, RiderUser };
 
 export interface AdminUser extends UserBase {
 	role: "superadmin" | "staff";
+	staffPermissions?: string[];
 }
 
 export interface InviteStaffRequest {

@@ -4,31 +4,25 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { toast } from "sonner"; // Import sonner
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { clearAuth } from "@/utils/auth"; // Import your existing auth util
 import { MENU_ITEMS, BOTTOM_MENU_ITEMS, LOGOUT_ITEM } from "@/constants/SidebarMenuItems";
 import { cn } from "@/lib/utils";
+import { ruleForPath } from "@/lib/permissions";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Sidebar({ className }: { className?: string }) {
 	const pathname = usePathname();
-	const router = useRouter();
-	const { data: session } = useSession();
-	const userRole = session?.user?.role;
+	const { allows, isLoading: permissionsLoading } = usePermissions();
 
-	// Filter menu items based on role
+	// Only show screens the admin can open (same rules as the route guard).
+	// Gated items stay hidden until permissions have loaded.
 	const filteredMenuItems = MENU_ITEMS.filter((item) => {
-		if (userRole === "staff") {
-			const restrictedItems = [
-				"Finance & Settlements",
-				"Analytics & Reports",
-				"User Management",
-			];
-			return !restrictedItems.includes(item.label);
-		}
-		return true;
+		const rule = ruleForPath(item.href);
+		if (!rule) return true;
+		return !permissionsLoading && allows(rule);
 	});
 
 	// Professional Logout Logic
@@ -38,9 +32,9 @@ export default function Sidebar({ className }: { className?: string }) {
 
 		// 2. Perform NextAuth signOut (clears cookies and session)
 		// Redirect to root/login but do it quietly
-		await signOut({ 
+		await signOut({
 			callbackUrl: "/",
-			redirect: true 
+			redirect: true,
 		});
 	};
 
