@@ -12,6 +12,7 @@ import TotalUsers from "@/components/_widgets/TotalUsers";
 import TodaysOrders from "@/components/_widgets/TodaysOrders";
 import OpsKpiStrip from "@/components/_widgets/OpsKpiStrip";
 import ExceptionsQueue from "@/components/_widgets/ExceptionsQueue";
+import LiveOpsMap from "@/components/_widgets/LiveOpsMap";
 import TopVendorsList from "@/components/List/TopVendorsList";
 import PermissionGate from "@/components/PermissionGate";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -41,6 +42,10 @@ export default function DashboardClient() {
 
 			<PermissionGate rule={OPS_RULE}>
 				<ExceptionsQueue isLive={isConnected} />
+			</PermissionGate>
+
+			<PermissionGate rule={OPS_RULE}>
+				<LiveOpsMap isLive={isConnected} />
 			</PermissionGate>
 
 			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">

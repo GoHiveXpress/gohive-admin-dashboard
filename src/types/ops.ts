@@ -95,6 +95,56 @@ export interface OpsKpisResponse {
 	};
 }
 
+export interface LatLng {
+	lat: number;
+	lng: number;
+}
+
+export type RiderMapStatus = "online" | "busy";
+
+export interface OpsMapRider {
+	_id: string;
+	name: string | null;
+	phone: string | null;
+	status: RiderMapStatus;
+	vehicleType: string | null;
+	// null until the rider has shared a location
+	position: LatLng | null;
+	lastLocationAt: string | null;
+	activeOrderId: string | null;
+}
+
+export interface OpsMapOrder {
+	_id: string;
+	orderId: string;
+	status: string;
+	state: string | null;
+	riderId: string | null;
+	vendorName: string | null;
+	pickup: LatLng | null;
+	dropoff: LatLng | null;
+	dropoffAddress: string | null;
+	exception: { label: string; severity: ExceptionSeverity; minutes: number } | null;
+}
+
+export interface OpsMapResponse {
+	success: boolean;
+	data: {
+		generatedAt: string;
+		riders: OpsMapRider[];
+		orders: OpsMapOrder[];
+	};
+}
+
+// Payload of the "admin:rider_location" socket event.
+export interface RiderLocationEvent {
+	riderId: string;
+	lat: number;
+	lng: number;
+	orderId: string | null;
+	at: string;
+}
+
 // Payload of the "admin:orders_changed" socket event.
 export interface OrdersChangedEvent {
 	changes: { orderId: string | null; status: string | null; kind: string }[];

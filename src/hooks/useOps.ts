@@ -8,17 +8,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { io } from "socket.io-client";
 import { opsApi } from "@/app/api/ops";
 import { getAuthToken } from "@/utils/auth";
+import { type OpsMapResponse, type RiderLocationEvent } from "@/types/ops";
 
 const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
 const SOCKET_URL = adminApiBaseUrl.replace("/api", "");
 
 export const OPS_EXCEPTIONS_KEY = ["ops_exceptions"];
 export const OPS_KPIS_KEY = ["ops_kpis"];
+export const OPS_MAP_KEY = ["ops_map"];
 
 // Queries an order change can make stale.
 const LIVE_QUERY_KEYS = [
 	OPS_EXCEPTIONS_KEY,
 	OPS_KPIS_KEY,
+	OPS_MAP_KEY,
 	["dashboardOverview"],
 	["admin_orders"],
 	["admin_order_stats"],
@@ -43,6 +46,38 @@ export const useOpsKpis = (enabled = true) =>
 		refetchInterval: 2 * 60 * 1000,
 		staleTime: 30 * 1000,
 	});
+
+// Rider status changes (going online/offline) don't emit events, so the map
+// also refetches on a timer. Positions in between arrive over the socket.
+export const useOpsMap = (enabled = true) =>
+	useQuery({
+		queryKey: OPS_MAP_KEY,
+		queryFn: () => opsApi.getMap(),
+		enabled,
+		refetchInterval: 60 * 1000,
+		staleTime: 15 * 1000,
+	});
+
+// Moves one rider in the cached map data without refetching.
+const applyRiderLocation = (
+	current: OpsMapResponse | undefined,
+	event: RiderLocationEvent,
+): OpsMapResponse | undefined => {
+	if (!current) return current;
+	let found = false;
+	const riders = current.data.riders.map((rider) => {
+		if (rider._id !== event.riderId) return rider;
+		found = true;
+		return {
+			...rider,
+			position: { lat: event.lat, lng: event.lng },
+			lastLocationAt: event.at,
+		};
+	});
+	// A rider we don't know yet (just came online): the next refetch adds them.
+	if (!found) return current;
+	return { ...current, data: { ...current.data, riders } };
+};
 
 /**
  * Joins the admin ops room (the server adds admins who can see orders) and
@@ -81,6 +116,11 @@ export const useOpsLiveUpdates = (enabled = true) => {
 		socket.on("admin:orders_changed", (payload: { at?: string }) => {
 			setLastEventAt(payload.at ?? new Date().toISOString());
 			refresh();
+		});
+		socket.on("admin:rider_location", (event: RiderLocationEvent) => {
+			queryClient.setQueryData<OpsMapResponse>(OPS_MAP_KEY, (current) =>
+				applyRiderLocation(current, event),
+			);
 		});
 
 		return () => {

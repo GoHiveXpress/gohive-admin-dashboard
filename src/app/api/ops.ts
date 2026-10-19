@@ -1,7 +1,7 @@
 // src/app/api/ops.ts
 /* eslint-disable import/prefer-default-export */
 import { apiClient } from "@/lib/apiClient";
-import { type OpsExceptionsResponse, type OpsKpisResponse } from "@/types/ops";
+import { type OpsExceptionsResponse, type OpsKpisResponse, type OpsMapResponse } from "@/types/ops";
 
 export const opsApi = {
 	getExceptions: () =>
@@ -11,6 +11,7 @@ export const opsApi = {
 		),
 	getKpis: () =>
 		apiClient.get<OpsKpisResponse>("/admin/ops/kpis", "Failed to load today's figures"),
+	getMap: () => apiClient.get<OpsMapResponse>("/admin/ops/map", "Failed to load the live map"),
 };
 
 /* eslint-enable */
