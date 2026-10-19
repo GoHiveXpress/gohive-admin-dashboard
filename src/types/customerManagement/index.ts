@@ -1,5 +1,7 @@
 // src/types/customerManagement/index.ts
 
+import { type PaginationMeta } from "@/types/pagination";
+
 export type Customer = {
 	_id: string;
 	name: string;
@@ -25,6 +27,7 @@ export type Order = {
 		phone: string;
 	};
 	vendor: {
+		_id?: string;
 		vendorProfile: {
 			businessName: string;
 		};
@@ -47,6 +50,8 @@ export type Order = {
 		| "expired";
 	totalAmount: number;
 	createdAt: string;
+	items?: { quantity: number; name?: string }[];
+	estimatedTime?: string;
 	deliveryAddress?: {
 		address: string;
 	};
@@ -79,9 +84,11 @@ export type CustomerFeedback = {
 	createdAt: string;
 };
 
+// `pagination` is only present when ?page or ?limit was sent.
 export interface CustomerListResponse {
 	success: boolean;
 	data: Customer[];
+	pagination?: PaginationMeta;
 }
 
 export interface SingleCustomerResponse {
@@ -97,6 +104,7 @@ export interface SingleOrderResponse {
 export interface OrderListResponse {
 	success: boolean;
 	data: Order[];
+	pagination?: PaginationMeta;
 }
 
 export interface OrderStatsResponse {

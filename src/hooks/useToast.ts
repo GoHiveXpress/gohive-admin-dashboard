@@ -10,8 +10,10 @@ export function useToast() {
 		success: (message: string, options?: Record<string, any>) =>
 			toast.success(message, { ...options }),
 
+		// Keyed by message so the same error (e.g. a 403 already toasted by the
+		// axios interceptor) isn't shown twice.
 		error: (message: string, options?: Record<string, any>) =>
-			toast.error(message, { ...options }),
+			toast.error(message, { id: message, ...options }),
 
 		info: (message: string, options?: Record<string, any>) =>
 			toast.info(message, { ...options }), // Use default toast for info

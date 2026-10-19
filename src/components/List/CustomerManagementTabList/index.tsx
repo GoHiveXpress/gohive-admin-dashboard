@@ -2,14 +2,16 @@
 
 /* eslint-disable no-nested-ternary */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { customerColumnsConfig } from "@/components/Tables/columns/CustomerColumns";
-import { useCustomers } from "@/hooks/customerManagement";
+import { usePaginatedCustomers } from "@/hooks/customerManagement";
+import { useDebounce } from "@/hooks/useDebounce";
+import TablePagination from "@/components/Tables/Pagination";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -19,15 +21,31 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
+
+const PAGE_SIZE = 20;
+
+type StatusFilter = "all" | "Active" | "Inactive" | "Suspend";
 
 export default function CustomerManagementTabList() {
 	const [search, setSearch] = useState("");
-	const [status, setStatus] = useState<"all" | "Active" | "Inactive" | "Suspend">("all");
+	const [status, setStatusState] = useState<StatusFilter>("all");
 	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
+	const [page, setPage] = useState(1);
 
-	const { data: customerResponse, isLoading, error } = useCustomers({ search, status });
-	const customers = customerResponse?.data ?? [];
+	// Search and status filter on the server, one page at a time.
+	const debouncedSearch = useDebounce(search.trim(), 400);
+	const {
+		data: customerResponse,
+		isLoading,
+		isFetching,
+		error,
+	} = usePaginatedCustomers({ search: debouncedSearch, status, page, limit: PAGE_SIZE });
+	const customers = useMemo(() => customerResponse?.data ?? [], [customerResponse]);
+
+	const setStatus = (value: StatusFilter) => {
+		setStatusState(value);
+		setPage(1);
+	};
 
 	const processedCustomers = useMemo(() => {
 		const result = [...customers];
@@ -57,7 +75,7 @@ export default function CustomerManagementTabList() {
 							)}
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+					<DropdownMenuContent align="start" className="z-50 w-48 bg-white">
 						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuCheckboxItem
@@ -94,17 +112,23 @@ export default function CustomerManagementTabList() {
 						"h-10 rounded-lg px-6 font-medium transition-colors",
 						status === "all"
 							? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
-							: "bg-muted text-foreground hover:bg-muted/80"
+							: "bg-muted text-foreground hover:bg-muted/80",
 					)}
 				>
 					All
 				</Button>
 				<Button
 					variant={sortMode !== null ? "default" : "outline"}
-					onClick={() => setSortMode((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
+					onClick={() =>
+						setSortMode((prev) =>
+							prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+						)
+					}
 					className={cn(
 						"h-10 rounded-lg px-6 font-medium",
-						sortMode !== null ? "bg-[#123614] text-white hover:bg-[#123614]/90" : "border-border"
+						sortMode !== null
+							? "bg-[#123614] text-white hover:bg-[#123614]/90"
+							: "border-border",
 					)}
 				>
 					A-Z {sortMode === "asc" ? "↓" : sortMode === "desc" ? "↑" : ""}
@@ -121,7 +145,10 @@ export default function CustomerManagementTabList() {
 					<Input
 						placeholder="Search"
 						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						onChange={(e) => {
+							setSearch(e.target.value);
+							setPage(1);
+						}}
 						className="border-border h-10 rounded-lg bg-white pl-10"
 					/>
 				</div>
@@ -137,7 +164,19 @@ export default function CustomerManagementTabList() {
 					Failed to load customers. Please try again.
 				</div>
 			) : (
-				<DataTable columns={getColumns(customerColumnsConfig)} data={processedCustomers} title="" />
+				<div className={cn(isFetching && "opacity-60 transition-opacity")}>
+					<DataTable
+						columns={getColumns(customerColumnsConfig)}
+						data={processedCustomers}
+						title=""
+					/>
+					<TablePagination
+						pagination={customerResponse?.pagination}
+						onPageChange={setPage}
+						isFetching={isFetching}
+						itemLabel="customers"
+					/>
+				</div>
 			)}
 		</div>
 	);

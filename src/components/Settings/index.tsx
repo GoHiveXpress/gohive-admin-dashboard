@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { useSearchParams } from "next/navigation";
 import ProfileSettingsTab from "./ProfileSettingsTab";
 import RoleSettingsTab from "./RoleSettingsTab";
 import NotificationSettingsTab from "./NotificationSettingsTab";
 import ActivitiesTab from "./ActivitiesTab";
+import AuditLogTab from "./AuditLogTab";
 import OthersSettingsTab from "./OthersSettingsTab";
 import AppConfigSettingsTab from "./AppConfigSettingsTab";
-import { useSession } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { useSearchParams } from "next/navigation";
 
 const ALL_TABS = [
 	{ id: "profile", label: "Profile", roles: ["superadmin", "staff"] },
 	{ id: "activities", label: "Activities", roles: ["superadmin", "staff"] },
+	{ id: "audit-log", label: "Audit Log", roles: ["superadmin"] },
 	{ id: "role", label: "Role Management", roles: ["superadmin"] },
 	{ id: "app-config", label: "Delivery Fee Settings", roles: ["superadmin"] },
 	{ id: "notification", label: "Notification Templates", roles: ["superadmin"] },
@@ -22,9 +24,9 @@ const ALL_TABS = [
 
 export default function SettingsMain() {
 	const { data: session } = useSession();
-	const userRole = session?.user?.role || "staff";
+	const userRole = session?.user?.role ?? "staff";
 	const searchParams = useSearchParams();
-	const initialTab = searchParams.get("tab") || "profile";
+	const initialTab = searchParams.get("tab") ?? "profile";
 
 	const filteredTabs = useMemo(() => {
 		return ALL_TABS.filter((tab) => tab.roles.includes(userRole));
@@ -62,6 +64,7 @@ export default function SettingsMain() {
 			<div className="min-h-0 flex-1">
 				{activeTab === "profile" && <ProfileSettingsTab />}
 				{activeTab === "activities" && <ActivitiesTab />}
+				{activeTab === "audit-log" && <AuditLogTab />}
 				{activeTab === "role" && userRole === "superadmin" && <RoleSettingsTab />}
 				{activeTab === "app-config" && userRole === "superadmin" && (
 					<AppConfigSettingsTab />
@@ -74,5 +77,3 @@ export default function SettingsMain() {
 		</div>
 	);
 }
-
-/* eslint-enable */

@@ -1,20 +1,28 @@
 // src/components/List/VendorCategoriesList/index.tsx
+
 "use client";
 
 import React from "react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
-import { getVendorCategoryColumns, type VendorCategoryData } from "@/components/Tables/columns/VendorCategoryColumns";
+import {
+	getVendorCategoryColumns,
+	type VendorCategoryData,
+} from "@/components/Tables/columns/VendorCategoryColumns";
 import { useVendorCategories, useDeleteVendorCategory } from "@/hooks/useVendorCategories";
 import { Loader2 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ACTION_RULES } from "@/lib/permissions";
 
 import EditVendorCategoryModal from "@/components/_modals/EditVendorCategoryModal";
 import ConfirmDeleteModal from "@/components/_modals/ConfirmDelete";
-import { IVendorCategory } from "@/types/vendorManagement/vendorCategory";
+import { type IVendorCategory } from "@/types/vendorManagement/vendorCategory";
 
 export default function VendorCategoriesList() {
 	const { data: categoriesData, isLoading } = useVendorCategories();
 	const deleteMutation = useDeleteVendorCategory();
+	const { allows } = usePermissions();
+	const canManage = allows(ACTION_RULES.manageVendorCategories);
 
 	const [isEditOpen, setIsEditOpen] = React.useState(false);
 	const [selectedCategory, setSelectedCategory] = React.useState<IVendorCategory | null>(null);
@@ -39,21 +47,22 @@ export default function VendorCategoriesList() {
 	};
 
 	const handleActionEdit = (row: VendorCategoryData) => {
-		const category = categoriesData?.data.find(c => c._id === row.id);
+		const category = categoriesData?.data.find((c) => c._id === row.id);
 		if (category) {
 			setSelectedCategory(category);
 			setIsEditOpen(true);
 		}
 	};
 
-	const tableData: VendorCategoryData[] = categoriesData?.data?.map((cat) => ({
-		id: cat._id,
-		image: cat.imageUrl,
-		title: cat.title,
-		subtitle: cat.subtitle,
-		value: cat.value,
-		color: cat.backgroundColor,
-	})) || [];
+	const tableData: VendorCategoryData[] =
+		categoriesData?.data?.map((cat) => ({
+			id: cat._id,
+			image: cat.imageUrl,
+			title: cat.title,
+			subtitle: cat.subtitle,
+			value: cat.value,
+			color: cat.backgroundColor,
+		})) ?? [];
 
 	if (isLoading) {
 		return (
@@ -65,21 +74,25 @@ export default function VendorCategoriesList() {
 
 	return (
 		<div className="w-full">
-			<DataTable 
-				columns={getColumns(getVendorCategoryColumns(handleActionDelete, handleActionEdit))} 
-				data={tableData} 
-				title="" 
+			<DataTable
+				columns={getColumns(
+					getVendorCategoryColumns(handleActionDelete, handleActionEdit).filter(
+						(col) => canManage || col.key !== "action",
+					),
+				)}
+				data={tableData}
+				title=""
 			/>
 
-			<EditVendorCategoryModal 
-				isOpen={isEditOpen} 
-				onOpenChange={setIsEditOpen} 
-				category={selectedCategory} 
+			<EditVendorCategoryModal
+				isOpen={isEditOpen}
+				onOpenChange={setIsEditOpen}
+				category={selectedCategory}
 			/>
-			<ConfirmDeleteModal 
-				isOpen={isDeleteOpen} 
-				onOpenChange={setIsDeleteOpen} 
-				onConfirm={handleConfirmDelete} 
+			<ConfirmDeleteModal
+				isOpen={isDeleteOpen}
+				onOpenChange={setIsDeleteOpen}
+				onConfirm={handleConfirmDelete}
 				isLoading={deleteMutation.isPending}
 				title="Delete Business Type?"
 				description="Are you sure you want to delete this business type? This action cannot be undone and will remove it from the platform."

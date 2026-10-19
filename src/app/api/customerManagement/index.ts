@@ -13,10 +13,18 @@ import {
 const ADMIN_BASE = "/admin";
 
 export const customerApi = {
-	getAllCustomers: (filters: { search?: string; status?: string }) => {
+	// Sending page/limit switches the backend to a paginated { data, pagination } reply.
+	getAllCustomers: (filters: {
+		search?: string;
+		status?: string;
+		page?: number;
+		limit?: number;
+	}) => {
 		const params = new URLSearchParams();
 		if (filters.search) params.append("search", filters.search);
 		if (filters.status) params.append("status", filters.status);
+		if (filters.page) params.append("page", String(filters.page));
+		if (filters.limit) params.append("limit", String(filters.limit));
 
 		return apiClient.get<CustomerListResponse>(
 			`${ADMIN_BASE}/customers?${params.toString()}`,
@@ -42,11 +50,19 @@ export const customerApi = {
 			"Failed to fetch customer feedback",
 		),
 
-	getAllOrders: (filters: { search?: string; status?: string; vendor?: string }) => {
+	getAllOrders: (filters: {
+		search?: string;
+		status?: string;
+		vendor?: string;
+		page?: number;
+		limit?: number;
+	}) => {
 		const params = new URLSearchParams();
 		if (filters.search) params.append("search", filters.search);
 		if (filters.status) params.append("status", filters.status);
 		if (filters.vendor) params.append("vendor", filters.vendor);
+		if (filters.page) params.append("page", String(filters.page));
+		if (filters.limit) params.append("limit", String(filters.limit));
 
 		return apiClient.get<OrderListResponse>(
 			`${ADMIN_BASE}/orders?${params.toString()}`,

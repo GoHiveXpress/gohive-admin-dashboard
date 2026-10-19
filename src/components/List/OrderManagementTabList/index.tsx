@@ -14,7 +14,13 @@ import {
 	type OrderData,
 } from "@/components/Tables/columns/customerOrderManagementColumns";
 import OrderProcessModal from "@/components/_modals/OrderProcessModal";
-import { useOrders, useOrderStats } from "@/hooks/customerManagement";
+import { usePaginatedOrders, useOrderStats } from "@/hooks/customerManagement";
+import { useVendors } from "@/hooks/vendorManagement";
+import { type VendorUser } from "@/types/vendorManagement";
+import { useDebounce } from "@/hooks/useDebounce";
+import { usePermissions } from "@/hooks/usePermissions";
+import { PERMISSIONS } from "@/lib/permissions";
+import TablePagination from "@/components/Tables/Pagination";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -26,18 +32,48 @@ import {
 import { cn } from "@/lib/utils";
 import GoogleRoutesMap from "@/components/Map/GoogleRoutesMap";
 
+const PAGE_SIZE = 20;
+
 export default function OrderManagementTabList() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-	const [status, setStatus] = useState<string>("all");
+	const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
+	const [status, setStatusState] = useState<string>("all");
 	const [search, setSearch] = useState("");
 	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
-	const [vendorId, setVendorId] = useState<string>("all");
+	const [vendorId, setVendorIdState] = useState<string>("all");
+	const [page, setPage] = useState(1);
+	const { can } = usePermissions();
 
-	const { data: orderResponse, isLoading, error } = useOrders({ status, search });
+	// Search, status and vendor filter on the server, one page at a time.
+	const debouncedSearch = useDebounce(search.trim(), 400);
+	const {
+		data: orderResponse,
+		isLoading,
+		isFetching,
+		error,
+	} = usePaginatedOrders({
+		status,
+		search: debouncedSearch,
+		vendor: vendorId === "all" ? undefined : vendorId,
+		page,
+		limit: PAGE_SIZE,
+	});
 	const { data: statsResponse } = useOrderStats();
+	// The full vendor list needs Vendor Management; without it the filter falls
+	// back to the vendors on the loaded page.
+	const canListVendors = can(PERMISSIONS.VENDORS);
+	const { data: vendorsResponse } = useVendors(canListVendors);
 
-	const orders = orderResponse?.data ?? [];
+	const orders = useMemo(() => orderResponse?.data ?? [], [orderResponse]);
+
+	const setStatus = (value: string) => {
+		setStatusState(value);
+		setPage(1);
+	};
+	const setVendorId = (value: string) => {
+		setVendorIdState(value);
+		setPage(1);
+	};
 	const stats = statsResponse?.data ?? {
 		pending: 0,
 		payment_failed: 0,
@@ -52,30 +88,36 @@ export default function OrderManagementTabList() {
 		expired: 0,
 	};
 
-	// Vendors that appear in the loaded orders, for the Vendor filter
+	// Options for the Vendor filter
 	const vendors = useMemo(() => {
 		const byId = new Map<string, string>();
-		orders.forEach((order: any) => {
+		(canListVendors ? (vendorsResponse?.data ?? []) : []).forEach((vendor: VendorUser) => {
+			if (vendor?._id) {
+				byId.set(
+					vendor._id,
+					vendor.vendorProfile?.businessName || vendor.name || "Unnamed vendor",
+				);
+			}
+		});
+		orders.forEach((order) => {
 			const id = order.vendor?._id;
 			if (id) byId.set(id, order.vendor?.vendorProfile?.businessName || "Unnamed vendor");
 		});
 		return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) =>
 			a.name.localeCompare(b.name),
 		);
-	}, [orders]);
+	}, [orders, vendorsResponse, canListVendors]);
 
+	// A-Z sorts the current page only; order across pages is newest first.
 	const processedOrders = useMemo(() => {
-		const result =
-			vendorId === "all"
-				? [...orders]
-				: orders.filter((order: any) => order.vendor?._id === vendorId);
+		const result = [...orders];
 		if (sortMode === "asc") {
 			result.sort((a, b) => (a.customer?.name || "").localeCompare(b.customer?.name || ""));
 		} else if (sortMode === "desc") {
 			result.sort((a, b) => (b.customer?.name || "").localeCompare(a.customer?.name || ""));
 		}
 		return result;
-	}, [orders, sortMode, vendorId]);
+	}, [orders, sortMode]);
 
 	const handleViewOrder = (order: OrderData) => {
 		setSelectedOrder(order);
@@ -141,7 +183,10 @@ export default function OrderManagementTabList() {
 					<Input
 						placeholder="Search Orders"
 						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						onChange={(e) => {
+							setSearch(e.target.value);
+							setPage(1);
+						}}
 						className="border-border h-10 rounded-lg bg-white pl-10"
 					/>
 				</div>
@@ -335,11 +380,19 @@ export default function OrderManagementTabList() {
 					Failed to load orders.
 				</div>
 			) : (
-				<DataTable
-					columns={getColumns(getCustomerOrderManagementColumns(handleViewOrder))}
-					data={processedOrders}
-					title=""
-				/>
+				<div className={cn(isFetching && "opacity-60 transition-opacity")}>
+					<DataTable
+						columns={getColumns(getCustomerOrderManagementColumns(handleViewOrder))}
+						data={processedOrders}
+						title=""
+					/>
+					<TablePagination
+						pagination={orderResponse?.pagination}
+						onPageChange={setPage}
+						isFetching={isFetching}
+						itemLabel="orders"
+					/>
+				</div>
 			)}
 
 			{/* Modal */}

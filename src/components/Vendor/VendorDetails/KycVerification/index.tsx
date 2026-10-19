@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { type VendorUser } from "@/types/vendorManagement";
 import { useUpdateVendorStatus } from "@/hooks/vendorManagement";
+import PermissionGate from "@/components/PermissionGate";
+import { ACTION_RULES } from "@/lib/permissions";
 import { Loader2 } from "lucide-react";
 
 interface KycVerificationTabProps {
@@ -46,8 +48,13 @@ export default function KycVerificationTab({ vendor }: KycVerificationTabProps) 
 
 	const hasNIN = !!vendor.vendorProfile.govtIdImage;
 	const hasPassport = !!vendor.vendorProfile.passportPhoto;
-	const hasCacDoc = !!(vendor.vendorProfile as any).cacDocumentImage;
-	const hasTaxDoc = !!(vendor.vendorProfile as any).taxDocumentImage;
+	// Not on the shared VendorProfile type yet; only some vendors upload these.
+	const { cacDocumentImage, taxDocumentImage } = vendor.vendorProfile as {
+		cacDocumentImage?: string;
+		taxDocumentImage?: string;
+	};
+	const hasCacDoc = !!cacDocumentImage;
+	const hasTaxDoc = !!taxDocumentImage;
 
 	return (
 		<div className="border-border/50 min-h-[600px] rounded-[20px] border bg-white p-6 shadow-sm">
@@ -73,13 +80,13 @@ export default function KycVerificationTab({ vendor }: KycVerificationTabProps) 
 							number="3"
 							label="Business License (CAC)"
 							status={hasCacDoc ? "view" : "missing"}
-							viewLink={(vendor.vendorProfile as any).cacDocumentImage}
+							viewLink={cacDocumentImage}
 						/>
 						<DocumentRow
 							number="4"
 							label="Tax Information"
 							status={hasTaxDoc ? "view" : "missing"}
-							viewLink={(vendor.vendorProfile as any).taxDocumentImage}
+							viewLink={taxDocumentImage}
 							isLast
 						/>
 					</div>
@@ -119,25 +126,27 @@ export default function KycVerificationTab({ vendor }: KycVerificationTabProps) 
 						</div>
 
 						{/* Action Buttons */}
-						<div className="flex gap-4 pt-4">
-							<Button
-								variant="outline"
-								className="border-border text-foreground h-12 flex-1 rounded-full bg-[#F9FAFB] font-medium hover:bg-[#F3F4F6]"
-							>
-								Cancel
-							</Button>
-							<Button
-								onClick={handleSave}
-								// UPDATED: Removed `|| status !== "approved"` so you can click save when rejected/pending
-								disabled={isPending}
-								className="h-12 flex-1 rounded-full bg-[#419A44] font-medium text-white hover:bg-[#419A44]/90"
-							>
-								{isPending ? (
-									<Loader2 className="mr-2 size-4 animate-spin" />
-								) : null}
-								Save
-							</Button>
-						</div>
+						<PermissionGate rule={ACTION_RULES.updateVendorStatus}>
+							<div className="flex gap-4 pt-4">
+								<Button
+									variant="outline"
+									className="border-border text-foreground h-12 flex-1 rounded-full bg-[#F9FAFB] font-medium hover:bg-[#F3F4F6]"
+								>
+									Cancel
+								</Button>
+								<Button
+									onClick={handleSave}
+									// UPDATED: Removed `|| status !== "approved"` so you can click save when rejected/pending
+									disabled={isPending}
+									className="h-12 flex-1 rounded-full bg-[#419A44] font-medium text-white hover:bg-[#419A44]/90"
+								>
+									{isPending ? (
+										<Loader2 className="mr-2 size-4 animate-spin" />
+									) : null}
+									Save
+								</Button>
+							</div>
+						</PermissionGate>
 					</div>
 				</div>
 			</div>
