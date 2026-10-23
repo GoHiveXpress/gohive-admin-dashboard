@@ -9,6 +9,7 @@ import {
 	useSendMessage,
 	useSupportSocket,
 	useJoinChat,
+	useTakeoverChat,
 	useCloseChat,
 	useMarkChatRead,
 } from "@/hooks/supportManagement";
@@ -119,18 +120,25 @@ export default function LiveChatTab() {
 		search: debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined,
 	});
 	const chats = useMemo(() => chatsData?.chats ?? [], [chatsData]);
+	const { data: profileData } = useAdminProfile();
+	const myAdminId = profileData?.data?._id;
+	const isSuperadmin = profileData?.data?.role === "superadmin";
 
-	// 2. Live updates patch chats in place, so re-check status/role and re-sort here
+	// 2. Live updates patch chats in place, so re-check status/role and re-sort here.
+	// Staff see the queue and their own chats; a chat another agent takes drops out.
 	const filteredChats = useMemo(
 		() =>
 			chats
-				.filter(
-					(chat) =>
+				.filter((chat) => {
+					const handler = chatAdminId(chat);
+					return (
 						chat.status === statusFilter &&
-						(activeCategory === "all" || chat.role === activeCategory),
-				)
+						(activeCategory === "all" || chat.role === activeCategory) &&
+						(isSuperadmin || !handler || handler === myAdminId)
+					);
+				})
 				.sort(compareChats),
-		[chats, activeCategory, statusFilter],
+		[chats, activeCategory, statusFilter, isSuperadmin, myAdminId],
 	);
 
 	// 3. The open chat; kept even if a new search or filter hides it from the list
@@ -217,13 +225,23 @@ export default function LiveChatTab() {
 	// 6. Mutations
 	const { mutate: sendMessage, isPending: isSending } = useSendMessage();
 	const { mutate: joinChat, isPending: isJoining } = useJoinChat();
+	const { mutate: takeoverChat, isPending: isTakingOver } = useTakeoverChat();
 	const { mutate: closeChat } = useCloseChat();
-	const { data: profileData } = useAdminProfile();
-	const myAdminId = profileData?.data?._id;
 
 	const isClosed = selectedChat?.status === "closed";
 	const handlerId = chatAdminId(selectedChat);
 	const isMine = !!handlerId && handlerId === myAdminId;
+	// Only the agent holding the chat replies or ends it (Join or Take over first)
+	const canReply = isMine && !isClosed;
+	const composerPlaceholder = isClosed
+		? "This chat session has ended"
+		: !handlerId
+			? "Join this chat to reply"
+			: !isMine
+				? isSuperadmin
+					? "Take over this chat to reply"
+					: "Another agent is handling this chat"
+				: "Type a message...";
 
 	const emitTyping = (isTyping: boolean) => {
 		if (socket && selectedChatId) {
@@ -250,7 +268,7 @@ export default function LiveChatTab() {
 	};
 
 	const handleSendMessage = () => {
-		if (!messageText.trim() || !selectedChatId || isClosed) return;
+		if (!messageText.trim() || !selectedChatId || !canReply) return;
 		stopTyping();
 
 		sendMessage(
@@ -270,7 +288,7 @@ export default function LiveChatTab() {
 	const handleImagePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		e.target.value = ""; // allow picking the same file again
-		if (!file || !selectedChatId || isClosed) return;
+		if (!file || !selectedChatId || !canReply) return;
 		if (!["image/png", "image/jpeg"].includes(file.type)) {
 			toast.error("Only PNG or JPEG images can be sent");
 			return;
@@ -304,8 +322,12 @@ export default function LiveChatTab() {
 		if (selectedChatId) joinChat(selectedChatId);
 	};
 
+	const handleTakeover = () => {
+		if (selectedChatId) takeoverChat(selectedChatId);
+	};
+
 	const handleClose = () => {
-		if (selectedChatId) closeChat(selectedChatId);
+		if (selectedChatId && canReply) closeChat(selectedChatId);
 	};
 
 	// Helper for user ID display
@@ -558,6 +580,16 @@ export default function LiveChatTab() {
 									>
 										{isJoining ? "Joining..." : "Join Chat"}
 									</Button>
+								) : !isMine && isSuperadmin ? (
+									<Button
+										size="sm"
+										className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+										onClick={handleTakeover}
+										disabled={isTakingOver}
+										title={`Take this chat over from ${chatAdminName(selectedChat)}`}
+									>
+										{isTakingOver ? "Taking over..." : "Take over"}
+									</Button>
 								) : (
 									<Button
 										size="sm"
@@ -576,9 +608,14 @@ export default function LiveChatTab() {
 								<Button
 									variant="outline"
 									size="sm"
-									className={`text-xs ${isClosed ? "cursor-not-allowed opacity-50" : "text-destructive border-destructive/20 hover:bg-destructive/5"}`}
+									className={`text-xs ${!canReply ? "cursor-not-allowed opacity-50" : "text-destructive border-destructive/20 hover:bg-destructive/5"}`}
 									onClick={handleClose}
-									disabled={isClosed}
+									disabled={!canReply}
+									title={
+										!canReply && !isClosed
+											? "Only the agent handling this chat can end it"
+											: undefined
+									}
 								>
 									{isClosed ? "Session Ended" : "End Session"}
 								</Button>
@@ -684,7 +721,7 @@ export default function LiveChatTab() {
 								type="button"
 								title="Send an image"
 								onClick={() => fileInputRef.current?.click()}
-								disabled={isClosed || isUploading}
+								disabled={!canReply || isUploading}
 								className="text-muted-foreground hover:text-foreground disabled:opacity-50"
 							>
 								<Icon
@@ -693,7 +730,7 @@ export default function LiveChatTab() {
 								/>
 							</button>
 							<QuickReplies
-								disabled={isClosed}
+								disabled={!canReply}
 								onPick={(text) =>
 									setMessageText((current) =>
 										current ? `${current} ${text}` : text,
@@ -702,16 +739,12 @@ export default function LiveChatTab() {
 							/>
 							<div className="relative flex-1">
 								<Input
-									placeholder={
-										isClosed
-											? "This chat session has ended"
-											: "Type a message..."
-									}
+									placeholder={composerPlaceholder}
 									value={messageText}
 									onChange={(e) => handleTextChange(e.target.value)}
 									onBlur={stopTyping}
 									onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-									disabled={isClosed}
+									disabled={!canReply}
 									className="border-border rounded-full bg-transparent disabled:opacity-50"
 								/>
 							</div>
@@ -719,7 +752,7 @@ export default function LiveChatTab() {
 								type="button"
 								aria-label="Send message"
 								onClick={handleSendMessage}
-								disabled={isSending || !messageText.trim() || isClosed}
+								disabled={isSending || !messageText.trim() || !canReply}
 								className="bg-accent hover:bg-accent/90 flex size-10 items-center justify-center rounded-full text-white shadow-md transition disabled:opacity-50"
 							>
 								<Icon icon="lucide:send" className="ml-0.5 size-5" />

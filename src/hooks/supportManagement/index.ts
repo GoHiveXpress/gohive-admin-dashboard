@@ -185,6 +185,25 @@ export const useJoinChat = () => {
 	});
 };
 
+export const useTakeoverChat = () => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+
+	return useMutation({
+		mutationFn: supportApi.takeoverChat,
+		onSuccess: (data, chatId) => {
+			toast.success(data?.message || "You have taken over this chat");
+			queryClient.invalidateQueries({
+				queryKey: ["support-chat-history", chatId],
+			});
+			queryClient.invalidateQueries({ queryKey: ["support-chats"] });
+		},
+		onError: (error: any) => {
+			toast.error(error.response?.data?.message || "Failed to take over the chat");
+		},
+	});
+};
+
 export const useCloseChat = () => {
 	const queryClient = useQueryClient();
 	const toast = useToast();

@@ -65,6 +65,12 @@ export const supportApi = {
 		return response.data;
 	},
 
+	// Superadmin only; recorded in the audit log
+	takeoverChat: async (chatId: string): Promise<any> => {
+		const response = await axiosInstance.post(`/support-chat/admin/takeover/${chatId}`);
+		return response.data;
+	},
+
 	closeChat: async (chatId: string): Promise<any> => {
 		const response = await axiosInstance.post(`/support-chat/close/${chatId}`);
 		return response.data;
