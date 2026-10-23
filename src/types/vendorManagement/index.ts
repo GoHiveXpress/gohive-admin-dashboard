@@ -1,4 +1,6 @@
 // src/types/vendorManagement/index.ts
+import { type PaginationMeta } from "@/types/pagination";
+
 export type OperatingHours = {
 	day: string;
 	openTime: string;
@@ -46,6 +48,16 @@ export type VendorUser = {
 export type VendorListResponse = {
 	success: boolean;
 	data: VendorUser[];
+	pagination?: PaginationMeta;
+};
+
+// Query for GET /admin/vendors. status is accountStatus, kyc is verificationStatus.
+export type VendorListFilters = {
+	search?: string;
+	status?: "Active" | "Inactive" | "Suspend";
+	kyc?: "pending" | "approved" | "rejected";
+	page?: number;
+	limit?: number;
 };
 
 export type SingleVendorResponse = {

@@ -1,41 +1,25 @@
 // src/app/api/userManagement/index.ts
 import { apiClient } from "@/lib/apiClient";
 import {
-	CustomerUser,
-	VendorUser,
-	RiderUser,
-	AdminUser,
-	UserListResponse,
-	GenericResponse,
-	InviteStaffRequest,
-	Invitation,
-	ChangePasswordRequest,
-	AdminProfileUpdate,
-	RegisterStaffRequest,
+	type CustomerUser,
+	type VendorUser,
+	type RiderUser,
+	type AdminUser,
+	type UserListResponse,
+	type GenericResponse,
+	type InviteStaffRequest,
+	type Invitation,
+	type ChangePasswordRequest,
+	type AdminProfileUpdate,
+	type RegisterStaffRequest,
 } from "@/types/userManagement";
 
 const ADMIN_PATH = "/admin";
 
+// eslint-disable-next-line import/prefer-default-export
 export const userManagementApi = {
-	getCustomers: (params?: any) =>
-		apiClient.get<UserListResponse<CustomerUser>>(
-			`${ADMIN_PATH}/customers${params ? `?${new URLSearchParams(params).toString()}` : ""}`,
-			"Failed to fetch customers",
-		),
-
-	getVendors: (params?: any) =>
-		apiClient.get<UserListResponse<VendorUser>>(
-			`${ADMIN_PATH}/vendors${params ? `?${new URLSearchParams(params).toString()}` : ""}`,
-			"Failed to fetch vendors",
-		),
-
-	getRiders: (params?: any) =>
-		apiClient.get<UserListResponse<RiderUser>>(
-			`${ADMIN_PATH}/riders${params ? `?${new URLSearchParams(params).toString()}` : ""}`,
-			"Failed to fetch riders",
-		),
-
-	getAdmins: (params?: any) =>
+	// Customer, vendor and rider lists live in customerApi, vendorApi and riderApi.
+	getAdmins: (params?: Record<string, string>) =>
 		apiClient.get<UserListResponse<AdminUser>>(
 			`${ADMIN_PATH}/admins${params ? `?${new URLSearchParams(params).toString()}` : ""}`,
 			"Failed to fetch admins",
@@ -74,7 +58,11 @@ export const userManagementApi = {
 		),
 
 	inviteStaff: (data: InviteStaffRequest) =>
-		apiClient.post<GenericResponse>(`${ADMIN_PATH}/invite-staff`, data, "Failed to invite staff"),
+		apiClient.post<GenericResponse>(
+			`${ADMIN_PATH}/invite-staff`,
+			data,
+			"Failed to invite staff",
+		),
 
 	upgradeStaffToSuperAdmin: (userId: string) =>
 		apiClient.put<GenericResponse>(
@@ -120,11 +108,7 @@ export const userManagementApi = {
 		),
 
 	registerStaff: (data: RegisterStaffRequest) =>
-		apiClient.post<GenericResponse>(
-			"/auth/register-staff",
-			data,
-			"Failed to register staff",
-		),
+		apiClient.post<GenericResponse>("/auth/register-staff", data, "Failed to register staff"),
 	getAdminPermissions: (id: string) =>
 		apiClient.get<{
 			success: boolean;
@@ -151,5 +135,8 @@ export const userManagementApi = {
 			"Failed to update admin permissions",
 		),
 	deleteAdmin: (id: string) =>
-		apiClient.delete<GenericResponse>(`${ADMIN_PATH}/admin/${id}`, "Failed to delete admin account"),
+		apiClient.delete<GenericResponse>(
+			`${ADMIN_PATH}/admin/${id}`,
+			"Failed to delete admin account",
+		),
 };

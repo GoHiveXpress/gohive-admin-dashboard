@@ -1,22 +1,22 @@
 // src/hooks/vendorManagement/index.ts
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { vendorApi } from "@/app/api/vendorManagement";
+import { type VendorListFilters } from "@/types/vendorManagement";
 
-export const useVendors = (enabled = true) => {
+// The one vendor list hook. Every vendor list shares the ["vendors", ...] cache,
+// so a status change invalidates all of them. Single vendors: useVendor in
+// hooks/userManagement.
+export const useVendors = (
+	filters: VendorListFilters = {},
+	options: { enabled?: boolean; keepPrevious?: boolean } = {},
+) => {
 	return useQuery({
-		queryKey: ["vendors"],
-		queryFn: vendorApi.getAllVendors,
-		enabled,
-	});
-};
-
-export const useSingleVendor = (id: string) => {
-	return useQuery({
-		queryKey: ["vendor", id],
-		queryFn: () => vendorApi.getVendorById(id),
-		enabled: !!id,
+		queryKey: ["vendors", filters],
+		queryFn: () => vendorApi.getAllVendors(filters),
+		enabled: options.enabled ?? true,
+		placeholderData: options.keepPrevious ? keepPreviousData : undefined,
 	});
 };
 

@@ -7,12 +7,10 @@ import {
 	type VerifyOtpRequest,
 	type ResendOtpRequest,
 	type AuthResponse,
-	type CustomerListResponse,
 	type RegisterStaffRequest,
 } from "@/types/authManagement";
 
 const AUTH_BASE = "/auth";
-const ADMIN_BASE = "/admin";
 
 export const authApi = {
 	// Login: Can return token OR requireOtp flag
@@ -30,10 +28,6 @@ export const authApi = {
 			data,
 			"Failed to resend OTP",
 		),
-
-	// --- Customer Management (Part of Auth/User management per prompt) ---
-	getAllCustomers: () =>
-		apiClient.get<CustomerListResponse>(`${ADMIN_BASE}/customers`, "Failed to fetch customers"),
 
 	// Staff registration
 	registerStaff: (data: RegisterStaffRequest) =>

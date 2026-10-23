@@ -7,13 +7,13 @@ import {
 	customerUserColumns,
 	type CustomerUserData,
 } from "@/components/Tables/columns/CustomerUserColumns";
-import { useCustomers } from "@/hooks/userManagement";
+import { useCustomers } from "@/hooks/customerManagement";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function CustomerUserList() {
 	const { data: response, isLoading } = useCustomers();
-	const customers = response?.data || [];
+	const customers = response?.data ?? [];
 
 	const tableData: CustomerUserData[] = customers.map((c) => ({
 		id: c._id,
@@ -22,7 +22,7 @@ export default function CustomerUserList() {
 		email: c.email,
 		phone: c.phone,
 		date: format(new Date(c.createdAt), "dd MMM yyyy | hh:mm a"),
-		status: c.accountStatus === "Suspend" ? "Inactive" : "Active" as any, // Mapping status
+		status: c.accountStatus === "Suspend" ? "Inactive" : "Active",
 	}));
 
 	if (isLoading) {

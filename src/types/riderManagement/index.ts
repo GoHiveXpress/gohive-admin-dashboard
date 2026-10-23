@@ -1,4 +1,6 @@
 // src/types/riderManagement/index.ts
+import { type PaginationMeta } from "@/types/pagination";
+
 export type RiderProfile = {
 	vehicleType: "Motorbike" | "Bicycle" | "Car" | "Van";
 	vehiclePlateNumber: string;
@@ -36,6 +38,17 @@ export type RiderUser = {
 export type RiderListResponse = {
 	success: boolean;
 	data: RiderUser[];
+	pagination?: PaginationMeta;
+};
+
+// Query for GET /admin/riders. status is accountStatus, kyc is verificationStatus.
+export type RiderListFilters = {
+	search?: string;
+	status?: "Active" | "Inactive" | "Suspend";
+	kyc?: "pending" | "approved" | "rejected";
+	availability?: "online" | "offline" | "busy";
+	page?: number;
+	limit?: number;
 };
 
 export type SingleRiderResponse = {

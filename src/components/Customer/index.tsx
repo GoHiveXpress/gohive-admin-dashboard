@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import CustomTabs, { type TabItem } from "@/components/Tabs";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
-import { useCustomer } from "@/hooks/customerManagement";
+import { useCustomer } from "@/hooks/userManagement";
 import { Skeleton } from "@/components/ui/skeleton";
 import CustomerProfileTab from "./CustomerProfileTabs";
 import CustomerOrderTab from "./CustomerOrderTabs";

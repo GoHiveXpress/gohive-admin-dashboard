@@ -3,9 +3,12 @@ import { useQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
 import { customerApi } from "@/app/api/customerManagement";
 import { useOpsLiveUpdates } from "@/hooks/useOps";
 
-export const useCustomers = (filters: { search?: string; status?: string }) => {
+// The customer list hooks. They share the ["customers", ...] cache with the
+// account status and role mutations in hooks/userManagement, so a suspension
+// refreshes every customer list. Single customers: useCustomer in hooks/userManagement.
+export const useCustomers = (filters: { search?: string; status?: string } = {}) => {
 	return useQuery({
-		queryKey: ["admin_customers", filters],
+		queryKey: ["customers", filters],
 		queryFn: () => customerApi.getAllCustomers(filters),
 	});
 };
@@ -18,17 +21,9 @@ export const usePaginatedCustomers = (filters: {
 	limit: number;
 }) => {
 	return useQuery({
-		queryKey: ["admin_customers", "paged", filters],
+		queryKey: ["customers", "paged", filters],
 		queryFn: () => customerApi.getAllCustomers(filters),
 		placeholderData: keepPreviousData,
-	});
-};
-
-export const useCustomer = (id: string) => {
-	return useQuery({
-		queryKey: ["admin_customer", id],
-		queryFn: () => customerApi.getCustomerById(id),
-		enabled: !!id,
 	});
 };
 

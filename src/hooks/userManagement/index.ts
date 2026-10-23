@@ -9,27 +9,8 @@ import {
 	type ChangePasswordRequest,
 } from "@/types/userManagement";
 
-export const useCustomers = (params?: any) => {
-	return useQuery({
-		queryKey: ["customers", params],
-		queryFn: () => userManagementApi.getCustomers(params),
-	});
-};
-
-export const useVendors = (params?: any) => {
-	return useQuery({
-		queryKey: ["vendors", params],
-		queryFn: () => userManagementApi.getVendors(params),
-	});
-};
-
-export const useRiders = (params?: any) => {
-	return useQuery({
-		queryKey: ["riders", params],
-		queryFn: () => userManagementApi.getRiders(params),
-	});
-};
-
+// Lists: useCustomers (customerManagement), useVendors (vendorManagement) and
+// useRiders (riderManagement). The single-user hooks below are the only copies.
 export const useCustomer = (id: string, enabled = true) => {
 	return useQuery({
 		queryKey: ["customer", id],

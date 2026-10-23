@@ -3,7 +3,7 @@
 import { apiClient } from "@/lib/apiClient";
 import {
 	type VendorListResponse,
-	type SingleVendorResponse,
+	type VendorListFilters,
 	type VendorCategoriesResponse,
 	type VendorMenuDetailsResponse,
 	type VendorStaffMember,
@@ -11,12 +11,22 @@ import {
 
 const ADMIN_BASE = "/admin";
 
-export const vendorApi = {
-	getAllVendors: () =>
-		apiClient.get<VendorListResponse>(`${ADMIN_BASE}/vendors`, "Failed to fetch vendors"),
+const toQuery = (filters: Record<string, string | number | undefined>) => {
+	const params = new URLSearchParams();
+	Object.entries(filters).forEach(([key, value]) => {
+		if (value !== undefined && value !== "" && value !== "all")
+			params.append(key, String(value));
+	});
+	const query = params.toString();
+	return query ? `?${query}` : "";
+};
 
-	getVendorById: (id: string) =>
-		apiClient.get<SingleVendorResponse>(`${ADMIN_BASE}/vendor/${id}`, "Failed to fetch vendor"),
+export const vendorApi = {
+	getAllVendors: (filters: VendorListFilters = {}) =>
+		apiClient.get<VendorListResponse>(
+			`${ADMIN_BASE}/vendors${toQuery(filters)}`,
+			"Failed to fetch vendors",
+		),
 
 	updateVendorStatus: (params: {
 		vendorId: string;
@@ -29,10 +39,16 @@ export const vendorApi = {
 		),
 
 	getVendorCategories: () =>
-		apiClient.get<VendorCategoriesResponse>("/vendor-categories", "Failed to fetch vendor categories"),
+		apiClient.get<VendorCategoriesResponse>(
+			"/vendor-categories",
+			"Failed to fetch vendor categories",
+		),
 
 	getVendorMenuDetails: (id: string) =>
-		apiClient.get<VendorMenuDetailsResponse>(`${ADMIN_BASE}/vendor/${id}/menu`, "Failed to fetch vendor menu details"),
+		apiClient.get<VendorMenuDetailsResponse>(
+			`${ADMIN_BASE}/vendor/${id}/menu`,
+			"Failed to fetch vendor menu details",
+		),
 
 	getVendorStaff: (id: string) =>
 		apiClient.get<{ success: boolean; data: VendorStaffMember[] }>(

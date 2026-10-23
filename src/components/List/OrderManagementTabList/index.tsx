@@ -69,7 +69,7 @@ export default function OrderManagementTabList() {
 	// The full vendor list needs Vendor Management; without it the filter falls
 	// back to the vendors on the loaded page.
 	const canListVendors = can(PERMISSIONS.VENDORS);
-	const { data: vendorsResponse } = useVendors(canListVendors);
+	const { data: vendorsResponse } = useVendors({}, { enabled: canListVendors });
 
 	const orders = useMemo(() => orderResponse?.data ?? [], [orderResponse]);
 

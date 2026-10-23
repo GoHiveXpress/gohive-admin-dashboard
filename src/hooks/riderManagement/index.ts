@@ -1,21 +1,22 @@
 // src/hooks/riderManagement/index.ts
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { riderApi } from "@/app/api/riderManagement";
+import { type RiderListFilters } from "@/types/riderManagement";
 
-export const useRiders = () => {
+// The one rider list hook. Every rider list shares the ["riders", ...] cache,
+// so a status change invalidates all of them. Single riders: useRider in
+// hooks/userManagement.
+export const useRiders = (
+	filters: RiderListFilters = {},
+	options: { enabled?: boolean; keepPrevious?: boolean } = {},
+) => {
 	return useQuery({
-		queryKey: ["riders"],
-		queryFn: riderApi.getAllRiders,
-	});
-};
-
-export const useSingleRider = (id: string) => {
-	return useQuery({
-		queryKey: ["rider", id],
-		queryFn: () => riderApi.getRiderById(id),
-		enabled: !!id,
+		queryKey: ["riders", filters],
+		queryFn: () => riderApi.getAllRiders(filters),
+		enabled: options.enabled ?? true,
+		placeholderData: options.keepPrevious ? keepPreviousData : undefined,
 	});
 };
 

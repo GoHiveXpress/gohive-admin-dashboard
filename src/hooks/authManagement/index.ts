@@ -1,6 +1,6 @@
 // src/hooks/authManagement/index.ts
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { authApi } from "@/app/api/authManagement";
 import { type LoginRequest } from "@/types/authManagement";
@@ -72,14 +72,6 @@ export const useRegisterStaff = () => {
 		onError: (error: Error) => {
 			toast.error(error.message);
 		},
-	});
-};
-
-// --- CUSTOMER QUERY HOOK ---
-export const useCustomers = () => {
-	return useQuery({
-		queryKey: ["customers"],
-		queryFn: authApi.getAllCustomers,
 	});
 };
 

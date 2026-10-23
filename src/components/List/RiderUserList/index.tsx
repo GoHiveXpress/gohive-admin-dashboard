@@ -4,13 +4,13 @@ import React from "react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { riderUserColumns, type RiderUserData } from "@/components/Tables/columns/RiderUserColumns";
-import { useRiders } from "@/hooks/userManagement";
+import { useRiders } from "@/hooks/riderManagement";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function RiderUserList() {
 	const { data: response, isLoading } = useRiders();
-	const riders = response?.data || [];
+	const riders = response?.data ?? [];
 
 	const tableData: RiderUserData[] = riders.map((r) => ({
 		id: r._id,
@@ -20,11 +20,10 @@ export default function RiderUserList() {
 		phone: r.phone,
 		date: format(new Date(r.createdAt), "dd MMM yyyy | hh:mm a"),
 		rating: 0, // Backend doesn't provide rating here yet
-		status: (r.accountStatus === "Suspend"
-			? "Offline"
-			: r.riderProfile?.availabilityStatus === "online"
+		status:
+			r.accountStatus !== "Suspend" && r.riderProfile?.availabilityStatus === "online"
 				? "Active"
-				: "Offline") as any,
+				: "Offline",
 	}));
 
 	if (isLoading) {

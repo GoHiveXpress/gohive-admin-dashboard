@@ -14,7 +14,8 @@ import {
 } from "@/components/Tables/columns/ActiveUsersColumnsConfig";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { ROUTES } from "@/constants/routes";
-import { useRiders, useVendors } from "@/hooks/userManagement";
+import { useRiders } from "@/hooks/riderManagement";
+import { useVendors } from "@/hooks/vendorManagement";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -64,8 +65,8 @@ export default function ActiveUserList() {
 				name: rider.name,
 				userType: "Rider",
 				userId: `RGHV${rider._id.slice(-4).toUpperCase()}`,
-				image: rider.profilePicture || "",
-				location: location || "N/A",
+				image: rider.profilePicture ?? "",
+				location: location ?? "N/A",
 				phone: rider.phone || "N/A",
 				status: isOnline ? "Active" : "Offline",
 				activeOrder: availability === "busy" ? "Yes" : "No",
@@ -88,7 +89,7 @@ export default function ActiveUserList() {
 				name: vendor.vendorProfile?.businessName || vendor.name,
 				userType: "Vendor",
 				userId: `VGHV${vendor._id.slice(-4).toUpperCase()}`,
-				image: vendor.profilePicture || "",
+				image: vendor.profilePicture ?? "",
 				location: vendor.vendorProfile?.businessAddress || "N/A",
 				phone: vendor.phone || "N/A",
 				status: isOnline ? "Online" : "Offline",
@@ -140,6 +141,21 @@ export default function ActiveUserList() {
 	const pageTitle = activeTab === "riders" ? "Active Rider" : "Active Vendor";
 
 	const columns = getColumns(activeUsersColumnConfig);
+
+	let tableBody = <DataTable columns={columns} data={currentData} title="" />;
+	if (isLoading) {
+		tableBody = (
+			<div className="flex h-64 items-center justify-center">
+				<Loader2 className="text-secondary size-8 animate-spin" />
+			</div>
+		);
+	} else if (isError) {
+		tableBody = (
+			<div className="text-destructive flex h-64 items-center justify-center">
+				Failed to load users.
+			</div>
+		);
+	}
 
 	return (
 		<div className="w-full space-y-6">
@@ -248,17 +264,7 @@ export default function ActiveUserList() {
 				</div>
 
 				{/* Table */}
-				{isLoading ? (
-					<div className="flex h-64 items-center justify-center">
-						<Loader2 className="text-secondary size-8 animate-spin" />
-					</div>
-				) : isError ? (
-					<div className="text-destructive flex h-64 items-center justify-center">
-						Failed to load users.
-					</div>
-				) : (
-					<DataTable columns={columns} data={currentData} title="" />
-				)}
+				{tableBody}
 			</div>
 		</div>
 	);

@@ -7,13 +7,13 @@ import {
 	vendorUserColumns,
 	type VendorUserData,
 } from "@/components/Tables/columns/VendorUserColumns";
-import { useVendors } from "@/hooks/userManagement";
+import { useVendors } from "@/hooks/vendorManagement";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function VendorUserList() {
 	const { data: response, isLoading } = useVendors();
-	const vendors = response?.data || [];
+	const vendors = response?.data ?? [];
 
 	const tableData: VendorUserData[] = vendors.map((v) => ({
 		id: v._id,
@@ -22,7 +22,7 @@ export default function VendorUserList() {
 		location: v.vendorProfile.businessAddress || "N/A",
 		phone: v.phone,
 		date: format(new Date(v.createdAt), "dd MMM yyyy | hh:mm a"),
-		status: v.accountStatus === "Suspend" ? "Inactive" : ("Active" as any),
+		status: v.accountStatus === "Suspend" ? "Inactive" : "Active",
 	}));
 
 	if (isLoading) {
