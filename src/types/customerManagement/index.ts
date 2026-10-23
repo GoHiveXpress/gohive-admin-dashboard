@@ -28,11 +28,13 @@ export type Order = {
 	};
 	vendor: {
 		_id?: string;
+		name?: string;
 		vendorProfile: {
 			businessName: string;
 		};
 	};
 	rider?: {
+		_id?: string;
 		name: string;
 		phone: string;
 	};

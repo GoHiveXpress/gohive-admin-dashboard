@@ -54,6 +54,8 @@ export const customerApi = {
 		search?: string;
 		status?: string;
 		vendor?: string;
+		customer?: string;
+		date?: string;
 		page?: number;
 		limit?: number;
 	}) => {
@@ -61,6 +63,8 @@ export const customerApi = {
 		if (filters.search) params.append("search", filters.search);
 		if (filters.status) params.append("status", filters.status);
 		if (filters.vendor) params.append("vendor", filters.vendor);
+		if (filters.customer) params.append("customer", filters.customer);
+		if (filters.date) params.append("date", filters.date);
 		if (filters.page) params.append("page", String(filters.page));
 		if (filters.limit) params.append("limit", String(filters.limit));
 

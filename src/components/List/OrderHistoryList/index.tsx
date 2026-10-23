@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+// Untyped screen written before the lint rules; only its data source changed here.
+
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-nullish-coalescing, no-nested-ternary */
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/Tables";
@@ -18,6 +20,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ORDER_STATUS_OPTIONS } from "@/lib/orderStatus";
 
 export default function OrderHistoryList({ customerId }: { customerId?: string }) {
 	const {
@@ -30,7 +33,7 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 		data: allOrdersResponse,
 		isLoading: isAllOrdersLoading,
 		error: allOrdersError,
-	} = useOrders({}); // General list could use filters, but for now empty
+	} = useOrders({}, { enabled: !customerId }); // A customer's page only needs their orders
 
 	const [status, setStatus] = useState<string>("all");
 	const [searchQuery, setSearchQuery] = useState("");
@@ -49,8 +52,9 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 			const query = searchQuery.toLowerCase();
 			result = result.filter(
 				(item: any) =>
+					item.orderId?.toLowerCase().includes(query.replace(/^#/, "")) ||
 					item._id?.toLowerCase().includes(query) ||
-					item.customer?.name?.toLowerCase().includes(query)
+					item.customer?.name?.toLowerCase().includes(query),
 			);
 		}
 
@@ -83,9 +87,13 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 		}
 
 		if (sortMode === "asc") {
-			result.sort((a: any, b: any) => (a.customer?.name || "").localeCompare(b.customer?.name || ""));
+			result.sort((a: any, b: any) =>
+				(a.customer?.name || "").localeCompare(b.customer?.name || ""),
+			);
 		} else if (sortMode === "desc") {
-			result.sort((a: any, b: any) => (b.customer?.name || "").localeCompare(a.customer?.name || ""));
+			result.sort((a: any, b: any) =>
+				(b.customer?.name || "").localeCompare(a.customer?.name || ""),
+			);
 		}
 
 		return result;
@@ -138,7 +146,7 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 							)}
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+					<DropdownMenuContent align="start" className="z-50 w-48 bg-white">
 						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuCheckboxItem
@@ -147,18 +155,15 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 						>
 							All Statuses
 						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "delivered"}
-							onCheckedChange={() => setStatus("delivered")}
-						>
-							Delivered
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "cancelled"}
-							onCheckedChange={() => setStatus("cancelled")}
-						>
-							Cancelled
-						</DropdownMenuCheckboxItem>
+						{ORDER_STATUS_OPTIONS.map((option) => (
+							<DropdownMenuCheckboxItem
+								key={option.value}
+								checked={status === option.value}
+								onCheckedChange={() => setStatus(option.value)}
+							>
+								{option.label}
+							</DropdownMenuCheckboxItem>
+						))}
 					</DropdownMenuContent>
 				</DropdownMenu>
 
@@ -172,7 +177,7 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 						"h-10 rounded-lg px-6 font-medium transition-colors",
 						status === "all" && dateFilter === "all-time"
 							? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
-							: "border-border bg-white text-foreground hover:bg-muted/80"
+							: "border-border bg-white text-foreground hover:bg-muted/80",
 					)}
 				>
 					All
@@ -180,10 +185,16 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 
 				<Button
 					variant={sortMode !== null ? "default" : "outline"}
-					onClick={() => setSortMode((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
+					onClick={() =>
+						setSortMode((prev) =>
+							prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+						)
+					}
 					className={cn(
 						"h-10 rounded-lg bg-white px-4 font-medium",
-						sortMode !== null ? "bg-[#123614] text-white hover:bg-[#123614]/90" : "border-border"
+						sortMode !== null
+							? "bg-[#123614] text-white hover:bg-[#123614]/90"
+							: "border-border",
 					)}
 				>
 					A-Z {sortMode === "asc" ? "↓" : sortMode === "desc" ? "↑" : ""}
@@ -193,24 +204,53 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<Button variant="outline" className="border-border h-10 min-w-[120px] justify-between rounded-lg bg-white">
-							{dateFilter === "all-time" ? "Date" : dateFilter === "today" ? "Today" : dateFilter === "week" ? "Last 7 Days" : "Last 30 Days"}
+						<Button
+							variant="outline"
+							className="border-border h-10 min-w-[120px] justify-between rounded-lg bg-white"
+						>
+							{dateFilter === "all-time"
+								? "Date"
+								: dateFilter === "today"
+									? "Today"
+									: dateFilter === "week"
+										? "Last 7 Days"
+										: "Last 30 Days"}
 							<Icon icon="ph:caret-down" className="ml-2" />
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+					<DropdownMenuContent align="start" className="z-50 w-48 bg-white">
 						<DropdownMenuLabel>Filter by Date</DropdownMenuLabel>
 						<DropdownMenuSeparator />
-						<DropdownMenuCheckboxItem checked={dateFilter === "all-time"} onCheckedChange={() => setDateFilter("all-time")}>All Time</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={dateFilter === "today"} onCheckedChange={() => setDateFilter("today")}>Today</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={dateFilter === "week"} onCheckedChange={() => setDateFilter("week")}>Last 7 Days</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={dateFilter === "month"} onCheckedChange={() => setDateFilter("month")}>Last 30 Days</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "all-time"}
+							onCheckedChange={() => setDateFilter("all-time")}
+						>
+							All Time
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "today"}
+							onCheckedChange={() => setDateFilter("today")}
+						>
+							Today
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "week"}
+							onCheckedChange={() => setDateFilter("week")}
+						>
+							Last 7 Days
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "month"}
+							onCheckedChange={() => setDateFilter("month")}
+						>
+							Last 30 Days
+						</DropdownMenuCheckboxItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
 
 			{/* Google Map Tracker for Orders */}
-			<div className="w-full mb-6">
+			<div className="mb-6 w-full">
 				<GoogleRoutesMap orders={orders || []} />
 			</div>
 

@@ -48,24 +48,44 @@ export const useCustomerFeedback = (id: string) => {
 	});
 };
 
-export const useOrders = (filters: { search?: string; status?: string; vendor?: string }) => {
+export const useOrders = (
+	filters: { search?: string; status?: string; vendor?: string },
+	options: { enabled?: boolean } = {},
+) => {
 	return useQuery({
 		queryKey: ["admin_orders", filters],
 		queryFn: () => customerApi.getAllOrders(filters),
+		enabled: options.enabled ?? true,
 	});
 };
 
-export const usePaginatedOrders = (filters: {
-	search?: string;
-	status?: string;
-	vendor?: string;
-	page: number;
-	limit: number;
-}) => {
+// The newest orders only (the server's page cap), for overview screens that
+// used to download every order ever placed.
+export const RECENT_ORDERS_LIMIT = 200;
+export const useRecentOrders = () => {
+	return useQuery({
+		queryKey: ["admin_orders", "recent"],
+		queryFn: () => customerApi.getAllOrders({ page: 1, limit: RECENT_ORDERS_LIMIT }),
+	});
+};
+
+export const usePaginatedOrders = (
+	filters: {
+		search?: string;
+		status?: string;
+		vendor?: string;
+		customer?: string;
+		date?: string;
+		page: number;
+		limit: number;
+	},
+	options: { enabled?: boolean } = {},
+) => {
 	return useQuery({
 		queryKey: ["admin_orders", "paged", filters],
 		queryFn: () => customerApi.getAllOrders(filters),
 		placeholderData: keepPreviousData,
+		enabled: options.enabled ?? true,
 	});
 };
 

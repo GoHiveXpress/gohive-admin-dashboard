@@ -2,12 +2,16 @@
 
 /* eslint-disable jsx-a11y/aria-role */
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@iconify/react";
-import { useOrders } from "@/hooks/customerManagement";
+import { usePaginatedOrders } from "@/hooks/customerManagement";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
-import { format, isSameDay } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { ORDER_STATUS_OPTIONS, orderStatusLabel } from "@/lib/orderStatus";
+import TablePagination from "@/components/Tables/Pagination";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { OrderListItem, TimelineActor, StatusCheck } from "@/components/_atoms/OrderAtoms";
@@ -23,47 +27,111 @@ import {
 } from "@/components/ui/dropdown-menu";
 import RefundPanel from "./RefundPanel";
 
-const OrderManagement = () => {
-	const { data: orderResponse, isLoading } = useOrders({});
-	const orders = orderResponse?.data || [];
+const PAGE_SIZE = 50;
+const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
-	const [searchQuery, setSearchQuery] = useState("");
-	const [statusFilter, setStatusFilter] = useState("All");
-	const [date, setDate] = useState<Date | undefined>(undefined);
+const OrderManagement = () => {
+	// Filters live in the URL, so links (e.g. ?search=<code> from the detail
+	// panel), refresh and back all keep them.
+	const router = useRouter();
+	const pathname = usePathname();
+	const params = useSearchParams();
+	const initialDate = params.get("date") ?? "";
+
+	const [searchQuery, setSearchQuery] = useState(params.get("search") ?? "");
+	const [statusFilter, setStatusFilterState] = useState(params.get("status") ?? "All");
+	const [date, setDateState] = useState<Date | undefined>(
+		DAY_KEY.test(initialDate) ? parseISO(initialDate) : undefined,
+	);
+	const [page, setPage] = useState(1);
 	const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-	// Dynamically filter orders
-	const filteredOrders = useMemo(() => {
-		return orders.filter((o: any) => {
-			const matchesSearch =
-				searchQuery === "" ||
-				o.orderId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				o._id?.toLowerCase().includes(searchQuery.toLowerCase());
+	const debouncedSearch = useDebounce(searchQuery.trim(), 400);
+	const dayKey = date ? format(date, "yyyy-MM-dd") : "";
+	const status = statusFilter === "All" ? undefined : statusFilter;
 
-			const matchesStatus =
-				statusFilter === "All" || o.status?.toLowerCase() === statusFilter.toLowerCase();
+	useEffect(() => {
+		const next = new URLSearchParams();
+		if (debouncedSearch) next.set("search", debouncedSearch);
+		if (status) next.set("status", status);
+		if (dayKey) next.set("date", dayKey);
+		const query = next.toString();
+		router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+	}, [debouncedSearch, status, dayKey, pathname, router]);
 
-			const matchesDate = !date || (o.createdAt && isSameDay(new Date(o.createdAt), date));
+	// Search, status and day filter on the server, one page at a time.
+	useEffect(() => setPage(1), [debouncedSearch, status, dayKey]);
+	const {
+		data: orderResponse,
+		isLoading,
+		isFetching,
+	} = usePaginatedOrders({
+		search: debouncedSearch,
+		status,
+		date: dayKey || undefined,
+		page,
+		limit: PAGE_SIZE,
+	});
+	const filteredOrders = useMemo(() => orderResponse?.data ?? [], [orderResponse]);
 
-			return matchesSearch && matchesStatus && matchesDate;
-		});
-	}, [orders, searchQuery, statusFilter, date]);
+	const setStatusFilter = (value: string) => setStatusFilterState(value);
+	const setDate = (value: Date | undefined) => setDateState(value);
 
-	// Extract the actual selected order object
-	const activeOrder = useMemo(() => {
-		if (selectedOrderId) {
-			return orders.find((o: any) => o._id === selectedOrderId) || filteredOrders[0];
-		}
-		return filteredOrders[0];
-	}, [selectedOrderId, filteredOrders, orders]) as any;
+	// Only an order that is in the list can be open: filtering it out closes it.
+	const activeOrder = useMemo(
+		() => filteredOrders.find((o) => o._id === selectedOrderId) ?? null,
+		[selectedOrderId, filteredOrders],
+	);
 
 	// Utility to conditionally define visual color codes
-	const getStatusColor = (status: string) => {
-		if (["pending", "placed", "accepted", "preparing", "ready", "picked_up"].includes(status))
+	const getStatusColor = (orderStatus: string) => {
+		if (
+			["pending", "placed", "accepted", "preparing", "ready", "picked_up"].includes(
+				orderStatus,
+			)
+		)
 			return "yellow";
-		if (["delivered"].includes(status)) return "green";
+		if (["delivered"].includes(orderStatus)) return "green";
 		return "red";
 	};
+
+	const dotClass = {
+		green: "bg-[#22C55E]",
+		red: "bg-[#EF4444]",
+		yellow: "bg-[#EAB308]",
+	};
+
+	let listBody: React.ReactNode;
+	if (isLoading) {
+		listBody = (
+			<div className="flex justify-center p-6">
+				<Loader2 className="text-secondary animate-spin" />
+			</div>
+		);
+	} else if (filteredOrders.length === 0) {
+		listBody = (
+			<div className="text-muted-foreground mt-4 text-center text-sm">No matching orders</div>
+		);
+	} else {
+		listBody = (
+			<div className="custom-scrollbar flex max-h-[600px] flex-col gap-3 overflow-y-auto pr-1">
+				{filteredOrders.map((o) => (
+					<button
+						type="button"
+						key={o._id}
+						className="text-left"
+						onClick={() => setSelectedOrderId(o._id)}
+					>
+						<OrderListItem
+							orderId={(o.orderId || o._id).slice(-6)}
+							statusColor={getStatusColor(o.status)}
+							isActive={activeOrder?._id === o._id}
+						/>
+					</button>
+				))}
+			</div>
+		);
+	}
 
 	return (
 		<div className="bg-background size-full space-y-6 p-6">
@@ -82,7 +150,7 @@ const OrderManagement = () => {
 						className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2"
 					/>
 					<Input
-						placeholder="Search by Order ID"
+						placeholder="Order code, customer or vendor"
 						className="bg-card border-border h-10 pl-9"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
@@ -140,7 +208,7 @@ const OrderManagement = () => {
 							variant="outline"
 							className="border-border bg-card text-foreground flex h-10 gap-2 px-4 capitalize"
 						>
-							{statusFilter !== "All" ? statusFilter.replace("_", " ") : "Status"}
+							{statusFilter !== "All" ? orderStatusLabel(statusFilter) : "Status"}
 							<Icon icon="lucide:chevron-down" className="size-4" />
 						</Button>
 					</DropdownMenuTrigger>
@@ -148,27 +216,14 @@ const OrderManagement = () => {
 						<DropdownMenuItem onClick={() => setStatusFilter("All")}>
 							All
 						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("pending")}>
-							Pending
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("preparing")}>
-							Preparing
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("ready")}>
-							Ready
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("picked_up")}>
-							Picked Up
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("delivered")}>
-							Delivered
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("rejected")}>
-							Rejected
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>
-							Cancelled
-						</DropdownMenuItem>
+						{ORDER_STATUS_OPTIONS.map((option) => (
+							<DropdownMenuItem
+								key={option.value}
+								onClick={() => setStatusFilter(option.value)}
+							>
+								{option.label}
+							</DropdownMenuItem>
+						))}
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
@@ -183,31 +238,19 @@ const OrderManagement = () => {
 						{/* Header */}
 						<div className="bg-secondary text-secondary-foreground mb-1 flex items-center gap-2 rounded-lg p-3">
 							<Icon icon="heroicons:document-text" className="size-5" />
-							<span className="font-semibold">Orders ({filteredOrders.length})</span>
+							<span className="font-semibold">
+								Orders ({orderResponse?.pagination?.total ?? filteredOrders.length})
+							</span>
 						</div>
 
 						{/* List */}
-						{isLoading ? (
-							<div className="flex justify-center p-6">
-								<Loader2 className="text-secondary animate-spin" />
-							</div>
-						) : filteredOrders.length === 0 ? (
-							<div className="text-muted-foreground mt-4 text-center text-sm">
-								No matching orders
-							</div>
-						) : (
-							<div className="custom-scrollbar flex max-h-[600px] flex-col gap-3 overflow-y-auto pr-1">
-								{filteredOrders.map((o: any) => (
-									<div key={o._id} onClick={() => setSelectedOrderId(o._id)}>
-										<OrderListItem
-											orderId={o.orderId?.slice(-6) || o._id.slice(-6)}
-											statusColor={getStatusColor(o.status)}
-											isActive={activeOrder?._id === o._id}
-										/>
-									</div>
-								))}
-							</div>
-						)}
+						{listBody}
+						<TablePagination
+							pagination={orderResponse?.pagination}
+							onPageChange={setPage}
+							isFetching={isFetching}
+							itemLabel="orders"
+						/>
 					</div>
 
 					{/* === COLUMN 2: TIMELINE DETAILS (Middle) === */}
@@ -222,7 +265,7 @@ const OrderManagement = () => {
 								<div className="dark:bg-accent/10 border-accent/20 mb-8 flex items-center justify-between rounded-lg border bg-orange-50 p-3">
 									<div className="flex items-center gap-2">
 										<div
-											className={`size-2.5 rounded-full ${getStatusColor(activeOrder.status) === "green" ? "bg-[#22C55E]" : getStatusColor(activeOrder.status) === "red" ? "bg-[#EF4444]" : "bg-[#EAB308]"}`}
+											className={`size-2.5 rounded-full ${dotClass[getStatusColor(activeOrder.status)]}`}
 										/>
 										<span className="text-foreground flex items-center gap-2 font-semibold">
 											Order ID: #
@@ -268,14 +311,14 @@ const OrderManagement = () => {
 									/>
 									<TimelineActor
 										name={
-											activeOrder.vendor?.vendorProfile?.businessName ||
-											activeOrder.vendor?.name ||
+											activeOrder.vendor?.vendorProfile?.businessName ??
+											activeOrder.vendor?.name ??
 											"Unknown Vendor"
 										}
 										role="Vendor"
 										idLabel="Vendor ID Number"
 										idValue={
-											activeOrder.vendor?._id?.slice(-6).toUpperCase() ||
+											activeOrder.vendor?._id?.slice(-6).toUpperCase() ??
 											"N/A"
 										}
 										time={
@@ -292,11 +335,11 @@ const OrderManagement = () => {
 										}
 									/>
 									<TimelineActor
-										name={activeOrder.rider?.name || "Unassigned"}
+										name={activeOrder.rider?.name ?? "Unassigned"}
 										role="Rider"
 										idLabel="Rider's ID Number"
 										idValue={
-											activeOrder.rider?._id?.slice(-6).toUpperCase() || "N/A"
+											activeOrder.rider?._id?.slice(-6).toUpperCase() ?? "N/A"
 										}
 										time={
 											activeOrder.status === "pending" || !activeOrder.rider
@@ -375,7 +418,7 @@ const OrderManagement = () => {
 						</div>
 						*/}
 
-						<RefundPanel order={activeOrder} />
+						<RefundPanel order={activeOrder ?? undefined} />
 					</div>
 				</div>
 			</div>

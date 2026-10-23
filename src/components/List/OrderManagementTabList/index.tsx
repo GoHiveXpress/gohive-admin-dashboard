@@ -30,6 +30,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ORDER_STATUS_OPTIONS } from "@/lib/orderStatus";
 import GoogleRoutesMap from "@/components/Map/GoogleRoutesMap";
 
 const PAGE_SIZE = 20;
@@ -220,60 +221,15 @@ export default function OrderManagementTabList() {
 						>
 							All Statuses
 						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "placed"}
-							onCheckedChange={() => setStatus("placed")}
-						>
-							Placed
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "accepted"}
-							onCheckedChange={() => setStatus("accepted")}
-						>
-							Accepted
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "preparing"}
-							onCheckedChange={() => setStatus("preparing")}
-						>
-							Preparing
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "ready"}
-							onCheckedChange={() => setStatus("ready")}
-						>
-							Ready
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "picked_up"}
-							onCheckedChange={() => setStatus("picked_up")}
-						>
-							Picked up
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "delivered"}
-							onCheckedChange={() => setStatus("delivered")}
-						>
-							Delivered
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "cancelled"}
-							onCheckedChange={() => setStatus("cancelled")}
-						>
-							Cancelled
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "rejected"}
-							onCheckedChange={() => setStatus("rejected")}
-						>
-							Rejected
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={status === "pending"}
-							onCheckedChange={() => setStatus("pending")}
-						>
-							Awaiting payment
-						</DropdownMenuCheckboxItem>
+						{ORDER_STATUS_OPTIONS.map((option) => (
+							<DropdownMenuCheckboxItem
+								key={option.value}
+								checked={status === option.value}
+								onCheckedChange={() => setStatus(option.value)}
+							>
+								{option.label}
+							</DropdownMenuCheckboxItem>
+						))}
 					</DropdownMenuContent>
 				</DropdownMenu>
 
@@ -295,6 +251,7 @@ export default function OrderManagementTabList() {
 
 				<Button
 					variant={sortMode !== null ? "default" : "outline"}
+					title="Sorts the orders on this page by customer name"
 					onClick={() =>
 						setSortMode((prev) =>
 							prev === "asc" ? "desc" : prev === "desc" ? null : "asc",

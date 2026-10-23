@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import { useOrders, useOrderStats, useAlertVendor } from "@/hooks/customerManagement";
+import { useRecentOrders, useOrderStats, useAlertVendor } from "@/hooks/customerManagement";
 import { useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
@@ -21,7 +21,7 @@ export default function LiveOrderVendorCards({
 	status,
 	dateFilter,
 }: LiveOrderVendorCardsProps) {
-	const { data: orderResponse, isLoading } = useOrders({});
+	const { data: orderResponse, isLoading } = useRecentOrders();
 	const { data: statsResponse } = useOrderStats();
 	const { mutate: alertVendor, isPending: isAlerting, variables } = useAlertVendor();
 	const toast = useToast();
