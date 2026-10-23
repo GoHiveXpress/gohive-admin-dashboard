@@ -1,22 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
 import CustomerTab from "./CustomerTab";
 import VendorTab from "./VendorTab";
 import RiderTab from "./RiderTab";
 import AdminTab from "./AdminTab";
 
+// /admins is superadmin-only on the backend, so staff never see the Admin tab
+// (they would only get a 403 there).
 const TABS = [
-	{ id: "customer", label: "Customer" },
-	{ id: "vendor", label: "Vendor" },
-	{ id: "rider", label: "Rider" },
-	{ id: "admin", label: "Admin" },
+	{ id: "customer", label: "Customer", superadminOnly: false },
+	{ id: "vendor", label: "Vendor", superadminOnly: false },
+	{ id: "rider", label: "Rider", superadminOnly: false },
+	{ id: "admin", label: "Admin", superadminOnly: true },
 ];
 
 export default function UsersManagement() {
-	const [activeTab, setActiveTab] = useState("customer");
+	const { isSuperAdmin } = usePermissions();
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+
+	const visibleTabs = TABS.filter((tab) => isSuperAdmin || !tab.superadminOnly);
+	const requestedTab = searchParams.get("tab") ?? "customer";
+	const activeTab = visibleTabs.some((tab) => tab.id === requestedTab)
+		? requestedTab
+		: "customer";
+
+	const setActiveTab = useCallback(
+		(tabId: string) => {
+			const params = new URLSearchParams(searchParams.toString());
+			params.set("tab", tabId);
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+		},
+		[pathname, router, searchParams],
+	);
 
 	return (
 		<div className="flex size-full flex-col gap-6">
@@ -25,7 +47,7 @@ export default function UsersManagement() {
         seen in the User Management screenshots. 
       */}
 			<div className="bg-muted/30 flex w-fit items-center gap-2 rounded-full p-1">
-				{TABS.map((tab) => {
+				{visibleTabs.map((tab) => {
 					const isActive = activeTab === tab.id;
 					return (
 						<Button
@@ -50,7 +72,7 @@ export default function UsersManagement() {
 				{activeTab === "customer" && <CustomerTab />}
 				{activeTab === "vendor" && <VendorTab />}
 				{activeTab === "rider" && <RiderTab />}
-				{activeTab === "admin" && <AdminTab />}
+				{activeTab === "admin" && isSuperAdmin && <AdminTab />}
 			</div>
 		</div>
 	);

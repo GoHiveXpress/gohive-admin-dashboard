@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useSession } from "next-auth/react";
+import React, { useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePermissions } from "@/hooks/usePermissions";
 import ProfileSettingsTab from "./ProfileSettingsTab";
 import RoleSettingsTab from "./RoleSettingsTab";
 import NotificationSettingsTab from "./NotificationSettingsTab";
@@ -23,16 +23,31 @@ const ALL_TABS = [
 ];
 
 export default function SettingsMain() {
-	const { data: session } = useSession();
-	const userRole = session?.user?.role ?? "staff";
+	const { role } = usePermissions();
+	const userRole = role ?? "staff";
+	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const initialTab = searchParams.get("tab") ?? "profile";
 
 	const filteredTabs = useMemo(() => {
 		return ALL_TABS.filter((tab) => tab.roles.includes(userRole));
 	}, [userRole]);
 
-	const [activeTab, setActiveTab] = useState(initialTab);
+	// The tab lives in the URL so it survives a refresh and can be linked to.
+	// A ?tab= the user may not open falls back to Profile.
+	const requestedTab = searchParams.get("tab") ?? "profile";
+	const activeTab = filteredTabs.some((tab) => tab.id === requestedTab)
+		? requestedTab
+		: "profile";
+
+	const setActiveTab = useCallback(
+		(tabId: string) => {
+			const params = new URLSearchParams(searchParams.toString());
+			params.set("tab", tabId);
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+		},
+		[pathname, router, searchParams],
+	);
 
 	return (
 		<div className="flex size-full flex-col gap-8">
@@ -64,7 +79,7 @@ export default function SettingsMain() {
 			<div className="min-h-0 flex-1">
 				{activeTab === "profile" && <ProfileSettingsTab />}
 				{activeTab === "activities" && <ActivitiesTab />}
-				{activeTab === "audit-log" && <AuditLogTab />}
+				{activeTab === "audit-log" && userRole === "superadmin" && <AuditLogTab />}
 				{activeTab === "role" && userRole === "superadmin" && <RoleSettingsTab />}
 				{activeTab === "app-config" && userRole === "superadmin" && (
 					<AppConfigSettingsTab />
