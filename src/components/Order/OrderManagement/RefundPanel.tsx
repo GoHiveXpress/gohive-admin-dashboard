@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -52,6 +52,8 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 	const [reason, setReason] = useState("");
 	const [cancelOrder, setCancelOrder] = useState(false);
 	const [confirming, setConfirming] = useState(false);
+	// One key per refund attempt, so a resubmit after a timeout can't pay twice.
+	const attemptKey = useRef(crypto.randomUUID());
 
 	const { mutate: processRefund, isPending } = useProcessRefund();
 	const { data: logs, isLoading: logsLoading } = useRefundLogs(
@@ -72,6 +74,7 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 		setReason("");
 		setCancelOrder(false);
 		setConfirming(false);
+		attemptKey.current = crypto.randomUUID();
 	}, [order?._id, total]);
 
 	if (!isSuperAdmin || !order) return null;
@@ -92,9 +95,11 @@ export default function RefundPanel({ order }: RefundPanelProps) {
 				amount: value,
 				reason: reason.trim(),
 				cancelOrder: canCancel && cancelOrder,
+				idempotencyKey: attemptKey.current,
 			},
 			{
 				onSuccess: (res) => {
+					attemptKey.current = crypto.randomUUID();
 					toast.success(res.message);
 					setConfirming(false);
 				},

@@ -50,16 +50,21 @@ export const financeApi = {
 		);
 	},
 
-	processRefund: (data: {
-		orderId: string;
-		amount: number;
-		reason: string;
-		cancelOrder?: boolean;
-	}) =>
+	// The key makes a retried submit return the first answer instead of paying twice.
+	processRefund: (
+		data: {
+			orderId: string;
+			amount: number;
+			reason: string;
+			cancelOrder?: boolean;
+		},
+		idempotencyKey: string,
+	) =>
 		apiClient.post<ProcessRefundResponse>(
 			`${ADMIN_BASE}/process-refund`,
 			data,
 			"Failed to process refund",
+			{ headers: { "Idempotency-Key": idempotencyKey } },
 		),
 
 	getWalletReconciliation: () =>
@@ -79,6 +84,8 @@ export const financeApi = {
 			`${ADMIN_BASE}/refund-requests/${id}/${decision}`,
 			{ note },
 			decision === "approve" ? "Failed to approve refund" : "Failed to reject refund",
+			// A request is decided once, so the same decision on it is the same action.
+			{ headers: { "Idempotency-Key": `refund-${decision}-${id}` } },
 		),
 };
 

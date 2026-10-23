@@ -33,12 +33,16 @@ export const useRefundLogs = (
 export const useProcessRefund = () => {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (data: {
+		mutationFn: ({
+			idempotencyKey,
+			...data
+		}: {
 			orderId: string;
 			amount: number;
 			reason: string;
 			cancelOrder?: boolean;
-		}) => financeApi.processRefund(data),
+			idempotencyKey: string;
+		}) => financeApi.processRefund(data, idempotencyKey),
 		// A refund can cancel the order, so orders are refetched too
 		onSuccess: () =>
 			Promise.all([
