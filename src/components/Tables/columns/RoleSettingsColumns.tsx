@@ -144,7 +144,12 @@ export const getRoleSettingsColumns = (
 		key: "action",
 		header: "",
 		render: (row) => (
-			<ActionCell row={row} onDelete={onDelete} currentUserRole={currentUserRole} />
+			<ActionCell
+				row={row}
+				onDelete={onDelete}
+				currentUserRole={currentUserRole}
+				isSelf={row.id === currentUserId}
+			/>
 		),
 	},
 ];
@@ -196,10 +201,12 @@ const ActionCell = ({
 	row,
 	onDelete,
 	currentUserRole,
+	isSelf,
 }: {
 	row: RoleSettingsData;
 	onDelete: (id: string) => void;
 	currentUserRole: string;
+	isSelf: boolean;
 }) => {
 	const resendMutation = useResendInvitation();
 	const cancelMutation = useCancelInvitation();
@@ -246,8 +253,9 @@ const ActionCell = ({
 		);
 	}
 
-	// Only SuperAdmins can delete other admins
-	if (currentUserRole !== "superadmin") {
+	// Only SuperAdmins can delete other admins, and nobody deletes themselves
+	// from this table (the backend refuses it anyway).
+	if (currentUserRole !== "superadmin" || isSelf) {
 		return null;
 	}
 

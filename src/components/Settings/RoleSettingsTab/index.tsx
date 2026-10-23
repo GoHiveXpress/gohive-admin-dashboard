@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import RoleSettingsList from "@/components/List/RoleSettingsList/indexx";
+import RoleSettingsList from "@/components/List/RoleSettingsList";
 
 export default function RoleSettingsTab() {
 	return (
