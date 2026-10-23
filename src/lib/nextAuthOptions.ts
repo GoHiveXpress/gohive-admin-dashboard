@@ -9,13 +9,32 @@ const nextAuthSecret =
 	process.env.NEXTAUTH_SECRET ??
 	(process.env.NODE_ENV !== "production" ? "dev-nextauth-secret-change-me" : undefined);
 
-type PreVerifiedUser = {
-	_id?: string;
-	id?: string;
+type AdminProfile = {
+	id: string;
 	name?: string;
 	email?: string;
-	role?: string;
+	role: string;
 };
+
+// Asks the backend who the token belongs to, so the session's role always
+// comes from the server and never from what the browser sent.
+async function fetchAdminProfile(backendToken: string): Promise<AdminProfile | null> {
+	try {
+		const { data } = await axios.get<{
+			success: boolean;
+			data?: { _id?: string; name?: string; email?: string; role?: string };
+		}>(`${adminApiBaseUrl}/admin/profile`, {
+			headers: { Authorization: `Bearer ${backendToken}` },
+			timeout: 10_000,
+		});
+		const admin = data.data;
+		if (!data.success || !admin?._id) return null;
+		if (admin.role !== "superadmin" && admin.role !== "staff") return null;
+		return { id: admin._id, name: admin.name, email: admin.email, role: admin.role };
+	} catch {
+		return null;
+	}
+}
 
 // eslint-disable-next-line import/prefer-default-export
 export const nextAuthOptions: NextAuthConfig = {
@@ -27,105 +46,42 @@ export const nextAuthOptions: NextAuthConfig = {
 		CredentialsProvider({
 			name: "Credentials",
 			credentials: {
-				// Standard Login
-				email: { label: "Email", type: "text" },
-				password: { label: "Password", type: "password" },
-				// OTP Login Flow
-				otp: { label: "OTP", type: "text" },
-				isOtpFlow: { label: "isOtpFlow", type: "text" },
-				// Pre-verified data (to avoid double-calling backend)
+				// The token the backend returned after the password and 2FA code
 				backendToken: { label: "backendToken", type: "text" },
-				userJson: { label: "userJson", type: "text" },
 			},
 			async authorize(credentials) {
-				try {
-					// --- CASE 0: PRE-VERIFIED (Manual Sync) ---
-					if (credentials?.backendToken && credentials?.userJson) {
-						const parsedUser: unknown = JSON.parse(credentials.userJson as string);
-						if (!parsedUser || typeof parsedUser !== "object") return null;
-						const user = parsedUser as PreVerifiedUser;
-						return {
-							id: user._id ?? user.id,
-							name: user.name,
-							email: user.email,
-							role: user.role,
-							backendToken: credentials.backendToken as string,
-						};
-					}
+				const backendToken =
+					typeof credentials?.backendToken === "string" ? credentials.backendToken : "";
+				if (!backendToken) return null;
 
-					type ApiResponse = {
-						success: boolean;
-						message?: string;
-						token?: string;
-						user?: {
-							_id?: string;
-							id?: string;
-							name?: string;
-							email?: string;
-							role?: string;
-						};
-					};
-
-					let data: ApiResponse;
-
-					// --- CASE 1: VERIFY OTP (Admin) ---
-					if (
-						credentials?.isOtpFlow === "true" &&
-						credentials?.otp &&
-						credentials?.email
-					) {
-						const response = await axios.post<ApiResponse>(
-							`${adminApiBaseUrl}/auth/verify-otp`,
-							{ email: credentials.email, otp: credentials.otp },
-						);
-						data = response.data;
-					}
-					// --- CASE 2: STANDARD LOGIN ---
-					else if (credentials?.email && credentials?.password) {
-						const response = await axios.post<ApiResponse>(
-							`${adminApiBaseUrl}/auth/login`,
-							{ email: credentials.email, password: credentials.password },
-						);
-						data = response.data;
-					} else {
-						throw new Error("Missing credentials");
-					}
-
-					if (!data.success) throw new Error(data.message ?? "Login failed");
-
-					// NOTE: If the backend says "requireOtp", authorize() will technically succeed
-					// if we return an object, but we won't have a token.
-					// *However*, we are handling the "first step" of admin login via
-					// the React Hook (useAdminLogin) in the UI, so authorize() is only
-					// called when we actually have a token to give (OTP verify or Standard login).
-
-					if (!data.token) {
-						return null; // Don't create session if no token
-					}
-
-					return {
-						id: data.user?._id ?? data.user?.id,
-						name: data.user?.name,
-						email: data.user?.email,
-						role: data.user?.role,
-						backendToken: data.token,
-					};
-				} catch (error: unknown) {
-					const err = error as { response?: { data?: unknown }; message?: string };
-					console.error("Auth Error:", err?.response?.data ?? err.message);
-					return null;
-				}
+				const profile = await fetchAdminProfile(backendToken);
+				if (!profile) return null;
+				return { ...profile, backendToken };
 			},
 		}),
 	],
 	callbacks: {
-		async jwt({ token, user }) {
+		async jwt({ token, user, trigger, session }) {
 			if (user) {
 				const u = user as { backendToken?: string; role?: string };
 				// eslint-disable-next-line no-param-reassign
 				token.backendToken = u.backendToken;
 				// eslint-disable-next-line no-param-reassign
 				token.role = u.role;
+			}
+			// A refreshed backend token (SessionTimeout); only kept if it is valid
+			// and belongs to the same admin
+			if (trigger === "update") {
+				const next = (session as { backendToken?: unknown } | undefined)?.backendToken;
+				if (typeof next === "string" && next) {
+					const profile = await fetchAdminProfile(next);
+					if (profile && profile.id === token.sub) {
+						// eslint-disable-next-line no-param-reassign
+						token.backendToken = next;
+						// eslint-disable-next-line no-param-reassign
+						token.role = profile.role;
+					}
+				}
 			}
 			return token;
 		},

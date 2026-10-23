@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import axiosInstance from "@/lib/axiosInstance";
-import { AUTH_TOKEN_KEY, LAST_ACTIVE_KEY, clearAuth, setAuthToken } from "@/utils/auth";
+import { LAST_ACTIVE_KEY, clearAuth, setAuthToken } from "@/utils/auth";
 
 const INACTIVITY_LIMIT = 9 * 60 * 60 * 1000; // 9 hours in milliseconds
 // Same rule as the mobile apps: not opened for 48h means log in again
@@ -12,9 +12,9 @@ const AWAY_LIMIT = 48 * 60 * 60 * 1000;
 const REFRESH_INTERVAL = 6 * 60 * 60 * 1000;
 const TOUCH_THROTTLE = 60 * 1000;
 
-const hasToken = () => !!localStorage.getItem(AUTH_TOKEN_KEY);
-
 export default function SessionTimeout({ children }: { children: React.ReactNode }) {
+	const { status, update } = useSession();
+	const signedIn = status === "authenticated";
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 	const lastTouchRef = useRef(0);
 
@@ -27,8 +27,8 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 		const now = Date.now();
 		if (now - lastTouchRef.current < TOUCH_THROTTLE) return;
 		lastTouchRef.current = now;
-		if (hasToken()) localStorage.setItem(LAST_ACTIVE_KEY, String(now));
-	}, []);
+		if (signedIn) localStorage.setItem(LAST_ACTIVE_KEY, String(now));
+	}, [signedIn]);
 
 	const resetTimer = useCallback(() => {
 		if (timerRef.current) clearTimeout(timerRef.current);
@@ -40,7 +40,7 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 
 	// On open: sign out if the dashboard was away for 48h, else get a fresh token
 	useEffect(() => {
-		if (!hasToken()) return undefined;
+		if (!signedIn) return undefined;
 		const lastActive = Number(localStorage.getItem(LAST_ACTIVE_KEY));
 		if (lastActive && Date.now() - lastActive > AWAY_LIMIT) {
 			handleLogout().catch(() => undefined);
@@ -48,13 +48,14 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 		}
 
 		const refresh = async () => {
-			if (!hasToken()) return;
 			try {
 				const res = await axiosInstance.post<{ success: boolean; token?: string }>(
 					"/auth/refresh",
 					{ app: "admin" },
 				);
-				if (res.data?.success && res.data.token && hasToken()) {
+				if (res.data?.success && res.data.token) {
+					// The session cookie holds the token; NextAuth checks it before keeping it
+					await update({ backendToken: res.data.token });
 					setAuthToken(res.data.token);
 				}
 			} catch {
@@ -67,7 +68,7 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 			refresh().catch(() => undefined);
 		}, REFRESH_INTERVAL);
 		return () => clearInterval(interval);
-	}, [handleLogout]);
+	}, [handleLogout, signedIn, update]);
 
 	useEffect(() => {
 		// Events to track user activity

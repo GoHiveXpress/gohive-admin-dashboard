@@ -5,6 +5,7 @@ import {
 	type LoginRequest,
 	type LoginResponse,
 	type VerifyOtpRequest,
+	type ResendOtpRequest,
 	type AuthResponse,
 	type CustomerListResponse,
 	type RegisterStaffRequest,
@@ -23,10 +24,10 @@ export const authApi = {
 		apiClient.post<AuthResponse>(`${AUTH_BASE}/verify-otp`, data, "Verification failed"),
 
 	// Resend OTP
-	resendOtp: (email: string) =>
+	resendOtp: (data: ResendOtpRequest) =>
 		apiClient.post<{ success: boolean; message: string }>(
 			`${AUTH_BASE}/resend-otp`,
-			{ email },
+			data,
 			"Failed to resend OTP",
 		),
 

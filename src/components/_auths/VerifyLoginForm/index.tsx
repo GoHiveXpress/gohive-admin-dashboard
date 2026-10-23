@@ -21,21 +21,27 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
 const formSchema = z.object({
-	otp: z.string().min(4, "OTP must be at least 4 characters"),
+	otp: z
+		.string()
+		.trim()
+		.regex(/^\d{6}$/, "Enter the 6-digit code from your email"),
 });
 
 export default function VerifyLoginForm() {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [email, setEmail] = useState("");
+	const [otpTicket, setOtpTicket] = useState("");
 
 	// Resend Hook
 	const { mutate: resendOtp, isPending: isResending } = useResendOtp();
 
 	useEffect(() => {
 		const storedEmail = sessionStorage.getItem("admin_login_email");
-		if (storedEmail) {
+		const storedTicket = sessionStorage.getItem("admin_login_ticket");
+		if (storedEmail && storedTicket) {
 			setEmail(storedEmail);
+			setOtpTicket(storedTicket);
 		} else {
 			// If no email found, redirect back to login
 			toast.error("Session invalid. Please login again.");
@@ -56,25 +62,23 @@ export default function VerifyLoginForm() {
 			// This fixes the 401 issue where NextAuth session might be null/delayed
 			const response = await authApi.verifyOtp({
 				email,
-				otp: values.otp,
+				otp: values.otp.trim(),
+				otpTicket,
 			});
 
 			if (response.success && response.token) {
-				// 2. Save token to localStorage for apiClient fallback
 				setAuthToken(response.token);
 
-				// 3. Sync with NextAuth for server-side / middleware awareness
-				// We pass the already-verified token and user data to avoid double-calling the backend
-				// which would fail because the OTP is cleared after the first call.
+				// NextAuth checks the token with the backend before creating the session
 				const result = await signIn("credentials", {
 					backendToken: response.token,
-					userJson: JSON.stringify(response.user),
 					redirect: false,
 				});
 
 				if (result?.ok) {
 					toast.success("Verification Successful");
 					sessionStorage.removeItem("admin_login_email"); // Cleanup
+					sessionStorage.removeItem("admin_login_ticket");
 					router.push("/dashboard");
 				} else {
 					setIsLoading(false);
@@ -84,15 +88,15 @@ export default function VerifyLoginForm() {
 				setIsLoading(false);
 				toast.error(response.message || "Verification failed");
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			setIsLoading(false);
-			toast.error(error.message || "An unexpected error occurred");
+			toast.error(error instanceof Error ? error.message : "An unexpected error occurred");
 		}
 	}
 
 	const handleResend = () => {
-		if (email) {
-			resendOtp(email);
+		if (email && otpTicket) {
+			resendOtp({ email, otpTicket });
 		}
 	};
 
@@ -132,7 +136,11 @@ export default function VerifyLoginForm() {
 				</div>
 
 				<Form {...form}>
-					<form method="POST" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+					<form
+						method="POST"
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="space-y-6"
+					>
 						<FormField
 							control={form.control}
 							name="otp"

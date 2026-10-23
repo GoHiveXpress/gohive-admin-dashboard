@@ -5,6 +5,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { getAuthToken, clearAuth } from "@/utils/auth";
 import { toast } from "sonner";
+import { signOut } from "next-auth/react";
 
 const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
 
@@ -34,14 +35,18 @@ axiosInstance.interceptors.response.use(
 			return Promise.reject(error);
 		}
 
-		// Only handle 401 if token exists (i.e., user is logged in)
-		const tokenExists = !!localStorage.getItem("token"); // same as AUTH_TOKEN_KEY
-		if (errResponse?.status === 401 && tokenExists) {
+		// A signed-in request was refused: end the NextAuth session too, or the
+		// middleware sends /login straight back to a dashboard full of failing calls.
+		// Requests without a token (login, 2FA, staff sign-up) show their own errors.
+		const sentToken = Boolean(error.config?.headers?.Authorization);
+		if (errResponse?.status === 401 && sentToken && typeof window !== "undefined") {
 			const errorMessage =
 				errResponse.data?.message ?? "Session expired, please log in again.";
 			clearAuth();
-			toast.error(errorMessage);
-			if (typeof window !== "undefined") window.location.href = "/login";
+			toast.error(errorMessage, { id: "session-expired" });
+			signOut({ callbackUrl: "/login" }).catch(() => {
+				window.location.href = "/login";
+			});
 		}
 
 		// Permission denied: show the backend's reason ("Requires permission: ...").

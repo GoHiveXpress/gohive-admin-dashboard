@@ -46,21 +46,19 @@ export default function LoginForm() {
 	function onSubmit(values: z.infer<typeof formSchema>) {
 		login(values, {
 			onSuccess: (data) => {
-				if (data.requireOtp) {
-					// Admin Flow: Store email for next step and redirect
+				if (data.requireOtp && data.otpTicket) {
+					// Admin Flow: the code is only accepted with this ticket
 					if (typeof window !== "undefined") {
 						sessionStorage.setItem("admin_login_email", values.email);
+						sessionStorage.setItem("admin_login_ticket", data.otpTicket);
 					}
 					router.push("/login-verify");
 				} else if (data.token) {
-					// Standard User Flow: Manually set token for immediate API accessibility
 					setAuthToken(data.token);
 
-					// Standard User Flow: Manually set session via NextAuth
-					// We pass the already-verified token and user data to avoid double-calling the backend
+					// NextAuth checks the token with the backend before creating the session
 					signIn("credentials", {
 						backendToken: data.token,
-						userJson: JSON.stringify(data.user),
 						redirect: false,
 					}).then((result) => {
 						if (result?.ok) {
@@ -107,7 +105,11 @@ export default function LoginForm() {
 				</div>
 
 				<Form {...form}>
-					<form method="POST" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+					<form
+						method="POST"
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="space-y-6"
+					>
 						<FormField
 							control={form.control}
 							name="email"

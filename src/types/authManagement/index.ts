@@ -27,6 +27,13 @@ export interface RegisterStaffRequest {
 export type VerifyOtpRequest = {
 	email: string;
 	otp: string;
+	// Returned by login; proves the password was right
+	otpTicket: string;
+};
+
+export type ResendOtpRequest = {
+	email: string;
+	otpTicket: string;
 };
 
 export type LoginResponse = {
@@ -34,6 +41,7 @@ export type LoginResponse = {
 	message: string;
 	token?: string;
 	requireOtp?: boolean;
+	otpTicket?: string;
 	email?: string;
 	user?: User;
 };
