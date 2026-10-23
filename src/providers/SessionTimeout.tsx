@@ -17,6 +17,15 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 	const signedIn = status === "authenticated";
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 	const lastTouchRef = useRef(0);
+	// NextAuth makes a new `update` and flips status to "loading" on every
+	// session change, so the refresh effect must not re-run on either: each
+	// update would trigger another refresh, looping forever.
+	const updateRef = useRef(update);
+	const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+	useEffect(() => {
+		updateRef.current = update;
+	}, [update]);
 
 	const handleLogout = useCallback(async () => {
 		clearAuth();
@@ -39,12 +48,17 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 	}, [handleLogout, touch]);
 
 	// On open: sign out if the dashboard was away for 48h, else get a fresh token
+	// once, then again every REFRESH_INTERVAL. Runs once per page load.
 	useEffect(() => {
-		if (!signedIn) return undefined;
+		if (status === "unauthenticated" && refreshIntervalRef.current) {
+			clearInterval(refreshIntervalRef.current);
+			refreshIntervalRef.current = null;
+		}
+		if (!signedIn || refreshIntervalRef.current) return;
 		const lastActive = Number(localStorage.getItem(LAST_ACTIVE_KEY));
 		if (lastActive && Date.now() - lastActive > AWAY_LIMIT) {
 			handleLogout().catch(() => undefined);
-			return undefined;
+			return;
 		}
 
 		const refresh = async () => {
@@ -55,7 +69,7 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 				);
 				if (res.data?.success && res.data.token) {
 					// The session cookie holds the token; NextAuth checks it before keeping it
-					await update({ backendToken: res.data.token });
+					await updateRef.current({ backendToken: res.data.token });
 					setAuthToken(res.data.token);
 				}
 			} catch {
@@ -64,11 +78,17 @@ export default function SessionTimeout({ children }: { children: React.ReactNode
 		};
 
 		refresh().catch(() => undefined);
-		const interval = setInterval(() => {
+		refreshIntervalRef.current = setInterval(() => {
 			refresh().catch(() => undefined);
 		}, REFRESH_INTERVAL);
-		return () => clearInterval(interval);
-	}, [handleLogout, signedIn, update]);
+	}, [handleLogout, signedIn, status]);
+
+	useEffect(
+		() => () => {
+			if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
+		},
+		[],
+	);
 
 	useEffect(() => {
 		// Events to track user activity
