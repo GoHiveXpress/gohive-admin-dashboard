@@ -10,12 +10,16 @@ import redirects from "./public/redirects.js";
 const config = {
 	reactStrictMode: true,
 
+	// Lint still runs in the pre-commit hook on the files you change. Older files
+	// have not been cleaned up yet, so a full lint would fail the build; flip this
+	// once `next lint` is clean.
 	eslint: {
 		ignoreDuringBuilds: true,
 	},
 
+	// tsc is clean, so a type error now fails the build instead of shipping.
 	typescript: {
-		ignoreBuildErrors: true,
+		ignoreBuildErrors: false,
 	},
 
 	async redirects() {
@@ -32,50 +36,9 @@ const config = {
 		return config;
 	},
 
+	// Only hosts real images come from: Dojah (KYC) and Cloudinary (uploads).
 	images: {
 		remotePatterns: [
-			{
-				protocol: "https",
-				hostname: "assets.vercel.com",
-				port: "",
-				pathname: "/image/upload/**",
-			},
-			{
-				protocol: "https",
-				hostname: "flowbite.com",
-				port: "",
-				pathname: "/docs/images/**",
-			},
-			{
-				protocol: "https",
-				hostname: "flowbite.s3.amazonaws.com",
-				port: "",
-				pathname: "/blocks/**",
-			},
-			{
-				protocol: "https",
-				hostname: "avatars.githubusercontent.com",
-				port: "",
-				pathname: "/**",
-			},
-			{
-				protocol: "https",
-				hostname: "github.com",
-				port: "",
-				pathname: "/**",
-			},
-			{
-				protocol: "https",
-				hostname: "cloudflare-ipfs.com",
-				port: "",
-				pathname: "/**",
-			},
-			{
-				protocol: "https",
-				hostname: "api.multiavatar.com",
-				port: "",
-				pathname: "/**",
-			},
 			{
 				protocol: "https",
 				hostname: "images.dojah.io",
