@@ -5,11 +5,11 @@ export type VendorPayout = {
 	vendorName: string;
 	vendorId: string;
 	orderVolume: number;
-	todayEarnings: string;
-	earnings: string;
-	payout: string;
-	commission: string;
-	totalBalance: string;
+	todayEarnings: number;
+	earnings: number;
+	payout: number;
+	commission: number;
+	totalBalance: number;
 };
 
 export type RiderEarning = {
@@ -17,11 +17,11 @@ export type RiderEarning = {
 	name: string;
 	riderId: string;
 	completedTrips: number;
-	todayEarnings: string;
-	earnings: string;
-	payout: string;
-	incentives: string;
-	totalBalance: string;
+	todayEarnings: number;
+	earnings: number;
+	payout: number;
+	incentives: number;
+	totalBalance: number;
 };
 
 export type RefundLog = {

@@ -1,7 +1,6 @@
 "use client";
 
-/* eslint-disable react/no-unescaped-entities */
-
+import { formatNaira } from "@/lib/utils";
 import { type BaseColumnSchema } from "../types";
 
 export type RiderEarningData = {
@@ -9,17 +8,17 @@ export type RiderEarningData = {
 	name: string;
 	riderId: string;
 	completedTrips: number;
-	todayEarnings: string;
-	earnings: string;
-	payout: string;
-	incentives: string;
-	totalBalance: string;
+	todayEarnings: number;
+	earnings: number;
+	payout: number;
+	incentives: number;
+	totalBalance: number;
 };
 
 export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 	{
 		key: "name",
-		header: "Vendor",
+		header: "Rider",
 		render: (row) => (
 			<div className="flex flex-col">
 				<div className="flex items-center gap-2">
@@ -27,7 +26,7 @@ export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 					<span className="text-foreground font-semibold">{row.name}</span>
 				</div>
 				<div className="ml-4 mt-1">
-					<span className="text-muted-foreground text-[10px]">Vendor's ID Number: </span>
+					<span className="text-muted-foreground text-[10px]">Rider ID: </span>
 					<span className="border-border rounded border px-1.5 py-0.5 text-[10px]">
 						{row.riderId}
 					</span>
@@ -48,7 +47,7 @@ export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 				<span className="border-secondary flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↓
 				</span>
-				{row.todayEarnings}
+				{formatNaira(row.todayEarnings)}
 			</div>
 		),
 	},
@@ -60,7 +59,7 @@ export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 				<span className="border-secondary flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↓
 				</span>
-				{row.earnings}
+				{formatNaira(row.earnings)}
 			</div>
 		),
 	},
@@ -72,7 +71,7 @@ export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 				<span className="border-destructive flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↑
 				</span>
-				{row.payout}
+				{formatNaira(row.payout)}
 			</div>
 		),
 	},
@@ -84,15 +83,15 @@ export const riderEarningColumnsConfig: BaseColumnSchema<RiderEarningData>[] = [
 				<span className="border-secondary flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↓
 				</span>
-				{row.incentives}
+				{formatNaira(row.incentives)}
 			</div>
 		),
 	},
 	{
 		key: "totalBalance",
 		header: "Period Balance",
-		render: (row) => <span className="text-foreground font-semibold">{row.totalBalance}</span>,
+		render: (row) => (
+			<span className="text-foreground font-semibold">{formatNaira(row.totalBalance)}</span>
+		),
 	},
 ];
-
-/* eslint-enable */

@@ -2,7 +2,10 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// eslint-disable-next-line import/prefer-default-export
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
+
+/** Whole-naira amount as "₦12,500". */
+export const formatNaira = (amount?: number | null) =>
+	`₦${Math.round(amount ?? 0).toLocaleString("en-NG")}`;

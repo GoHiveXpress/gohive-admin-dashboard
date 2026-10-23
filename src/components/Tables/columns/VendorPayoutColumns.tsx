@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, react/no-unescaped-entities */
 
 import { Badge } from "@/components/ui/badge";
+import { formatNaira } from "@/lib/utils";
 import { type BaseColumnSchema } from "../types";
 
 export type VendorPayoutData = {
@@ -10,11 +11,11 @@ export type VendorPayoutData = {
 	vendorName: string;
 	vendorId: string;
 	orderVolume: number;
-	todayEarnings: string;
-	earnings: string;
-	payout: string;
-	commission: string;
-	totalBalance: string;
+	todayEarnings: number;
+	earnings: number;
+	payout: number;
+	commission: number;
+	totalBalance: number;
 };
 
 export const vendorPayoutColumnsConfig: BaseColumnSchema<VendorPayoutData>[] = [
@@ -49,7 +50,7 @@ export const vendorPayoutColumnsConfig: BaseColumnSchema<VendorPayoutData>[] = [
 				<span className="border-secondary flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↓
 				</span>
-				{row.todayEarnings}
+				{formatNaira(row.todayEarnings)}
 			</div>
 		),
 	},
@@ -61,7 +62,7 @@ export const vendorPayoutColumnsConfig: BaseColumnSchema<VendorPayoutData>[] = [
 				<span className="border-secondary flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↓
 				</span>
-				{row.earnings}
+				{formatNaira(row.earnings)}
 			</div>
 		),
 	},
@@ -73,7 +74,7 @@ export const vendorPayoutColumnsConfig: BaseColumnSchema<VendorPayoutData>[] = [
 				<span className="border-destructive flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↑
 				</span>
-				{row.payout}
+				{formatNaira(row.payout)}
 			</div>
 		),
 	},
@@ -85,14 +86,16 @@ export const vendorPayoutColumnsConfig: BaseColumnSchema<VendorPayoutData>[] = [
 				<span className="border-destructive flex size-3 items-center justify-center rounded-full border text-[10px]">
 					↑
 				</span>
-				{row.commission}
+				{formatNaira(row.commission)}
 			</div>
 		),
 	},
 	{
 		key: "totalBalance",
 		header: "Period Balance",
-		render: (row) => <span className="text-foreground font-semibold">{row.totalBalance}</span>,
+		render: (row) => (
+			<span className="text-foreground font-semibold">{formatNaira(row.totalBalance)}</span>
+		),
 	},
 ];
 
