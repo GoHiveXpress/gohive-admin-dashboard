@@ -1,6 +1,7 @@
 // src/hooks/customerManagement/index.ts
 import { useQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
 import { customerApi } from "@/app/api/customerManagement";
+import { useOpsLiveUpdates } from "@/hooks/useOps";
 
 export const useCustomers = (filters: { search?: string; status?: string }) => {
 	return useQuery({
@@ -68,12 +69,15 @@ export const usePaginatedOrders = (filters: {
 	});
 };
 
+// Order changes arrive over the admin socket; the timer only covers staff the
+// server keeps out of the live room and a dropped connection.
 export const useOrder = (id: string) => {
+	useOpsLiveUpdates(!!id);
 	return useQuery({
 		queryKey: ["admin_order", id],
 		queryFn: () => customerApi.getOrderById(id),
 		enabled: !!id,
-		refetchInterval: 5000, // Poll every 5 seconds for real-time updates
+		refetchInterval: 30 * 1000,
 	});
 };
 

@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 import { opsApi } from "@/app/api/ops";
 import { getAuthToken } from "@/utils/auth";
 import { type OpsMapResponse, type RiderLocationEvent } from "@/types/ops";
@@ -25,7 +25,34 @@ const LIVE_QUERY_KEYS = [
 	["dashboardOverview"],
 	["admin_orders"],
 	["admin_order_stats"],
+	["admin_order"],
 ];
+
+// One socket for the whole tab, however many components want live updates.
+let sharedSocket: Socket | null = null;
+let socketUsers = 0;
+
+const acquireSocket = (): Socket => {
+	socketUsers += 1;
+	sharedSocket ??= io(SOCKET_URL, {
+		transports: ["websocket", "polling"],
+		withCredentials: true,
+		// Called on every (re)connect, so a refreshed token is picked up
+		auth: (cb) => {
+			getAuthToken()
+				.then((token) => cb({ token: token ?? "" }))
+				.catch(() => cb({ token: "" }));
+		},
+	});
+	return sharedSocket;
+};
+
+const releaseSocket = () => {
+	socketUsers -= 1;
+	if (socketUsers > 0 || !sharedSocket) return;
+	sharedSocket.disconnect();
+	sharedSocket = null;
+};
 
 // Orders also become late without any write happening, so the queue is
 // refetched on a timer as well as on socket events.
@@ -90,16 +117,8 @@ export const useOpsLiveUpdates = (enabled = true) => {
 
 	useEffect(() => {
 		if (!enabled) return undefined;
-		const socket = io(SOCKET_URL, {
-			transports: ["websocket", "polling"],
-			withCredentials: true,
-			// Called on every (re)connect, so a refreshed token is picked up
-			auth: (cb) => {
-				getAuthToken()
-					.then((token) => cb({ token: token ?? "" }))
-					.catch(() => cb({ token: "" }));
-			},
-		});
+		const socket = acquireSocket();
+		setIsConnected(socket.connected);
 
 		const refresh = () => {
 			LIVE_QUERY_KEYS.forEach((queryKey) => {
@@ -107,24 +126,32 @@ export const useOpsLiveUpdates = (enabled = true) => {
 			});
 		};
 
-		socket.on("connect", () => {
+		const onConnect = () => {
 			setIsConnected(true);
 			// Catch up on anything missed while disconnected
 			refresh();
-		});
-		socket.on("disconnect", () => setIsConnected(false));
-		socket.on("admin:orders_changed", (payload: { at?: string }) => {
+		};
+		const onDisconnect = () => setIsConnected(false);
+		const onOrdersChanged = (payload: { at?: string }) => {
 			setLastEventAt(payload.at ?? new Date().toISOString());
 			refresh();
-		});
-		socket.on("admin:rider_location", (event: RiderLocationEvent) => {
+		};
+		const onRiderLocation = (event: RiderLocationEvent) => {
 			queryClient.setQueryData<OpsMapResponse>(OPS_MAP_KEY, (current) =>
 				applyRiderLocation(current, event),
 			);
-		});
+		};
+		socket.on("connect", onConnect);
+		socket.on("disconnect", onDisconnect);
+		socket.on("admin:orders_changed", onOrdersChanged);
+		socket.on("admin:rider_location", onRiderLocation);
 
 		return () => {
-			socket.disconnect();
+			socket.off("connect", onConnect);
+			socket.off("disconnect", onDisconnect);
+			socket.off("admin:orders_changed", onOrdersChanged);
+			socket.off("admin:rider_location", onRiderLocation);
+			releaseSocket();
 		};
 	}, [enabled, queryClient]);
 
