@@ -19,8 +19,10 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useOpsLiveUpdates } from "@/hooks/useOps";
 
-// Order volume and the vendor leaderboard read analytics endpoints; the
-// leaderboard also loads vendors. Staff without those permissions skip them.
+// The headline cards, order volume, users and today's orders all read
+// GET /admin/analytics/dashboard-overview, which needs ANALYTICS; the vendor
+// leaderboard also loads vendors. Staff without those permissions skip them
+// instead of rendering widgets stuck on a 403.
 const ANALYTICS_RULE = { all: [PERMISSIONS.ANALYTICS] };
 const TOP_VENDORS_RULE = { all: [PERMISSIONS.ANALYTICS, PERMISSIONS.VENDORS] };
 // These mirror GET /admin/ops/kpis and /admin/ops/exceptions on the backend.
@@ -48,35 +50,35 @@ export default function DashboardClient() {
 				<LiveOpsMap isLive={isConnected} />
 			</PermissionGate>
 
-			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-				<TopCustomers />
-				<TotalRiders />
-				<TotalVendors />
-				<TotalOrders />
-			</div>
+			<PermissionGate rule={ANALYTICS_RULE}>
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+					<TopCustomers />
+					<TotalRiders />
+					<TotalVendors />
+					<TotalOrders />
+				</div>
 
-			<RouteWrapper
-				middleSlot={
-					<div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
-						<PermissionGate rule={ANALYTICS_RULE}>
+				<RouteWrapper
+					middleSlot={
+						<div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
 							<div className="h-[400px] lg:col-span-2">
 								<OrderVolume />
 							</div>
-						</PermissionGate>
-						<div className="h-[400px]">
-							<TotalUsers />
+							<div className="h-[400px]">
+								<TotalUsers />
+							</div>
 						</div>
-					</div>
-				}
-			/>
+					}
+				/>
 
-			<RouteWrapper
-				middleSlot={
-					<div className="w-full">
-						<TodaysOrders />
-					</div>
-				}
-			/>
+				<RouteWrapper
+					middleSlot={
+						<div className="w-full">
+							<TodaysOrders />
+						</div>
+					}
+				/>
+			</PermissionGate>
 
 			<PermissionGate rule={TOP_VENDORS_RULE}>
 				<RouteWrapper
