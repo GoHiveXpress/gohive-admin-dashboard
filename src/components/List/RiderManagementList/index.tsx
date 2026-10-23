@@ -11,7 +11,8 @@ import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { riderColumnsConfig } from "@/components/Tables/columns/RiderManagementColumns";
 import { useRiders } from "@/hooks/riderManagement";
-import { type RiderUser } from "@/types/riderManagement";
+import { useDebounce } from "@/hooks/useDebounce";
+import { type RiderListFilters, type RiderUser } from "@/types/riderManagement";
 import { Loader2 } from "lucide-react";
 import {
 	Select,
@@ -24,47 +25,48 @@ import {
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 export default function RiderManagementList() {
-	const { data: response, isLoading, isError } = useRiders();
-	const riders = response?.data || [];
-
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [kycFilter, setKycFilter] = useState("all");
+	const debouncedSearch = useDebounce(searchQuery.trim(), 400);
 
-	// Filter and Map API data to the format your Table expects.
+	// Search, availability and KYC are filtered by the server.
+	const {
+		data: response,
+		isLoading,
+		isError,
+		isFetching,
+	} = useRiders(
+		{
+			search: debouncedSearch || undefined,
+			availability:
+				statusFilter === "all"
+					? undefined
+					: (statusFilter as RiderListFilters["availability"]),
+			kyc: kycFilter === "all" ? undefined : (kycFilter as RiderListFilters["kyc"]),
+		},
+		{ keepPrevious: true },
+	);
+	const riders = response?.data || [];
+
+	// Map API data to the format the table expects.
 	// Riders who never finished onboarding have no riderProfile, and some
 	// accounts have no name or email, so every field is read defensively.
-	const query = searchQuery.trim().toLowerCase();
-	const formattedData = riders
-		.filter((rider: RiderUser) => {
-			const availability = rider.riderProfile?.availabilityStatus ?? "offline";
-			const verification = rider.riderProfile?.verificationStatus ?? "pending";
-			const matchesSearch =
-				!query ||
-				(rider.name ?? "").toLowerCase().includes(query) ||
-				(rider.email ?? "").toLowerCase().includes(query) ||
-				(rider.phone ?? "").includes(query);
-
-			const matchesStatus = statusFilter === "all" || availability === statusFilter;
-			const matchesKyc = kycFilter === "all" || verification === kycFilter;
-
-			return matchesSearch && matchesStatus && matchesKyc;
-		})
-		.map((rider: RiderUser) => ({
-			id: rider._id,
-			name: rider.name ?? "Unnamed rider",
-			email: rider.email ?? "",
-			phone: rider.phone || "N/A",
-			status: capitalize(rider.riderProfile?.availabilityStatus ?? "offline"),
-			kyc:
-				rider.riderProfile?.verificationStatus === "approved"
-					? "Verified"
-					: capitalize(rider.riderProfile?.verificationStatus ?? "pending"),
-			rating: rider.riderProfile?.averageRating ?? 0,
-			profilePicture: rider.profilePicture || "",
-			// Pass the full object if needed for actions
-			original: rider,
-		}));
+	const formattedData = riders.map((rider: RiderUser) => ({
+		id: rider._id,
+		name: rider.name ?? "Unnamed rider",
+		email: rider.email ?? "",
+		phone: rider.phone || "N/A",
+		status: capitalize(rider.riderProfile?.availabilityStatus ?? "offline"),
+		kyc:
+			rider.riderProfile?.verificationStatus === "approved"
+				? "Verified"
+				: capitalize(rider.riderProfile?.verificationStatus ?? "pending"),
+		rating: rider.riderProfile?.averageRating ?? 0,
+		profilePicture: rider.profilePicture || "",
+		// Pass the full object if needed for actions
+		original: rider,
+	}));
 
 	const handleResetFilters = () => {
 		setSearchQuery("");
@@ -145,7 +147,9 @@ export default function RiderManagementList() {
 			</div>
 
 			{/* Table */}
-			<DataTable columns={getColumns(riderColumnsConfig)} data={formattedData} title="" />
+			<div className={isFetching ? "opacity-60 transition-opacity" : undefined}>
+				<DataTable columns={getColumns(riderColumnsConfig)} data={formattedData} title="" />
+			</div>
 		</div>
 	);
 }

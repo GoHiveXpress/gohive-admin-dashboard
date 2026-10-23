@@ -14,7 +14,8 @@ import {
 	type VendorData,
 } from "@/components/Tables/columns/VendorManagementColumns";
 import { useVendors } from "@/hooks/vendorManagement";
-import { type VendorProfile } from "@/types/vendorManagement";
+import { useDebounce } from "@/hooks/useDebounce";
+import { type VendorListFilters, type VendorProfile } from "@/types/vendorManagement";
 import { Loader2 } from "lucide-react";
 import {
 	Select,
@@ -39,15 +40,37 @@ const kycLabel = (profile?: VendorProfile): VendorData["kyc"] => {
 	return "Pending";
 };
 
+// UI labels -> the values the backend filters on
+const STATUS_PARAM: Record<VendorData["status"], VendorListFilters["status"]> = {
+	Active: "Active",
+	Inactive: "Inactive",
+	Suspended: "Suspend",
+};
+const KYC_PARAM: Record<VendorData["kyc"], VendorListFilters["kyc"]> = {
+	Verified: "approved",
+	Pending: "pending",
+	Rejected: "rejected",
+};
+
 const NEXT_SORT = { none: "asc", asc: "desc", desc: null } as const;
 const SORT_ARROW = { none: "", asc: "↓", desc: "↑" } as const;
 
 export default function VendorList() {
-	const { data, isLoading } = useVendors();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState<"all" | VendorData["status"]>("all");
 	const [kycFilter, setKycFilter] = useState<"all" | VendorData["kyc"]>("all");
 	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
+	const debouncedSearch = useDebounce(searchQuery.trim(), 400);
+
+	// Search, status and KYC are filtered by the server; only A-Z sorting is local.
+	const { data, isLoading, isFetching } = useVendors(
+		{
+			search: debouncedSearch || undefined,
+			status: statusFilter === "all" ? undefined : STATUS_PARAM[statusFilter],
+			kyc: kycFilter === "all" ? undefined : KYC_PARAM[kycFilter],
+		},
+		{ keepPrevious: true },
+	);
 
 	// Map backend data to table format
 	const vendorTableData: VendorData[] = useMemo(
@@ -64,29 +87,15 @@ export default function VendorList() {
 		[data],
 	);
 
-	const filteredData = useMemo(() => {
-		let result = vendorTableData.filter((vendor) => {
-			const query = searchQuery.trim().toLowerCase();
-			const matchesSearch =
-				!query ||
-				vendor.name.toLowerCase().includes(query) ||
-				vendor.email.toLowerCase().includes(query) ||
-				vendor.phone.toLowerCase().includes(query);
-
-			const matchesStatus = statusFilter === "all" || vendor.status === statusFilter;
-			const matchesKyc = kycFilter === "all" || vendor.kyc === kycFilter;
-
-			return matchesSearch && matchesStatus && matchesKyc;
-		});
-
+	const sortedData = useMemo(() => {
 		if (sortMode === "asc") {
-			result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-		} else if (sortMode === "desc") {
-			result = [...result].sort((a, b) => b.name.localeCompare(a.name));
+			return [...vendorTableData].sort((a, b) => a.name.localeCompare(b.name));
 		}
-
-		return result;
-	}, [kycFilter, searchQuery, sortMode, statusFilter, vendorTableData]);
+		if (sortMode === "desc") {
+			return [...vendorTableData].sort((a, b) => b.name.localeCompare(a.name));
+		}
+		return vendorTableData;
+	}, [sortMode, vendorTableData]);
 
 	if (isLoading) {
 		return (
@@ -178,7 +187,9 @@ export default function VendorList() {
 			</div>
 
 			{/* Table */}
-			<DataTable columns={getColumns(vendorColumnsConfig)} data={filteredData} title="" />
+			<div className={cn(isFetching && "opacity-60 transition-opacity")}>
+				<DataTable columns={getColumns(vendorColumnsConfig)} data={sortedData} title="" />
+			</div>
 		</div>
 	);
 }
