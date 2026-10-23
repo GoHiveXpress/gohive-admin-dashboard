@@ -13,7 +13,15 @@ import { riderColumnsConfig } from "@/components/Tables/columns/RiderManagementC
 import { useRiders } from "@/hooks/riderManagement";
 import { type RiderUser } from "@/types/riderManagement";
 import { Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 export default function RiderManagementList() {
 	const { data: response, isLoading, isError } = useRiders();
@@ -23,29 +31,36 @@ export default function RiderManagementList() {
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [kycFilter, setKycFilter] = useState("all");
 
-	// Filter and Map API data to the format your Table expects
+	// Filter and Map API data to the format your Table expects.
+	// Riders who never finished onboarding have no riderProfile, and some
+	// accounts have no name or email, so every field is read defensively.
+	const query = searchQuery.trim().toLowerCase();
 	const formattedData = riders
 		.filter((rider: RiderUser) => {
+			const availability = rider.riderProfile?.availabilityStatus ?? "offline";
+			const verification = rider.riderProfile?.verificationStatus ?? "pending";
 			const matchesSearch =
-				rider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				(rider.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-				(rider.phone || "").includes(searchQuery);
+				!query ||
+				(rider.name ?? "").toLowerCase().includes(query) ||
+				(rider.email ?? "").toLowerCase().includes(query) ||
+				(rider.phone ?? "").includes(query);
 
-			const matchesStatus = statusFilter === "all" || rider.riderProfile.availabilityStatus === statusFilter;
-			const matchesKyc = kycFilter === "all" || rider.riderProfile.verificationStatus === kycFilter;
+			const matchesStatus = statusFilter === "all" || availability === statusFilter;
+			const matchesKyc = kycFilter === "all" || verification === kycFilter;
 
 			return matchesSearch && matchesStatus && matchesKyc;
 		})
 		.map((rider: RiderUser) => ({
 			id: rider._id,
-			name: rider.name,
-			email: rider.email,
+			name: rider.name ?? "Unnamed rider",
+			email: rider.email ?? "",
 			phone: rider.phone || "N/A",
-			// Capitalize first letter for UI consistency
-			status: rider.riderProfile.availabilityStatus.charAt(0).toUpperCase() + rider.riderProfile.availabilityStatus.slice(1),
-			kyc: rider.riderProfile.verificationStatus.charAt(0).toUpperCase() + rider.riderProfile.verificationStatus.slice(1),
-			// Default rating to 0 or 5.0 as it's not in the current RiderUser type
-			rating: 5.0,
+			status: capitalize(rider.riderProfile?.availabilityStatus ?? "offline"),
+			kyc:
+				rider.riderProfile?.verificationStatus === "approved"
+					? "Verified"
+					: capitalize(rider.riderProfile?.verificationStatus ?? "pending"),
+			rating: rider.riderProfile?.averageRating ?? 0,
 			profilePicture: rider.profilePicture || "",
 			// Pass the full object if needed for actions
 			original: rider,
@@ -75,7 +90,10 @@ export default function RiderManagementList() {
 			<div className="flex flex-wrap items-center gap-3">
 				{/* Search Bar */}
 				<div className="relative w-full sm:w-[300px]">
-					<Icon icon="ph:magnifying-glass" className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2" />
+					<Icon
+						icon="ph:magnifying-glass"
+						className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2"
+					/>
 					<Input
 						placeholder="Search by name, email or phone"
 						className="border-border h-12 rounded-lg bg-white pl-10"
@@ -84,10 +102,10 @@ export default function RiderManagementList() {
 					/>
 				</div>
 
-				<Button 
+				<Button
 					variant={statusFilter === "all" && kycFilter === "all" ? "default" : "outline"}
 					onClick={handleResetFilters}
-					className={`h-12 rounded-lg px-6 font-medium ${statusFilter === "all" && kycFilter === "all" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-white border-border"}`}
+					className={`h-12 rounded-lg px-6 font-medium ${statusFilter === "all" && kycFilter === "all" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "border-border bg-white"}`}
 				>
 					All
 				</Button>
@@ -99,6 +117,7 @@ export default function RiderManagementList() {
 					<SelectContent>
 						<SelectItem value="all">All Status</SelectItem>
 						<SelectItem value="online">Online</SelectItem>
+						<SelectItem value="busy">Busy</SelectItem>
 						<SelectItem value="offline">Offline</SelectItem>
 					</SelectContent>
 				</Select>
@@ -109,7 +128,7 @@ export default function RiderManagementList() {
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="all">All KYC</SelectItem>
-						<SelectItem value="verified">Verified</SelectItem>
+						<SelectItem value="approved">Verified</SelectItem>
 						<SelectItem value="pending">Pending</SelectItem>
 						<SelectItem value="rejected">Rejected</SelectItem>
 					</SelectContent>

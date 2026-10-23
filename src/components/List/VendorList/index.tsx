@@ -14,6 +14,7 @@ import {
 	type VendorData,
 } from "@/components/Tables/columns/VendorManagementColumns";
 import { useVendors } from "@/hooks/vendorManagement";
+import { type VendorProfile } from "@/types/vendorManagement";
 import { Loader2 } from "lucide-react";
 import {
 	Select,
@@ -24,26 +25,44 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+// Account status and KYC are separate things: a suspended vendor can still be
+// KYC-verified, and an active one can be waiting on review.
+const accountStatusLabel = (status?: string): VendorData["status"] => {
+	if (status === "Active") return "Active";
+	if (status === "Suspend") return "Suspended";
+	return "Inactive";
+};
+
+const kycLabel = (profile?: VendorProfile): VendorData["kyc"] => {
+	if (profile?.verificationStatus === "approved" || profile?.isApproved) return "Verified";
+	if (profile?.verificationStatus === "rejected") return "Rejected";
+	return "Pending";
+};
+
+const NEXT_SORT = { none: "asc", asc: "desc", desc: null } as const;
+const SORT_ARROW = { none: "", asc: "↓", desc: "↑" } as const;
+
 export default function VendorList() {
 	const { data, isLoading } = useVendors();
 	const [searchQuery, setSearchQuery] = useState("");
-	const [statusFilter, setStatusFilter] = useState<"all" | "Active" | "Inactive">("all");
-	const [kycFilter, setKycFilter] = useState<"all" | "Verified" | "Unverified">("all");
+	const [statusFilter, setStatusFilter] = useState<"all" | VendorData["status"]>("all");
+	const [kycFilter, setKycFilter] = useState<"all" | VendorData["kyc"]>("all");
 	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
 
 	// Map backend data to table format
-	const vendorTableData: VendorData[] =
-		data?.data?.map((vendor) => ({
-			id: vendor._id,
-			name: vendor.vendorProfile?.businessName || vendor.name, // Prefer Business Name
-			email: vendor.email,
-			phone: vendor.phone || "N/A",
-			// Logic: Verified email = Active status for now (customize as needed)
-			status: vendor.vendorProfile?.isApproved ? "Active" : "Inactive",
-			// Logic: Approved profile = Verified KYC
-			kyc: vendor.vendorProfile?.isApproved ? "Verified" : "Unverified",
-			rating: 0.0, // Backend doesn't provide rating yet, defaulting to 0
-		})) || [];
+	const vendorTableData: VendorData[] = useMemo(
+		() =>
+			data?.data?.map((vendor) => ({
+				id: vendor._id,
+				name: vendor.vendorProfile?.businessName || vendor.name || "Unnamed vendor",
+				email: vendor.email || "",
+				phone: vendor.phone || "N/A",
+				status: accountStatusLabel(vendor.accountStatus),
+				kyc: kycLabel(vendor.vendorProfile),
+				rating: vendor.vendorProfile?.averageRating ?? 0,
+			})) || [],
+		[data],
+	);
 
 	const filteredData = useMemo(() => {
 		let result = vendorTableData.filter((vendor) => {
@@ -114,9 +133,7 @@ export default function VendorList() {
 
 				<Button
 					variant={sortMode !== null ? "default" : "outline"}
-					onClick={() =>
-						setSortMode((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))
-					}
+					onClick={() => setSortMode((prev) => NEXT_SORT[prev ?? "none"])}
 					className={cn(
 						"h-12 rounded-lg px-6 font-medium",
 						sortMode !== null
@@ -124,12 +141,14 @@ export default function VendorList() {
 							: "border-border bg-white",
 					)}
 				>
-					A-Z {sortMode === "asc" ? "↓" : sortMode === "desc" ? "↑" : ""}
+					A-Z {SORT_ARROW[sortMode ?? "none"]}
 				</Button>
 
 				<Select
 					value={statusFilter}
-					onValueChange={(value) => setStatusFilter(value as "all" | "Active" | "Inactive")}
+					onValueChange={(value) =>
+						setStatusFilter(value as "all" | VendorData["status"])
+					}
 				>
 					<SelectTrigger className="border-border h-12 w-[160px] rounded-lg bg-white font-medium">
 						<SelectValue placeholder="Status" />
@@ -138,12 +157,13 @@ export default function VendorList() {
 						<SelectItem value="all">All Status</SelectItem>
 						<SelectItem value="Active">Active</SelectItem>
 						<SelectItem value="Inactive">Inactive</SelectItem>
+						<SelectItem value="Suspended">Suspended</SelectItem>
 					</SelectContent>
 				</Select>
 
 				<Select
 					value={kycFilter}
-					onValueChange={(value) => setKycFilter(value as "all" | "Verified" | "Unverified")}
+					onValueChange={(value) => setKycFilter(value as "all" | VendorData["kyc"])}
 				>
 					<SelectTrigger className="border-border h-12 w-[180px] rounded-lg bg-white font-medium">
 						<SelectValue placeholder="KYC" />
@@ -151,7 +171,8 @@ export default function VendorList() {
 					<SelectContent>
 						<SelectItem value="all">All KYC</SelectItem>
 						<SelectItem value="Verified">Verified</SelectItem>
-						<SelectItem value="Unverified">Unverified</SelectItem>
+						<SelectItem value="Pending">Pending</SelectItem>
+						<SelectItem value="Rejected">Rejected</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>

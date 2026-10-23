@@ -9,6 +9,8 @@ export type RiderProfile = {
 	verificationStatus: "pending" | "approved" | "rejected";
 	isApproved: boolean;
 	nin?: string;
+	averageRating?: number;
+	totalRatings?: number;
 };
 
 export type BankDetails = {

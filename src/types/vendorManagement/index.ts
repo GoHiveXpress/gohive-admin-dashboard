@@ -19,6 +19,8 @@ export type VendorProfile = {
 	verificationStatus: "pending" | "approved" | "rejected";
 	availabilityStatus?: "online" | "offline";
 	isApproved: boolean;
+	averageRating?: number;
+	totalRatings?: number;
 };
 
 export type BankDetails = {

@@ -10,8 +10,8 @@ export type VendorData = {
 	name: string;
 	email: string;
 	phone: string;
-	status: "Active" | "Inactive";
-	kyc: "Verified" | "Unverified";
+	status: "Active" | "Inactive" | "Suspended";
+	kyc: "Verified" | "Pending" | "Rejected";
 	rating: number;
 };
 
@@ -67,15 +67,15 @@ export const vendorColumnsConfig: BaseColumnSchema<VendorData>[] = [
 		key: "kyc",
 		header: "KYC",
 		render: (row) => {
-			const isVerified = row.kyc === "Verified";
+			const kycClass = {
+				Verified: "bg-secondary hover:bg-secondary/90 text-white",
+				Pending: "bg-yellow-500 hover:bg-yellow-500/90 text-white",
+				Rejected: "bg-destructive hover:bg-destructive/90 text-white",
+			}[row.kyc];
 			return (
 				<Badge
 					variant="outline"
-					className={`rounded-[6px] border-none px-4 py-1 font-medium ${
-						isVerified
-							? "bg-secondary hover:bg-secondary/90 text-white"
-							: "bg-destructive hover:bg-destructive/90 text-white"
-					}`}
+					className={`rounded-[6px] border-none px-4 py-1 font-medium ${kycClass}`}
 				>
 					<div className="mr-2 size-2 rounded-full bg-white" />
 					{row.kyc}
