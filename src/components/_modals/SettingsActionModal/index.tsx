@@ -17,7 +17,7 @@ import { Icon } from "@iconify/react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Separator } from "@/components/ui/separator";
 import { useAdminPermissions, useUpdateAdminPermissions } from "@/hooks/userManagement";
-import { useToast } from "@/hooks/useToast";
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface SettingsActionModalProps {
 	isOpen: boolean;
@@ -30,21 +30,11 @@ interface SettingsActionModalProps {
 	};
 }
 
-const PERMISSIONS_LEFT = [
-	"Customer Management",
-	"Vendor Management",
-	"Rider Management",
-	"Edit",
-	"Messaging",
-];
-
-const PERMISSIONS_RIGHT = [
-	"Finance",
-	"Customer Support",
-	"Broadcast",
-	"Analytics & Reports",
-	"Download",
-];
+// Built from the shared permission list (which mirrors the backend's), so a new
+// permission shows up here without a second hand-kept copy
+const ALL_PERMISSIONS: string[] = Object.values(PERMISSIONS);
+const PERMISSIONS_LEFT = ALL_PERMISSIONS.slice(0, Math.ceil(ALL_PERMISSIONS.length / 2));
+const PERMISSIONS_RIGHT = ALL_PERMISSIONS.slice(PERMISSIONS_LEFT.length);
 
 export default function SettingsActionModal({
 	isOpen,
@@ -53,35 +43,32 @@ export default function SettingsActionModal({
 }: SettingsActionModalProps) {
 	const { data: permissionsResponse, isLoading } = useAdminPermissions(userData.id, isOpen);
 	const updatePermissionsMutation = useUpdateAdminPermissions();
-	const toast = useToast();
 
 	const [permissions, setPermissions] = useState<Record<string, boolean>>(() => {
-		const defaults = [...PERMISSIONS_LEFT, ...PERMISSIONS_RIGHT].reduce<Record<string, boolean>>(
-			(acc, key) => {
-				acc[key] = false;
-				return acc;
-			},
-			{},
-		);
+		const defaults = [...PERMISSIONS_LEFT, ...PERMISSIONS_RIGHT].reduce<
+			Record<string, boolean>
+		>((acc, key) => {
+			acc[key] = false;
+			return acc;
+		}, {});
 		return defaults;
 	});
 	const [role, setRole] = useState<"superadmin" | "staff">(
 		userData.role === "superadmin" ? "superadmin" : "staff",
 	);
 
-	const accountStatus = permissionsResponse?.data?.accountStatus || "Active";
+	const accountStatus = permissionsResponse?.data?.accountStatus ?? "Active";
 
 	React.useEffect(() => {
 		if (!permissionsResponse?.data) return;
 
 		const enabledPermissions = new Set(permissionsResponse.data.permissions || []);
-		const nextState = [...PERMISSIONS_LEFT, ...PERMISSIONS_RIGHT].reduce<Record<string, boolean>>(
-			(acc, key) => {
-				acc[key] = enabledPermissions.has(key);
-				return acc;
-			},
-			{},
-		);
+		const nextState = [...PERMISSIONS_LEFT, ...PERMISSIONS_RIGHT].reduce<
+			Record<string, boolean>
+		>((acc, key) => {
+			acc[key] = enabledPermissions.has(key);
+			return acc;
+		}, {});
 
 		setPermissions(nextState);
 		setRole(permissionsResponse.data.role === "superadmin" ? "superadmin" : "staff");
@@ -93,10 +80,14 @@ export default function SettingsActionModal({
 
 	const handleSuspendToggle = async () => {
 		const nextStatus = accountStatus === "Suspend" ? "Active" : "Suspend";
-		await updatePermissionsMutation.mutateAsync({
-			id: userData.id,
-			data: { accountStatus: nextStatus },
-		});
+		try {
+			await updatePermissionsMutation.mutateAsync({
+				id: userData.id,
+				data: { accountStatus: nextStatus },
+			});
+		} catch {
+			// The hook already showed why it was refused
+		}
 	};
 
 	const handleApplyChanges = async () => {
@@ -104,16 +95,19 @@ export default function SettingsActionModal({
 			.filter(([, enabled]) => enabled)
 			.map(([key]) => key);
 
-		await updatePermissionsMutation.mutateAsync({
-			id: userData.id,
-			data: {
-				permissions: selectedPermissions,
-				role,
-			},
-		});
-
-		toast.success("Permissions updated");
-		onClose();
+		try {
+			await updatePermissionsMutation.mutateAsync({
+				id: userData.id,
+				data: {
+					permissions: selectedPermissions,
+					role,
+				},
+			});
+			// The hook shows the success toast
+			onClose();
+		} catch {
+			// The hook already showed why it was refused; stay open so nothing is lost
+		}
 	};
 
 	return (
@@ -179,7 +173,10 @@ export default function SettingsActionModal({
 				{/* Role Selector */}
 				<div className="mb-8 flex items-center gap-4">
 					<span className="text-foreground text-base font-medium">Role</span>
-					<Select value={role} onValueChange={(value) => setRole(value as "superadmin" | "staff")}>
+					<Select
+						value={role}
+						onValueChange={(value) => setRole(value as "superadmin" | "staff")}
+					>
 						<SelectTrigger className="border-border h-11 w-[200px] rounded-xl bg-white text-base">
 							<SelectValue />
 						</SelectTrigger>
@@ -195,55 +192,57 @@ export default function SettingsActionModal({
 				{/* Permissions Grid */}
 				<div className="mb-10 flex flex-col gap-8 md:flex-row md:gap-16">
 					{isLoading ? (
-						<div className="text-muted-foreground py-10 text-center">Loading permissions...</div>
+						<div className="text-muted-foreground py-10 text-center">
+							Loading permissions...
+						</div>
 					) : (
 						<>
-					{/* Left Column */}
-					<div className="flex-1 space-y-6">
-						{PERMISSIONS_LEFT.map((perm) => (
-							<div key={perm} className="flex items-center justify-between">
-								<div className="flex items-center gap-3">
-									<span className="bg-secondary size-2 rounded-full" />
-									<label
-										className="text-foreground/80 cursor-pointer text-base font-medium"
-										onClick={() => togglePermission(perm)}
-									>
-										{perm}
-									</label>
-								</div>
-								<Checkbox
-									checked={permissions[perm]}
-									onCheckedChange={() => togglePermission(perm)}
-									className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary size-6 rounded data-[state=checked]:text-white"
-								/>
+							{/* Left Column */}
+							<div className="flex-1 space-y-6">
+								{PERMISSIONS_LEFT.map((perm) => (
+									<div key={perm} className="flex items-center justify-between">
+										<div className="flex items-center gap-3">
+											<span className="bg-secondary size-2 rounded-full" />
+											<label
+												className="text-foreground/80 cursor-pointer text-base font-medium"
+												onClick={() => togglePermission(perm)}
+											>
+												{perm}
+											</label>
+										</div>
+										<Checkbox
+											checked={permissions[perm]}
+											onCheckedChange={() => togglePermission(perm)}
+											className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary size-6 rounded data-[state=checked]:text-white"
+										/>
+									</div>
+								))}
 							</div>
-						))}
-					</div>
 
-					{/* Vertical Separator (Only on md screens and up) */}
-					<div className="bg-border hidden w-px self-stretch md:block" />
+							{/* Vertical Separator (Only on md screens and up) */}
+							<div className="bg-border hidden w-px self-stretch md:block" />
 
-					{/* Right Column */}
-					<div className="flex-1 space-y-6">
-						{PERMISSIONS_RIGHT.map((perm) => (
-							<div key={perm} className="flex items-center justify-between">
-								<div className="flex items-center gap-3">
-									<span className="bg-secondary size-2 rounded-full" />
-									<label
-										className="text-foreground/80 cursor-pointer text-base font-medium"
-										onClick={() => togglePermission(perm)}
-									>
-										{perm}
-									</label>
-								</div>
-								<Checkbox
-									checked={permissions[perm]}
-									onCheckedChange={() => togglePermission(perm)}
-									className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary size-6 rounded data-[state=checked]:text-white"
-								/>
+							{/* Right Column */}
+							<div className="flex-1 space-y-6">
+								{PERMISSIONS_RIGHT.map((perm) => (
+									<div key={perm} className="flex items-center justify-between">
+										<div className="flex items-center gap-3">
+											<span className="bg-secondary size-2 rounded-full" />
+											<label
+												className="text-foreground/80 cursor-pointer text-base font-medium"
+												onClick={() => togglePermission(perm)}
+											>
+												{perm}
+											</label>
+										</div>
+										<Checkbox
+											checked={permissions[perm]}
+											onCheckedChange={() => togglePermission(perm)}
+											className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary size-6 rounded data-[state=checked]:text-white"
+										/>
+									</div>
+								))}
 							</div>
-						))}
-					</div>
 						</>
 					)}
 				</div>

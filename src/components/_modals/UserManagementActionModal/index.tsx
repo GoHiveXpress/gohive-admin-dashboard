@@ -1,5 +1,5 @@
 // src/components/_modals/UserManagementActionModal/index.tsx
-/* eslint-disable import/no-extraneous-dependencies, no-console, react/no-array-index-key, react/no-unused-prop-types */
+/* eslint-disable import/no-extraneous-dependencies, no-nested-ternary */
 
 "use client";
 
@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useRouter } from "next/navigation";
-import { 
-	useUpdateUserRole, 
+import {
+	useUpdateUserRole,
 	useUpdateAccountStatus,
 	useCustomer,
 	useVendor,
-	useRider
+	useRider,
 } from "@/hooks/userManagement";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,12 +41,21 @@ export default function UserManagementActionModal({
 	const updateStatus = useUpdateAccountStatus();
 
 	// Fetch current user data to determine status
-	const { data: customerData, isLoading: loadingCustomer } = useCustomer(userId, userType === "customer" && isOpen);
-	const { data: vendorData, isLoading: loadingVendor } = useVendor(userId, userType === "vendor" && isOpen);
-	const { data: riderData, isLoading: loadingRider } = useRider(userId, userType === "rider" && isOpen);
+	const { data: customerData, isLoading: loadingCustomer } = useCustomer(
+		userId,
+		userType === "customer" && isOpen,
+	);
+	const { data: vendorData, isLoading: loadingVendor } = useVendor(
+		userId,
+		userType === "vendor" && isOpen,
+	);
+	const { data: riderData, isLoading: loadingRider } = useRider(
+		userId,
+		userType === "rider" && isOpen,
+	);
 
 	const isLoading = loadingCustomer || loadingVendor || loadingRider;
-	const userData = customerData?.data || vendorData?.data || riderData?.data;
+	const userData = customerData?.data ?? vendorData?.data ?? riderData?.data;
 	const currentStatus = userData?.accountStatus;
 
 	const handleAction = async (action: string) => {
@@ -71,48 +80,98 @@ export default function UserManagementActionModal({
 				router.push(`/rider-management/${userId}`);
 			}
 			onClose();
-		} catch (error: any) {
-			toast.error(error.message || "Action failed");
+		} catch {
+			// The hook already showed the error; keep the modal open so they can retry
 		}
 	};
 
-
 	const getActionsConfig = () => {
 		const isSuspended = currentStatus === "Suspend" || currentStatus === "Inactive";
-		
+
 		switch (userType) {
 			case "customer":
 				return [
-					{ label: "Suspend Account", icon: "ph:pause-circle-bold", type: "danger", hidden: isSuspended },
-					{ label: "Reactivate Account", icon: "ph:play-circle-bold", type: "success", hidden: !isSuspended },
-					{ label: "Send message or campaign", icon: "ph:paper-plane-tilt-bold", hidden: false },
-					{ label: "View complaint resolution status", icon: "ph:file-search-bold", hidden: false },
+					{
+						label: "Suspend Account",
+						icon: "ph:pause-circle-bold",
+						type: "danger",
+						hidden: isSuspended,
+					},
+					{
+						label: "Reactivate Account",
+						icon: "ph:play-circle-bold",
+						type: "success",
+						hidden: !isSuspended,
+					},
+					{
+						label: "Send message or campaign",
+						icon: "ph:paper-plane-tilt-bold",
+						hidden: false,
+					},
+					{
+						label: "View complaint resolution status",
+						icon: "ph:file-search-bold",
+						hidden: false,
+					},
 					{ label: "Update role to Admin", icon: "ph:shield-user-bold", hidden: false },
 				];
 			case "vendor":
 				return [
-					{ label: "Suspend Vendor", icon: "ph:storefront-bold", type: "danger", hidden: isSuspended },
-					{ label: "Reactivate Vendor", icon: "ph:storefront-bold", type: "success", hidden: !isSuspended },
+					{
+						label: "Suspend Vendor",
+						icon: "ph:storefront-bold",
+						type: "danger",
+						hidden: isSuspended,
+					},
+					{
+						label: "Reactivate Vendor",
+						icon: "ph:storefront-bold",
+						type: "success",
+						hidden: !isSuspended,
+					},
 					{ label: "View store details", icon: "ph:eye-bold", hidden: false },
-					{ label: "View complaint resolution status", icon: "ph:file-search-bold", hidden: false },
+					{
+						label: "View complaint resolution status",
+						icon: "ph:file-search-bold",
+						hidden: false,
+					},
 				];
 			case "rider":
 				return [
-					{ label: "Suspend Rider", icon: "ph:bicycle-bold", type: "danger", hidden: isSuspended },
-					{ label: "Reactivate Rider", icon: "ph:bicycle-bold", type: "success", hidden: !isSuspended },
-					{ label: "View complaint resolution status", icon: "ph:file-search-bold", hidden: false },
+					{
+						label: "Suspend Rider",
+						icon: "ph:bicycle-bold",
+						type: "danger",
+						hidden: isSuspended,
+					},
+					{
+						label: "Reactivate Rider",
+						icon: "ph:bicycle-bold",
+						type: "success",
+						hidden: !isSuspended,
+					},
+					{
+						label: "View complaint resolution status",
+						icon: "ph:file-search-bold",
+						hidden: false,
+					},
 					{ label: "View route logs", icon: "ph:map-trifold-bold", hidden: false },
 				];
 			case "admin":
 				return [
-					{ label: "Remove Admin", icon: "ph:user-minus-bold", type: "danger", hidden: false }
+					{
+						label: "Remove Admin",
+						icon: "ph:user-minus-bold",
+						type: "danger",
+						hidden: false,
+					},
 				];
 			default:
 				return [];
 		}
 	};
 
-	const actions = getActionsConfig().filter(a => !a.hidden);
+	const actions = getActionsConfig().filter((a) => !a.hidden);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -123,7 +182,7 @@ export default function UserManagementActionModal({
 
 				{/* Header */}
 				<div className="flex items-start justify-between">
-					<motion.div 
+					<motion.div
 						initial={{ scale: 0 }}
 						animate={{ scale: 1 }}
 						className="bg-primary/10 flex size-12 items-center justify-center rounded-2xl shadow-inner"
@@ -142,8 +201,12 @@ export default function UserManagementActionModal({
 				</div>
 
 				<div className="space-y-1">
-					<h3 className="text-foreground text-xl font-bold tracking-tight">Manage Account</h3>
-					<p className="text-muted-foreground text-sm">Select an action to perform for this user.</p>
+					<h3 className="text-foreground text-xl font-bold tracking-tight">
+						Manage Account
+					</h3>
+					<p className="text-muted-foreground text-sm">
+						Select an action to perform for this user.
+					</p>
 				</div>
 
 				{/* Dynamic Buttons */}
@@ -154,7 +217,7 @@ export default function UserManagementActionModal({
 								<Loader2 className="text-primary size-8 animate-spin" />
 							</div>
 						) : (
-							<motion.div 
+							<motion.div
 								initial={{ opacity: 0, y: 10 }}
 								animate={{ opacity: 1, y: 0 }}
 								className="flex flex-col gap-3"
@@ -162,24 +225,40 @@ export default function UserManagementActionModal({
 								{actions.map((action, index) => (
 									<motion.button
 										key={action.label}
-										whileHover={{ 
+										whileHover={{
 											scale: 1.02,
-											backgroundColor: action.type === "danger" ? "rgba(239, 68, 68, 0.05)" : action.type === "success" ? "rgba(34, 197, 94, 0.05)" : "rgba(253, 185, 0, 0.05)",
-											borderColor: action.type === "danger" ? "rgba(239, 68, 68, 0.3)" : action.type === "success" ? "rgba(34, 197, 94, 0.3)" : "rgba(253, 185, 0, 0.3)"
+											backgroundColor:
+												action.type === "danger"
+													? "rgba(239, 68, 68, 0.05)"
+													: action.type === "success"
+														? "rgba(34, 197, 94, 0.05)"
+														: "rgba(253, 185, 0, 0.05)",
+											borderColor:
+												action.type === "danger"
+													? "rgba(239, 68, 68, 0.3)"
+													: action.type === "success"
+														? "rgba(34, 197, 94, 0.3)"
+														: "rgba(253, 185, 0, 0.3)",
 										}}
 										whileTap={{ scale: 0.98 }}
 										className={cn(
 											"border-border text-foreground flex h-14 w-full items-center justify-between rounded-2xl border bg-white/50 px-5 text-left text-base font-semibold transition-all duration-200",
 											action.type === "danger" && "hover:text-destructive",
-											action.type === "success" && "hover:text-green-600"
+											action.type === "success" && "hover:text-green-600",
 										)}
 										onClick={() => handleAction(action.label)}
 									>
 										<div className="flex items-center gap-3">
-											<Icon icon={action.icon as string} className="size-5 opacity-60" />
+											<Icon
+												icon={action.icon}
+												className="size-5 opacity-60"
+											/>
 											<span>{action.label}</span>
 										</div>
-										<Icon icon="ph:caret-right-bold" className="text-muted-foreground/50 size-4" />
+										<Icon
+											icon="ph:caret-right-bold"
+											className="text-muted-foreground/50 size-4"
+										/>
 									</motion.button>
 								))}
 							</motion.div>

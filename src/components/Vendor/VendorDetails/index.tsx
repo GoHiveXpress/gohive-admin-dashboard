@@ -44,8 +44,8 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 				`Account ${newStatus === "Active" ? "reactivated" : "suspended"} successfully`,
 			);
 			await refetch();
-		} catch (error: unknown) {
-			toast.error(error instanceof Error && error.message ? error.message : "Action failed");
+		} catch {
+			// The hook already showed the error
 		}
 	};
 

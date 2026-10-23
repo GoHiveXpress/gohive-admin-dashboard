@@ -1,13 +1,28 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element, no-nested-ternary */
+/* eslint-disable no-nested-ternary, no-use-before-define */
 
 import { Icon } from "@iconify/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import RoleActionCell from "@/components/Tables/cells/RoleActionCell";
-import { type BaseColumnSchema } from "../types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+/* --- New Sub-Component for Role Selection Cell --- */
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+import {
+	useUpdateAdminPermissions,
+	useResendInvitation,
+	useCancelInvitation,
+} from "@/hooks/userManagement";
+import { type BaseColumnSchema } from "../types";
 
 export type RoleSettingsData = {
 	id: string;
@@ -23,7 +38,8 @@ export type RoleSettingsData = {
 
 export const getRoleSettingsColumns = (
 	onDelete: (id: string) => void,
-	currentUserRole: string
+	currentUserRole: string,
+	currentUserId: string,
 ): BaseColumnSchema<RoleSettingsData>[] => [
 	{
 		key: "name",
@@ -116,56 +132,54 @@ export const getRoleSettingsColumns = (
 	{
 		key: "role",
 		header: "Role",
-		render: (row) => <RoleCell row={row} />,
+		render: (row) => (
+			<RoleCell
+				row={row}
+				// Only superadmins change roles, and never their own (the server refuses it too)
+				canEdit={currentUserRole === "superadmin" && row.id !== currentUserId}
+			/>
+		),
 	},
 	{
 		key: "action",
 		header: "",
 		render: (row) => (
-			<ActionCell 
-				row={row} 
-				onDelete={onDelete} 
-				currentUserRole={currentUserRole} 
-			/>
+			<ActionCell row={row} onDelete={onDelete} currentUserRole={currentUserRole} />
 		),
 	},
 ];
 
-/* --- New Sub-Component for Role Selection Cell --- */
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
-	useUpdateUserRole,
-	useResendInvitation,
-	useCancelInvitation,
-} from "@/hooks/userManagement";
+const roleLabel = (role: string) => (role === "superadmin" ? "Super Admin" : "Staff");
 
-const RoleCell = ({ row }: { row: RoleSettingsData }) => {
-	const updateRoleMutation = useUpdateUserRole();
+const RoleCell = ({ row, canEdit }: { row: RoleSettingsData; canEdit: boolean }) => {
+	// Same endpoint as the permissions modal, so the server applies one set of rules
+	const updateRole = useUpdateAdminPermissions();
+	// Shown while the change is saving; afterwards the refetched row is the source of truth,
+	// so a refused change falls back to the real role instead of sticking on screen
+	const [pendingRole, setPendingRole] = useState<string | null>(null);
 
-	if (row.isInvitation) {
-		const roleDisplay = row.role === "superadmin" ? "Super Admin" : "Staff";
+	if (row.isInvitation === true || !canEdit) {
 		return (
 			<div className="text-secondary inline-flex h-9 w-40 items-center gap-2 rounded-lg bg-green-50 px-3 py-1.5 text-sm font-medium">
-				{roleDisplay}
+				{roleLabel(row.role)}
 			</div>
 		);
 	}
 
 	const handleRoleUpdate = (newRole: string) => {
-		updateRoleMutation.mutate({ userId: row.id, newRole });
+		if (newRole === row.role) return;
+		setPendingRole(newRole);
+		updateRole.mutate(
+			{ id: row.id, data: { role: newRole as "superadmin" | "staff" } },
+			{ onSettled: () => setPendingRole(null) },
+		);
 	};
 
 	return (
 		<Select
-			defaultValue={row.role}
+			value={pendingRole ?? row.role}
 			onValueChange={handleRoleUpdate}
-			disabled={updateRoleMutation.isPending}
+			disabled={updateRole.isPending}
 		>
 			<SelectTrigger className="text-secondary inline-flex h-9 w-40 items-center justify-between gap-2 rounded-lg border-none bg-green-50 px-3 py-1.5 text-sm font-medium shadow-none focus:ring-0">
 				<SelectValue placeholder="Select Role" />
@@ -178,11 +192,11 @@ const RoleCell = ({ row }: { row: RoleSettingsData }) => {
 	);
 };
 
-const ActionCell = ({ 
-	row, 
-	onDelete, 
-	currentUserRole 
-}: { 
+const ActionCell = ({
+	row,
+	onDelete,
+	currentUserRole,
+}: {
 	row: RoleSettingsData;
 	onDelete: (id: string) => void;
 	currentUserRole: string;

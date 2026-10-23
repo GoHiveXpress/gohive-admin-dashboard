@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +20,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function RoleSettingsList() {
-	const { data: adminsResponse, isLoading: isLoadingAdmins } = useAdmins();
-	const { data: invitationsResponse, isLoading: isLoadingInvites } = useInvitations();
+	const {
+		data: adminsResponse,
+		isLoading: isLoadingAdmins,
+		isError: adminsFailed,
+		refetch: refetchAdmins,
+	} = useAdmins();
+	const {
+		data: invitationsResponse,
+		isLoading: isLoadingInvites,
+		isError: invitesFailed,
+		refetch: refetchInvites,
+	} = useInvitations();
 	const { data: profileResponse } = useAdminProfile();
 	const deleteAdminMutation = useDeleteAdmin();
 
@@ -32,7 +43,8 @@ export default function RoleSettingsList() {
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const [idToDelete, setIdToDelete] = useState<string | null>(null);
 
-	const currentUserRole = profileResponse?.data?.role || "";
+	const currentUserRole = profileResponse?.data?.role ?? "";
+	const currentUserId = profileResponse?.data?._id ?? "";
 
 	const handleActionDelete = (id: string) => {
 		setIdToDelete(id);
@@ -63,6 +75,7 @@ export default function RoleSettingsList() {
 					status: admin.accountStatus || "Active",
 					phone: admin.phone || "N/A",
 					role: admin.role,
+					email: admin.email,
 					profilePicture: admin.profilePicture,
 					isInvitation: false,
 				});
@@ -112,6 +125,26 @@ export default function RoleSettingsList() {
 
 	if (isLoadingAdmins || isLoadingInvites) {
 		return <div className="flex h-64 items-center justify-center">Loading Role Data...</div>;
+	}
+
+	// An empty table here would look like "no admins"; say it failed instead
+	if (adminsFailed || invitesFailed) {
+		return (
+			<div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+				<p className="text-foreground text-sm font-medium">
+					Couldn&apos;t load {adminsFailed ? "the admin list" : "the invitations"}.
+				</p>
+				<Button
+					variant="outline"
+					onClick={() => {
+						if (adminsFailed) refetchAdmins().catch(() => null);
+						if (invitesFailed) refetchInvites().catch(() => null);
+					}}
+				>
+					Try again
+				</Button>
+			</div>
+		);
 	}
 
 	return (
@@ -203,7 +236,7 @@ export default function RoleSettingsList() {
 			<div className="border-border overflow-hidden rounded-[20px] border bg-white p-0 shadow-sm">
 				<DataTable
 					columns={getColumns(
-						getRoleSettingsColumns(handleActionDelete, currentUserRole),
+						getRoleSettingsColumns(handleActionDelete, currentUserRole, currentUserId),
 					)}
 					data={filteredData}
 				/>
@@ -222,3 +255,5 @@ export default function RoleSettingsList() {
 		</div>
 	);
 }
+
+/* eslint-enable */

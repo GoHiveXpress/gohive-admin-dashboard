@@ -1,8 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { userManagementApi } from "@/app/api/userManagement";
 import { useToast } from "@/hooks/useToast";
-import { RegisterStaffRequest } from "@/types/userManagement";
+import {
+	type RegisterStaffRequest,
+	type AdminProfileUpdate,
+	type ChangePasswordRequest,
+} from "@/types/userManagement";
 
 export const useCustomers = (params?: any) => {
 	return useQuery({
@@ -56,8 +61,10 @@ export const useAdmins = (params?: any) => {
 	});
 };
 
+// Errors toast here; callers show their own success message
 export const useUpdateUserRole = () => {
 	const queryClient = useQueryClient();
+	const toast = useToast();
 	return useMutation({
 		mutationFn: ({ userId, newRole }: { userId: string; newRole: string }) =>
 			userManagementApi.updateUserRole(userId, newRole),
@@ -71,11 +78,16 @@ export const useUpdateUserRole = () => {
 			queryClient.invalidateQueries({ queryKey: ["vendor"] });
 			queryClient.invalidateQueries({ queryKey: ["rider"] });
 		},
+		onError: (error: Error) => {
+			toast.error(error.message || "Something went wrong. Please try again.");
+		},
 	});
 };
 
+// Errors toast here; callers show their own success message
 export const useUpdateAccountStatus = () => {
 	const queryClient = useQueryClient();
+	const toast = useToast();
 	return useMutation({
 		mutationFn: ({ userId, status }: { userId: string; status: string }) =>
 			userManagementApi.updateAccountStatus(userId, status),
@@ -88,6 +100,9 @@ export const useUpdateAccountStatus = () => {
 			queryClient.invalidateQueries({ queryKey: ["customer"] });
 			queryClient.invalidateQueries({ queryKey: ["vendor"] });
 			queryClient.invalidateQueries({ queryKey: ["rider"] });
+		},
+		onError: (error: Error) => {
+			toast.error(error.message || "Something went wrong. Please try again.");
 		},
 	});
 };
@@ -123,7 +138,6 @@ export const useUpgradeStaffToSuperAdmin = () => {
 		},
 	});
 };
-import { AdminProfileUpdate, ChangePasswordRequest } from "@/types/userManagement";
 
 export const useAdminProfile = () => {
 	return useQuery({
@@ -273,3 +287,5 @@ export const useUpdateAdminPermissions = () => {
 		},
 	});
 };
+
+/* eslint-enable */
