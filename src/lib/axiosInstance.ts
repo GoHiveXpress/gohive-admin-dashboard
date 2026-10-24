@@ -11,9 +11,15 @@ const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://lo
 
 const axiosInstance = axios.create({
 	baseURL: adminApiBaseUrl,
-	timeout: 15_000,
+	// Render can take ~30s to wake a sleeping instance
+	timeout: 30_000,
 	headers: { "Content-Type": "application/json" },
+	// Real timeouts become ETIMEDOUT; ECONNABORTED then only means the browser
+	// dropped the request (navigation, sign-out), which isn't worth a toast
+	transitional: { clarifyTimeoutError: true },
 });
+
+type RetryableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 
 axiosInstance.interceptors.request.use(
 	async (config: InternalAxiosRequestConfig) => {
@@ -28,10 +34,31 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
 	(response) => response,
-	(error: AxiosError<{ message?: string }>) => {
+	async (error: AxiosError<{ message?: string }>) => {
 		const errResponse = error.response;
-		if (error.code === "ECONNABORTED") {
-			toast.error("Request timed out. Please try again.");
+		if (axios.isCancel(error) || error.code === "ECONNABORTED") {
+			return Promise.reject(error);
+		}
+
+		// No answer at all (timeout or the server is still waking up): try a read
+		// once more before giving up. Writes aren't retried, they may have landed.
+		const config = error.config as RetryableConfig | undefined;
+		if (!errResponse && config && !config._retried && config.method === "get") {
+			config._retried = true;
+			toast.loading("Waking up the server…", { id: "server-waking" });
+			try {
+				return await axiosInstance(config);
+			} finally {
+				toast.dismiss("server-waking");
+			}
+		}
+		if (!errResponse) {
+			toast.error(
+				error.code === "ETIMEDOUT"
+					? "The server took too long to answer. Please try again."
+					: "Can't reach the server. Check your connection and try again.",
+				{ id: "network-error" },
+			);
 			return Promise.reject(error);
 		}
 

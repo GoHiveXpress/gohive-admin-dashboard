@@ -3,11 +3,12 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@iconify/react";
 import { DataTable } from "@/components/Tables";
+import TablePagination from "@/components/Tables/Pagination";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import {
 	vendorColumnsConfig,
@@ -52,6 +53,8 @@ const KYC_PARAM: Record<VendorData["kyc"], VendorListFilters["kyc"]> = {
 	Rejected: "rejected",
 };
 
+const PAGE_SIZE = 20;
+
 const NEXT_SORT = { none: "asc", asc: "desc", desc: null } as const;
 const SORT_ARROW = { none: "", asc: "↓", desc: "↑" } as const;
 
@@ -60,14 +63,23 @@ export default function VendorList() {
 	const [statusFilter, setStatusFilter] = useState<"all" | VendorData["status"]>("all");
 	const [kycFilter, setKycFilter] = useState<"all" | VendorData["kyc"]>("all");
 	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
+	const [page, setPage] = useState(1);
 	const debouncedSearch = useDebounce(searchQuery.trim(), 400);
 
-	// Search, status and KYC are filtered by the server; only A-Z sorting is local.
+	// Any filter change starts again from the first page
+	useEffect(() => {
+		setPage(1);
+	}, [debouncedSearch, statusFilter, kycFilter, sortMode]);
+
+	// Filtering, A-Z sorting and paging all happen on the server
 	const { data, isLoading, isFetching } = useVendors(
 		{
 			search: debouncedSearch || undefined,
 			status: statusFilter === "all" ? undefined : STATUS_PARAM[statusFilter],
 			kyc: kycFilter === "all" ? undefined : KYC_PARAM[kycFilter],
+			sort: sortMode ? (`name_${sortMode}` as const) : undefined,
+			page,
+			limit: PAGE_SIZE,
 		},
 		{ keepPrevious: true },
 	);
@@ -86,16 +98,6 @@ export default function VendorList() {
 			})) || [],
 		[data],
 	);
-
-	const sortedData = useMemo(() => {
-		if (sortMode === "asc") {
-			return [...vendorTableData].sort((a, b) => a.name.localeCompare(b.name));
-		}
-		if (sortMode === "desc") {
-			return [...vendorTableData].sort((a, b) => b.name.localeCompare(a.name));
-		}
-		return vendorTableData;
-	}, [sortMode, vendorTableData]);
 
 	if (isLoading) {
 		return (
@@ -188,7 +190,17 @@ export default function VendorList() {
 
 			{/* Table */}
 			<div className={cn(isFetching && "opacity-60 transition-opacity")}>
-				<DataTable columns={getColumns(vendorColumnsConfig)} data={sortedData} title="" />
+				<DataTable
+					columns={getColumns(vendorColumnsConfig)}
+					data={vendorTableData}
+					title=""
+				/>
+				<TablePagination
+					pagination={data?.pagination}
+					onPageChange={setPage}
+					isFetching={isFetching}
+					itemLabel="vendors"
+				/>
 			</div>
 		</div>
 	);

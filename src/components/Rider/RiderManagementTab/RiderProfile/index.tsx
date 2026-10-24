@@ -1,5 +1,5 @@
 // src/components/Rider/RiderManagementTab/RiderProfile/index.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, react/no-unescaped-entities */
+/* eslint-disable @typescript-eslint/no-unused-vars, react/no-unescaped-entities */
 
 "use client";
 
@@ -11,7 +11,7 @@ import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Link from "next/link";
-import { useRiders } from "@/hooks/riderManagement"; // Assuming you use the same hook or a single rider hook
+import { useRider } from "@/hooks/userManagement";
 import { Loader2 } from "lucide-react";
 import RiderKycTab from "./RiderKycTab";
 import ProfileTab from "./ProfileTab";
@@ -31,11 +31,9 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState("profile");
 
-	// Fetching the rider data.
-	// If you have a useRider(riderId) hook, use that.
-	// Otherwise, we find the rider from the list:
-	const { data: response, isLoading, isError } = useRiders();
-	const rider = response?.data?.find((r: any) => r._id === riderId);
+	// Just this rider, not the whole rider list
+	const { data: response, isLoading, isError } = useRider(riderId);
+	const rider = response?.data;
 
 	if (isLoading) {
 		return (
@@ -80,7 +78,11 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 					{/* Avatar */}
 					<div className="flex size-24 items-center justify-center rounded-full bg-[#E8E6D9] text-[#8E8B7B]">
 						{rider.profilePicture ? (
-							<img src={rider.profilePicture} alt={rider.name} className="size-24 rounded-full object-cover shadow-sm" />
+							<img
+								src={rider.profilePicture}
+								alt={rider.name}
+								className="size-24 rounded-full object-cover shadow-sm"
+							/>
 						) : (
 							<div className="flex size-20 items-center justify-center rounded-full bg-[#D9D7C8]">
 								<Icon icon="ph:user-fill" width="40" />
@@ -110,21 +112,26 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 						/>
 					</div>
 
-					<div 
+					<div
 						className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${
 							rider.riderProfile?.availabilityStatus?.toLowerCase() === "online"
 								? "bg-[#E8F5E9] text-[#22C55E]"
 								: "bg-[#F4F4F5] text-[#71717A]"
 						}`}
 					>
-						<div 
+						<div
 							className={`size-2 rounded-full ${
-								rider.riderProfile?.availabilityStatus?.toLowerCase() === "online" 
-									? "bg-[#22C55E]" 
+								rider.riderProfile?.availabilityStatus?.toLowerCase() === "online"
+									? "bg-[#22C55E]"
 									: "bg-[#71717A]"
-							}`} 
+							}`}
 						/>
-						{rider.riderProfile?.availabilityStatus?.charAt(0).toUpperCase() + rider.riderProfile?.availabilityStatus?.slice(1) || "Offline"}
+						{(() => {
+							const availability = rider.riderProfile?.availabilityStatus;
+							return availability
+								? availability.charAt(0).toUpperCase() + availability.slice(1)
+								: "Offline";
+						})()}
 					</div>
 				</div>
 

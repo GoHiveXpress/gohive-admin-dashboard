@@ -2,12 +2,13 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { DataTable } from "@/components/Tables";
+import TablePagination from "@/components/Tables/Pagination";
 import {
 	activeUsersColumnConfig,
 	type ActiveUserData,
@@ -16,6 +17,9 @@ import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { ROUTES } from "@/constants/routes";
 import { useRiders } from "@/hooks/riderManagement";
 import { useVendors } from "@/hooks/vendorManagement";
+import { useDebounce } from "@/hooks/useDebounce";
+import { type RiderListFilters } from "@/types/riderManagement";
+import { type VendorListFilters } from "@/types/vendorManagement";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -26,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
+const PAGE_SIZE = 20;
+
 const TAB_ITEMS: TabItem[] = [
 	{ id: "riders", label: "Online Riders" },
 	{ id: "vendors", label: "Online Vendor" },
@@ -35,19 +41,55 @@ export default function ActiveUserList() {
 	const [activeTab, setActiveTab] = useState<"riders" | "vendors">("riders");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
-	const [locationFilter, setLocationFilter] = useState("all");
+	const [locationFilter, setLocationFilter] = useState("");
 	const [ratingFilter, setRatingFilter] = useState("all");
+	const [page, setPage] = useState(1);
+	const debouncedSearch = useDebounce(searchQuery.trim(), 400);
+	const debouncedLocation = useDebounce(locationFilter.trim(), 400);
 
+	// Any filter or tab change starts again from the first page
+	useEffect(() => {
+		setPage(1);
+	}, [activeTab, debouncedSearch, debouncedLocation, statusFilter, ratingFilter]);
+
+	// Every filter runs on the server, one page at a time, for the open tab only
+	const sharedFilters = {
+		search: debouncedSearch || undefined,
+		location: debouncedLocation || undefined,
+		minRating: ratingFilter === "all" ? undefined : (ratingFilter as "2" | "3" | "4"),
+		page,
+		limit: PAGE_SIZE,
+	};
 	const {
 		data: ridersResponse,
 		isLoading: isLoadingRiders,
 		isError: isRidersError,
-	} = useRiders();
+		isFetching: isFetchingRiders,
+	} = useRiders(
+		{
+			...sharedFilters,
+			availability:
+				statusFilter === "all"
+					? undefined
+					: (statusFilter as RiderListFilters["availability"]),
+		},
+		{ enabled: activeTab === "riders", keepPrevious: true },
+	);
 	const {
 		data: vendorsResponse,
 		isLoading: isLoadingVendors,
 		isError: isVendorsError,
-	} = useVendors();
+		isFetching: isFetchingVendors,
+	} = useVendors(
+		{
+			...sharedFilters,
+			availability:
+				statusFilter === "all"
+					? undefined
+					: (statusFilter as VendorListFilters["availability"]),
+		},
+		{ enabled: activeTab === "vendors", keepPrevious: true },
+	);
 
 	const ridersData = useMemo<ActiveUserData[]>(() => {
 		const riders = ridersResponse?.data ?? [];
@@ -101,38 +143,10 @@ export default function ActiveUserList() {
 		});
 	}, [vendorsResponse]);
 
-	const baseData = activeTab === "riders" ? ridersData : vendorsData;
-
-	const locationOptions = useMemo(() => {
-		const uniqueLocations = Array.from(
-			new Set(baseData.map((item) => item.location).filter((location) => location !== "N/A")),
-		);
-		return uniqueLocations.sort((a, b) => a.localeCompare(b));
-	}, [baseData]);
-
-	const currentData = useMemo(() => {
-		return baseData.filter((item) => {
-			const query = searchQuery.trim().toLowerCase();
-			const matchesSearch =
-				!query ||
-				item.name.toLowerCase().includes(query) ||
-				item.userId.toLowerCase().includes(query) ||
-				item.phone.toLowerCase().includes(query);
-
-			const matchesStatus =
-				statusFilter === "all" || item.status.toLowerCase() === statusFilter.toLowerCase();
-
-			const matchesLocation = locationFilter === "all" || item.location === locationFilter;
-
-			const matchesRating =
-				ratingFilter === "all" ||
-				(ratingFilter === "4" && item.rating >= 4) ||
-				(ratingFilter === "3" && item.rating >= 3) ||
-				(ratingFilter === "2" && item.rating >= 2);
-
-			return matchesSearch && matchesStatus && matchesLocation && matchesRating;
-		});
-	}, [baseData, locationFilter, ratingFilter, searchQuery, statusFilter]);
+	const currentData = activeTab === "riders" ? ridersData : vendorsData;
+	const pagination =
+		activeTab === "riders" ? ridersResponse?.pagination : vendorsResponse?.pagination;
+	const isFetching = activeTab === "riders" ? isFetchingRiders : isFetchingVendors;
 
 	const isLoading = activeTab === "riders" ? isLoadingRiders : isLoadingVendors;
 	const isError = activeTab === "riders" ? isRidersError : isVendorsError;
@@ -142,7 +156,17 @@ export default function ActiveUserList() {
 
 	const columns = getColumns(activeUsersColumnConfig);
 
-	let tableBody = <DataTable columns={columns} data={currentData} title="" />;
+	let tableBody = (
+		<div className={isFetching ? "opacity-60 transition-opacity" : undefined}>
+			<DataTable columns={columns} data={currentData} title="" />
+			<TablePagination
+				pagination={pagination}
+				onPageChange={setPage}
+				isFetching={isFetching}
+				itemLabel={activeTab}
+			/>
+		</div>
+	);
 	if (isLoading) {
 		tableBody = (
 			<div className="flex h-64 items-center justify-center">
@@ -184,7 +208,11 @@ export default function ActiveUserList() {
 					<CustomTabs
 						items={TAB_ITEMS}
 						activeTab={activeTab as string}
-						onTabChange={(tab) => setActiveTab(tab as "riders" | "vendors")}
+						onTabChange={(tab) => {
+							setActiveTab(tab as "riders" | "vendors");
+							// The status values differ between the tabs
+							setStatusFilter("all");
+						}}
 					/>
 				</div>
 
@@ -198,7 +226,7 @@ export default function ActiveUserList() {
 						<Input
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
-							placeholder="Search by name, ID or phone"
+							placeholder="Search by name, email or phone"
 							className="border-border h-10 rounded-lg bg-white pl-10"
 						/>
 					</div>
@@ -212,6 +240,7 @@ export default function ActiveUserList() {
 							{activeTab === "riders" ? (
 								<>
 									<SelectItem value="active">Active</SelectItem>
+									<SelectItem value="busy">On a delivery</SelectItem>
 									<SelectItem value="offline">Offline</SelectItem>
 								</>
 							) : (
@@ -223,19 +252,12 @@ export default function ActiveUserList() {
 						</SelectContent>
 					</Select>
 
-					<Select value={locationFilter} onValueChange={setLocationFilter}>
-						<SelectTrigger className="border-border h-10 w-[170px] rounded-lg bg-white text-sm font-medium">
-							<SelectValue placeholder="Location" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">All Locations</SelectItem>
-							{locationOptions.map((location) => (
-								<SelectItem key={location} value={location}>
-									{location}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
+					<Input
+						value={locationFilter}
+						onChange={(e) => setLocationFilter(e.target.value)}
+						placeholder="Location"
+						className="border-border h-10 w-[170px] rounded-lg bg-white text-sm"
+					/>
 
 					<Select value={ratingFilter} onValueChange={setRatingFilter}>
 						<SelectTrigger className="border-border h-10 w-[140px] rounded-lg bg-white text-sm font-medium">
@@ -254,7 +276,7 @@ export default function ActiveUserList() {
 						onClick={() => {
 							setSearchQuery("");
 							setStatusFilter("all");
-							setLocationFilter("all");
+							setLocationFilter("");
 							setRatingFilter("all");
 						}}
 						className="border-border h-10 rounded-lg bg-white px-4 text-sm font-medium"

@@ -2,7 +2,7 @@
 
 // Untyped screen written before the lint rules; only its data source changed here.
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-nullish-coalescing, no-plusplus, react/no-array-index-key */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-nullish-coalescing, react/no-array-index-key */
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Icon } from "@iconify/react";
 import { Loader2 } from "lucide-react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { useRecentOrders } from "@/hooks/customerManagement";
-import { useRiders } from "@/hooks/riderManagement";
+import { useRiderOverview } from "@/hooks/riderManagement";
 
 const containerStyle = {
 	width: "100%",
@@ -20,10 +20,9 @@ const containerStyle = {
 
 export default function PendingOrders() {
 	const { data: orderResponse, isLoading: isLoadingOrders } = useRecentOrders();
-	const { data: riderResponse, isLoading: isLoadingRiders } = useRiders();
+	const { riders, online, offline, isLoading: isLoadingRiders } = useRiderOverview();
 
 	const orders = orderResponse?.data || [];
-	const riders = riderResponse?.data || [];
 
 	const { isLoaded: isMapLoaded } = useJsApiLoader({
 		id: "google-map-script",
@@ -64,24 +63,13 @@ export default function PendingOrders() {
 		return `conic-gradient(#22C55E 0% ${cEnd}%, #84CC16 ${cEnd}% ${rEnd}%, #EAB308 ${rEnd}% ${pEnd}%, #EF4444 ${pEnd}% 100%)`;
 	};
 
-	// Compute Rider Metrics
-	const { online, offline } = useMemo(() => {
-		let o = 0;
-		let off = 0;
-		riders.forEach((r: any) => {
-			if (r.riderProfile?.availabilityStatus?.toLowerCase() === "online") o++;
-			else off++;
-		});
-		return { online: o, offline: off };
-	}, [riders]);
-
 	// Display First Active En Route/Pending Order on Map seamlessly
 	const targetOrder = pending[0] || enRoute[0] || null;
 	const vendorLocation = { lat: 6.5244, lng: 3.3792 };
 
 	const activeRider = riders.find(
 		(r: any) =>
-			r.riderProfile?.availabilityStatus?.toLowerCase() === "online" &&
+			["online", "busy"].includes(r.riderProfile?.availabilityStatus) &&
 			r.location?.coordinates?.length === 2,
 	) as any;
 	const mapCenter = activeRider
@@ -207,7 +195,7 @@ export default function PendingOrders() {
 									<div className="text-muted-foreground flex items-center gap-1.5 text-[10px] font-medium">
 										Status
 										<div
-											className={`size-1.5 rounded-full ${rider.riderProfile?.availabilityStatus?.toLowerCase() === "online" ? "bg-[#22C55E]" : "bg-[#71717A]"}`}
+											className={`size-1.5 rounded-full ${["online", "busy"].includes(rider.riderProfile?.availabilityStatus) ? "bg-[#22C55E]" : "bg-[#71717A]"}`}
 										/>
 										<span className="text-foreground capitalize">
 											{rider.riderProfile?.availabilityStatus || "Offline"}
@@ -263,8 +251,9 @@ export default function PendingOrders() {
 							{riders
 								.filter(
 									(r: any) =>
-										r.riderProfile?.availabilityStatus === "online" &&
-										r.location?.coordinates?.length === 2,
+										["online", "busy"].includes(
+											r.riderProfile?.availabilityStatus,
+										) && r.location?.coordinates?.length === 2,
 								)
 								.map((rider: any) => (
 									<Marker

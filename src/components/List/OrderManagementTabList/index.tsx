@@ -69,7 +69,11 @@ export default function OrderManagementTabList() {
 	// The full vendor list needs Vendor Management; without it the filter falls
 	// back to the vendors on the loaded page.
 	const canListVendors = can(PERMISSIONS.VENDORS);
-	const { data: vendorsResponse } = useVendors({}, { enabled: canListVendors });
+	// A-Z and capped at the server's page maximum, so it never downloads every vendor
+	const { data: vendorsResponse } = useVendors(
+		{ sort: "name_asc", page: 1, limit: 200 },
+		{ enabled: canListVendors },
+	);
 
 	const orders = useMemo(() => orderResponse?.data ?? [], [orderResponse]);
 

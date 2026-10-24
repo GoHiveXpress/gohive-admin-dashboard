@@ -46,7 +46,10 @@ export type RiderListFilters = {
 	search?: string;
 	status?: "Active" | "Inactive" | "Suspend";
 	kyc?: "pending" | "approved" | "rejected";
-	availability?: "online" | "offline" | "busy";
+	availability?: "online" | "offline" | "busy" | "active";
+	minRating?: "2" | "3" | "4";
+	location?: string;
+	sort?: "name_asc" | "name_desc";
 	page?: number;
 	limit?: number;
 };

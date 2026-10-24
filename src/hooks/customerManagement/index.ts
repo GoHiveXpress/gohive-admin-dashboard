@@ -71,6 +71,7 @@ export const usePaginatedOrders = (
 		vendor?: string;
 		customer?: string;
 		date?: string;
+		range?: "today" | "week" | "month";
 		page: number;
 		limit: number;
 	},

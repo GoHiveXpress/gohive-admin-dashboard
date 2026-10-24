@@ -3,11 +3,12 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@iconify/react";
 import { DataTable } from "@/components/Tables";
+import TablePagination from "@/components/Tables/Pagination";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { riderColumnsConfig } from "@/components/Tables/columns/RiderManagementColumns";
 import { useRiders } from "@/hooks/riderManagement";
@@ -22,15 +23,23 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 
+const PAGE_SIZE = 20;
+
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 export default function RiderManagementList() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [kycFilter, setKycFilter] = useState("all");
+	const [page, setPage] = useState(1);
 	const debouncedSearch = useDebounce(searchQuery.trim(), 400);
 
-	// Search, availability and KYC are filtered by the server.
+	// Any filter change starts again from the first page
+	useEffect(() => {
+		setPage(1);
+	}, [debouncedSearch, statusFilter, kycFilter]);
+
+	// Search, availability, KYC and paging are handled by the server.
 	const {
 		data: response,
 		isLoading,
@@ -44,6 +53,8 @@ export default function RiderManagementList() {
 					? undefined
 					: (statusFilter as RiderListFilters["availability"]),
 			kyc: kycFilter === "all" ? undefined : (kycFilter as RiderListFilters["kyc"]),
+			page,
+			limit: PAGE_SIZE,
 		},
 		{ keepPrevious: true },
 	);
@@ -149,6 +160,12 @@ export default function RiderManagementList() {
 			{/* Table */}
 			<div className={isFetching ? "opacity-60 transition-opacity" : undefined}>
 				<DataTable columns={getColumns(riderColumnsConfig)} data={formattedData} title="" />
+				<TablePagination
+					pagination={response?.pagination}
+					onPageChange={setPage}
+					isFetching={isFetching}
+					itemLabel="riders"
+				/>
 			</div>
 		</div>
 	);

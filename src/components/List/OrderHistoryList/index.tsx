@@ -4,12 +4,14 @@
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/Tables";
+import TablePagination from "@/components/Tables/Pagination";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
 import { orderHistoryColumns } from "@/components/Tables/columns/orderHistoryColumns";
-import { useCustomerOrders, useOrders } from "@/hooks/customerManagement";
+import { useCustomerOrders, usePaginatedOrders } from "@/hooks/customerManagement";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import GoogleRoutesMap from "@/components/Map/GoogleRoutesMap";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import {
 	DropdownMenu,
@@ -22,23 +24,44 @@ import {
 import { cn } from "@/lib/utils";
 import { ORDER_STATUS_OPTIONS } from "@/lib/orderStatus";
 
+const PAGE_SIZE = 20;
+
 export default function OrderHistoryList({ customerId }: { customerId?: string }) {
+	const [status, setStatus] = useState<string>("all");
+	const [searchQuery, setSearchQuery] = useState("");
+	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
+	const [dateFilter, setDateFilter] = useState<string>("all-time");
+	const [page, setPage] = useState(1);
+	const debouncedSearch = useDebounce(searchQuery.trim(), 400);
+
+	useEffect(() => {
+		setPage(1);
+	}, [debouncedSearch, status, dateFilter]);
+
+	// One customer's orders are few, so their page loads them all and filters here
 	const {
 		data: customerOrdersResponse,
 		isLoading: isCustomerOrdersLoading,
 		error: customerOrdersError,
 	} = useCustomerOrders(customerId!);
 
+	// Every order on the platform: the server filters and pages them
 	const {
 		data: allOrdersResponse,
 		isLoading: isAllOrdersLoading,
+		isFetching: isAllOrdersFetching,
 		error: allOrdersError,
-	} = useOrders({}, { enabled: !customerId }); // A customer's page only needs their orders
-
-	const [status, setStatus] = useState<string>("all");
-	const [searchQuery, setSearchQuery] = useState("");
-	const [sortMode, setSortMode] = useState<"asc" | "desc" | null>(null);
-	const [dateFilter, setDateFilter] = useState<string>("all-time");
+	} = usePaginatedOrders(
+		{
+			search: debouncedSearch || undefined,
+			status: status === "all" ? undefined : status,
+			range:
+				dateFilter === "all-time" ? undefined : (dateFilter as "today" | "week" | "month"),
+			page,
+			limit: PAGE_SIZE,
+		},
+		{ enabled: !customerId },
+	);
 
 	const isLoading = customerId ? isCustomerOrdersLoading : isAllOrdersLoading;
 	const error = customerId ? customerOrdersError : allOrdersError;
@@ -47,8 +70,10 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 
 	const processedOrders = useMemo(() => {
 		let result = [...orders];
+		// The server already applied search, status and date to the all-orders list
+		const filterHere = Boolean(customerId);
 
-		if (searchQuery.trim() !== "") {
+		if (filterHere && searchQuery.trim() !== "") {
 			const query = searchQuery.toLowerCase();
 			result = result.filter(
 				(item: any) =>
@@ -58,11 +83,11 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 			);
 		}
 
-		if (status !== "all") {
+		if (filterHere && status !== "all") {
 			result = result.filter((item: any) => item.status === status);
 		}
 
-		if (dateFilter !== "all-time") {
+		if (filterHere && dateFilter !== "all-time") {
 			const now = new Date();
 			result = result.filter((item: any) => {
 				if (!item.createdAt) return false;
@@ -97,7 +122,7 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 		}
 
 		return result;
-	}, [orders, searchQuery, sortMode, status, dateFilter]);
+	}, [orders, customerId, searchQuery, sortMode, status, dateFilter]);
 
 	if (isLoading) {
 		return (
@@ -255,7 +280,25 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 			</div>
 
 			{/* Table - Modal/Action removed */}
-			<DataTable columns={getColumns(orderHistoryColumns)} data={processedOrders} title="" />
+			<div
+				className={cn(
+					!customerId && isAllOrdersFetching && "opacity-60 transition-opacity",
+				)}
+			>
+				<DataTable
+					columns={getColumns(orderHistoryColumns)}
+					data={processedOrders}
+					title=""
+				/>
+				{!customerId && (
+					<TablePagination
+						pagination={allOrdersResponse?.pagination}
+						onPageChange={setPage}
+						isFetching={isAllOrdersFetching}
+						itemLabel="orders"
+					/>
+				)}
+			</div>
 		</div>
 	);
 }

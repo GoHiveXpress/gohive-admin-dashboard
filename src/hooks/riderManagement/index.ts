@@ -20,6 +20,22 @@ export const useRiders = (
 	});
 };
 
+// Online/offline counts plus the riders working right now, for the order-flow
+// screens. Two small queries instead of downloading every rider.
+const WORKING_RIDERS_SHOWN = 50;
+export const useRiderOverview = () => {
+	const working = useRiders({ availability: "active", page: 1, limit: WORKING_RIDERS_SHOWN });
+	const everyone = useRiders({ page: 1, limit: 1 });
+	const online = working.data?.pagination?.total ?? 0;
+	const total = everyone.data?.pagination?.total ?? 0;
+	return {
+		riders: working.data?.data ?? [],
+		online,
+		offline: Math.max(total - online, 0),
+		isLoading: working.isLoading || everyone.isLoading,
+	};
+};
+
 export const useUpdateRiderStatus = () => {
 	const queryClient = useQueryClient();
 	const toast = useToast();

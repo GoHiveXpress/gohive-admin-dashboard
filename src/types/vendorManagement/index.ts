@@ -56,6 +56,10 @@ export type VendorListFilters = {
 	search?: string;
 	status?: "Active" | "Inactive" | "Suspend";
 	kyc?: "pending" | "approved" | "rejected";
+	availability?: "online" | "offline";
+	minRating?: "2" | "3" | "4";
+	location?: string;
+	sort?: "name_asc" | "name_desc";
 	page?: number;
 	limit?: number;
 };
