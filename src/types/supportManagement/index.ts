@@ -4,6 +4,38 @@ export type ChatRole = "customer" | "vendor" | "rider";
 export type ChatStatus = "active" | "closed";
 export type MessageType = "text" | "image" | "options";
 
+// Matches gohive-backend/utils/supportTickets.js
+export type TicketCategory =
+	| "order_issue"
+	| "late_delivery"
+	| "missing_item"
+	| "wrong_item"
+	| "payment"
+	| "refund"
+	| "account"
+	| "rider"
+	| "vendor"
+	| "app_bug"
+	| "other";
+export type TicketPriority = "low" | "normal" | "high" | "urgent";
+export type TicketStatus = "open" | "in_progress" | "waiting_on_user" | "resolved";
+export type TicketResolution =
+	| "answered"
+	| "refunded"
+	| "replaced"
+	| "order_fixed"
+	| "duplicate"
+	| "no_response"
+	| "not_an_issue"
+	| "other";
+
+export interface ITicketOrder {
+	_id: string;
+	orderId: string;
+	status: string;
+	totalAmount?: number;
+}
+
 export interface ISupportUser {
 	_id: string;
 	name: string;
@@ -44,6 +76,18 @@ export interface ISupportChat {
 	status: ChatStatus;
 	createdAt: string;
 	updatedAt: string;
+	// Ticket fields (chats from before tickets existed may lack them)
+	ticketNumber?: number | null;
+	category?: TicketCategory | null;
+	priority?: TicketPriority | null;
+	ticketStatus?: TicketStatus | null;
+	order?: ITicketOrder | null;
+	firstResponseAt?: string | null;
+	closedAt?: string | null;
+	resolvedAt?: string | null;
+	resolvedByName?: string | null;
+	resolution?: TicketResolution | null;
+	resolutionNote?: string | null;
 }
 
 export interface ISupportMessage {
@@ -72,6 +116,58 @@ export interface IChatListParams {
 	status?: ChatStatus;
 	role?: ChatRole;
 	search?: string;
+	category?: TicketCategory;
+	priority?: TicketPriority;
+	ticketStatus?: TicketStatus;
+}
+
+export interface ITicketUpdate {
+	category?: TicketCategory;
+	priority?: TicketPriority;
+	status?: Exclude<TicketStatus, "resolved">;
+	// An order code such as GH-123456, or "" to unlink
+	orderCode?: string;
+}
+
+export interface ITicketResolution {
+	resolution: TicketResolution;
+	note?: string;
+}
+
+export interface ITicketResponse {
+	success: boolean;
+	message: string;
+	data: ISupportChat;
+}
+
+export interface ITicketTiming {
+	count: number;
+	medianMs: number | null;
+	averageMs: number | null;
+}
+
+export interface ITicketReport {
+	from: string;
+	to: string;
+	truncated: boolean;
+	totals: { opened: number; resolved: number; unresolved: number; neverAnswered: number };
+	firstResponse: ITicketTiming;
+	resolution: ITicketTiming;
+	byCategory: Array<{
+		category: TicketCategory | "uncategorised";
+		count: number;
+		resolved: number;
+		medianResolutionMs: number | null;
+	}>;
+	byPriority: Array<{ priority: TicketPriority; count: number }>;
+	byResolution: Array<{ resolution: TicketResolution; count: number }>;
+	agents: Array<{
+		agentId: string;
+		name: string;
+		handled: number;
+		resolved: number;
+		medianFirstResponseMs: number | null;
+	}>;
 }
 
 // Sent to agents on "support_chat_activity" whenever a chat changes
@@ -88,6 +184,11 @@ export interface IChatActivity {
 	updatedAt?: string;
 	senderRole?: string;
 	isNew?: boolean;
+	ticketNumber?: number | null;
+	category?: TicketCategory | null;
+	priority?: TicketPriority | null;
+	ticketStatus?: TicketStatus | null;
+	firstResponseAt?: string | null;
 }
 
 export interface IQuickReply {

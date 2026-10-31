@@ -5,19 +5,21 @@ import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { useSession } from "next-auth/react";
 import LiveChatTab from "./LiveChatTab";
 import TicketTab from "./TicketTab";
+import TicketReportTab from "./TicketReportTab";
 import BroadcastTab from "./BroadcastTab";
 import CampaignTab from "./CampaignTab";
 
 const TABS: (TabItem & { roles: string[] })[] = [
 	{ id: "live-chat", label: "Live Chat", roles: ["superadmin", "staff"] },
 	{ id: "tickets", label: "Support Tickets", roles: ["superadmin", "staff"] },
+	{ id: "ticket-report", label: "Ticket Report", roles: ["superadmin", "staff"] },
 	{ id: "broadcasts", label: "Broadcasts", roles: ["superadmin"] },
 	{ id: "campaigns", label: "Campaigns", roles: ["superadmin"] },
 ];
 
 export default function SupportManagement() {
 	const { data: session } = useSession();
-	const userRole = session?.user?.role || "staff";
+	const userRole = session?.user?.role ?? "staff";
 
 	const filteredTabs = TABS.filter((tab) => tab.roles.includes(userRole));
 	const [activeTab, setActiveTab] = useState("live-chat");
@@ -39,6 +41,7 @@ export default function SupportManagement() {
 			<div className="min-h-0 flex-1">
 				{activeTab === "live-chat" && <LiveChatTab />}
 				{activeTab === "tickets" && <TicketTab />}
+				{activeTab === "ticket-report" && <TicketReportTab />}
 				{activeTab === "broadcasts" && userRole === "superadmin" && <BroadcastTab />}
 				{activeTab === "campaigns" && userRole === "superadmin" && <CampaignTab />}
 			</div>

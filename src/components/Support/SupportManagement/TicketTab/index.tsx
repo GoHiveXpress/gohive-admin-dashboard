@@ -14,7 +14,17 @@ import {
 	type ISupportChat,
 	type ISupportMessage,
 	type ISupportUser,
+	type TicketCategory,
+	type TicketPriority,
+	type TicketStatus,
 } from "@/types/supportManagement";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -24,7 +34,45 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useAdminProfile } from "@/hooks/userManagement";
+import {
+	TICKET_CATEGORIES,
+	TICKET_CATEGORY_LABELS,
+	TICKET_PRIORITIES,
+	TICKET_PRIORITY_LABELS,
+	TICKET_STATUSES,
+	TICKET_STATUS_LABELS,
+	categoryLabel,
+	priorityOf,
+	responseTimer,
+	ticketCode,
+	ticketStatusOf,
+} from "@/lib/supportTickets";
+
 import ChatMessageContent from "../ChatMessageContent";
+import TicketDetails from "./TicketDetails";
+
+const SEARCH_DELAY_MS = 350;
+const MIN_SEARCH_LENGTH = 2;
+
+const PRIORITY_STYLES: Record<TicketPriority, string> = {
+	low: "bg-muted text-muted-foreground",
+	normal: "bg-blue-50 text-blue-700",
+	high: "bg-amber-100 text-amber-800",
+	urgent: "bg-red-100 text-destructive",
+};
+
+const TIMER_STYLES = {
+	ok: "text-secondary",
+	warning: "text-amber-600",
+	late: "text-destructive",
+	muted: "text-muted-foreground",
+};
+
+const chatAdminId = (chat?: ISupportChat) => {
+	if (!chat?.admin) return null;
+	return typeof chat.admin === "object" ? chat.admin._id : chat.admin;
+};
 
 export default function TicketTab() {
 	const [activeCategory, setActiveCategory] = useState<"customer" | "vendor" | "rider" | "all">(
@@ -33,29 +81,64 @@ export default function TicketTab() {
 	const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">("all");
 	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [debouncedSearch, setDebouncedSearch] = useState("");
+	const [complaintFilter, setComplaintFilter] = useState<TicketCategory | "all">("all");
+	const [priorityFilter, setPriorityFilter] = useState<TicketPriority | "all">("all");
+	const [ticketStatusFilter, setTicketStatusFilter] = useState<TicketStatus | "all">("all");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
 	const [messageText, setMessageText] = useState("");
 	const scrollRef = useRef<HTMLDivElement>(null);
+	// Ticks so the response timers stay current
+	const [now, setNow] = useState(() => Date.now());
 
-	// 1. Fetch chats (newest first, a page at a time)
+	useEffect(() => {
+		const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), SEARCH_DELAY_MS);
+		return () => clearTimeout(timer);
+	}, [searchQuery]);
+
+	useEffect(() => {
+		const timer = setInterval(() => setNow(Date.now()), 30_000);
+		return () => clearInterval(timer);
+	}, []);
+
+	const { data: profileData } = useAdminProfile();
+	const myAdminId = profileData?.data?._id;
+	const isSuperadmin = profileData?.data?.role === "superadmin";
+
+	// 1. Fetch tickets: the server filters and searches every chat, however old
+	// (name, email, phone, ticket number, order code or message text), a page at a time
 	const {
 		data: chatsData,
 		isLoading: chatsLoading,
 		hasNextPage,
 		fetchNextPage,
 		isFetchingNextPage,
-	} = useAllChats({ status: statusFilter === "all" ? undefined : statusFilter });
+	} = useAllChats({
+		status: statusFilter === "all" ? undefined : statusFilter,
+		role: activeCategory === "all" ? undefined : activeCategory,
+		search: debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined,
+		category: complaintFilter === "all" ? undefined : complaintFilter,
+		priority: priorityFilter === "all" ? undefined : priorityFilter,
+		ticketStatus: ticketStatusFilter === "all" ? undefined : ticketStatusFilter,
+	});
 	const chats = useMemo(() => chatsData?.chats ?? [], [chatsData]);
 
-	// 2. Filter chats for the category
+	// 2. Live updates patch tickets in place, so re-check the filters here
 	const filteredChats = useMemo(() => {
 		const result = chats.filter((chat) => {
 			const matchesCategory = activeCategory === "all" || chat.role === activeCategory;
 			const matchesStatus = statusFilter === "all" || chat.status === statusFilter;
-			const matchesSearch =
-				chat.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				chat._id.toLowerCase().includes(searchQuery.toLowerCase());
-			return matchesCategory && matchesStatus && matchesSearch;
+			const matchesComplaint = complaintFilter === "all" || chat.category === complaintFilter;
+			const matchesPriority = priorityFilter === "all" || priorityOf(chat) === priorityFilter;
+			const matchesTicketStatus =
+				ticketStatusFilter === "all" || ticketStatusOf(chat) === ticketStatusFilter;
+			return (
+				matchesCategory &&
+				matchesStatus &&
+				matchesComplaint &&
+				matchesPriority &&
+				matchesTicketStatus
+			);
 		});
 
 		// Apply A-Z sort by user name
@@ -70,7 +153,15 @@ export default function TicketTab() {
 			);
 		}
 		return result;
-	}, [chats, activeCategory, searchQuery, statusFilter, sortOrder]);
+	}, [
+		chats,
+		activeCategory,
+		statusFilter,
+		complaintFilter,
+		priorityFilter,
+		ticketStatusFilter,
+		sortOrder,
+	]);
 
 	// 3. Selected Chat
 	const selectedChat = useMemo(
@@ -129,10 +220,11 @@ export default function TicketTab() {
 		);
 	};
 
-	const formatUserId = (chat: ISupportChat) => {
-		const prefix = chat.role.charAt(0).toUpperCase();
-		return `${prefix}GHV${chat.user._id.slice(-4).toUpperCase()}`;
-	};
+	const canEditSelected =
+		!!selectedChat &&
+		(isSuperadmin || (!!myAdminId && chatAdminId(selectedChat) === myAdminId));
+	const filtersActive =
+		complaintFilter !== "all" || priorityFilter !== "all" || ticketStatusFilter !== "all";
 
 	// Helper for Dynamic Avatars
 	const getUserAvatar = (user: ISupportUser) => {
@@ -178,7 +270,8 @@ export default function TicketTab() {
 						className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2"
 					/>
 					<Input
-						placeholder="Search by name or ID"
+						aria-label="Search tickets"
+						placeholder="Name, ticket, order or message"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						className="border-border h-10 rounded-lg bg-transparent pl-10"
@@ -195,7 +288,7 @@ export default function TicketTab() {
 							className="border-border relative size-10 shrink-0 rounded-lg"
 						>
 							<Icon icon="ph:sliders-horizontal" className="size-5" />
-							{statusFilter !== "all" && (
+							{(statusFilter !== "all" || filtersActive) && (
 								<span className="absolute right-0 top-0 size-2 rounded-full bg-[#F97316]" />
 							)}
 						</Button>
@@ -224,17 +317,71 @@ export default function TicketTab() {
 					</DropdownMenuContent>
 				</DropdownMenu>
 
+				<Select
+					value={ticketStatusFilter}
+					onValueChange={(value) => setTicketStatusFilter(value as TicketStatus | "all")}
+				>
+					<SelectTrigger aria-label="Ticket status" className="h-10 w-40">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Any status</SelectItem>
+						{TICKET_STATUSES.map((value) => (
+							<SelectItem key={value} value={value}>
+								{TICKET_STATUS_LABELS[value]}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+
+				<Select
+					value={complaintFilter}
+					onValueChange={(value) => setComplaintFilter(value as TicketCategory | "all")}
+				>
+					<SelectTrigger aria-label="Complaint category" className="h-10 w-44">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Any category</SelectItem>
+						{TICKET_CATEGORIES.map((value) => (
+							<SelectItem key={value} value={value}>
+								{TICKET_CATEGORY_LABELS[value]}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+
+				<Select
+					value={priorityFilter}
+					onValueChange={(value) => setPriorityFilter(value as TicketPriority | "all")}
+				>
+					<SelectTrigger aria-label="Priority" className="h-10 w-36">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Any priority</SelectItem>
+						{TICKET_PRIORITIES.map((value) => (
+							<SelectItem key={value} value={value}>
+								{TICKET_PRIORITY_LABELS[value]}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+
 				{/* Quick Reset All */}
 				<Button
 					onClick={() => {
 						setActiveCategory("all");
 						setStatusFilter("all");
 						setSearchQuery("");
+						setComplaintFilter("all");
+						setPriorityFilter("all");
+						setTicketStatusFilter("all");
 						setSortOrder(null);
 					}}
 					className={cn(
 						"h-10 rounded-lg px-6 font-medium transition-colors",
-						activeCategory === "all" && statusFilter === "all"
+						activeCategory === "all" && statusFilter === "all" && !filtersActive
 							? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
 							: "bg-muted text-foreground hover:bg-muted/80",
 					)}
@@ -264,7 +411,8 @@ export default function TicketTab() {
 			<div className="flex items-center gap-2">
 				<h2 className="text-2xl font-medium">
 					{activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Support
-					Tickets ({filteredChats.length})
+					Tickets ({filteredChats.length}
+					{hasNextPage ? "+" : ""})
 				</h2>
 			</div>
 
@@ -290,10 +438,23 @@ export default function TicketTab() {
 										: "border-border hover:border-primary/50"
 								}`}
 							>
-								<div className="flex items-start justify-between">
-									<span className="border-border bg-background rounded-full border px-3 py-1 text-xs">
-										{formatUserId(chat)}
-									</span>
+								<div className="flex items-start justify-between gap-2">
+									<div className="flex flex-wrap items-center gap-1.5">
+										<span className="border-border bg-background rounded-full border px-3 py-1 text-xs font-medium">
+											{ticketCode(chat)}
+										</span>
+										<span
+											className={cn(
+												"rounded-full px-2 py-0.5 text-xs font-medium",
+												PRIORITY_STYLES[priorityOf(chat)],
+											)}
+										>
+											{TICKET_PRIORITY_LABELS[priorityOf(chat)]}
+										</span>
+										<span className="bg-muted rounded-full px-2 py-0.5 text-xs">
+											{categoryLabel(chat.category)}
+										</span>
+									</div>
 									<span className="text-muted-foreground text-xs">
 										{formatDistanceToNow(new Date(chat.updatedAt), {
 											addSuffix: true,
@@ -304,6 +465,17 @@ export default function TicketTab() {
 								<h3 className="line-clamp-2 text-lg font-medium leading-tight">
 									{chat.lastMessage || "New Support Request"}
 								</h3>
+								<p className="text-xs">
+									<span className={TIMER_STYLES[responseTimer(chat, now).tone]}>
+										{responseTimer(chat, now).label}
+									</span>
+									{chat.order && (
+										<span className="text-muted-foreground">
+											{" "}
+											· Order {chat.order.orderId}
+										</span>
+									)}
+								</p>
 
 								<div className="flex items-center justify-between pt-2">
 									<div className="flex items-center gap-2">
@@ -329,13 +501,12 @@ export default function TicketTab() {
 									<div className="flex items-center gap-2">
 										<span
 											className={`rounded-full px-3 py-1 text-xs font-medium ${
-												chat.status === "active"
-													? "bg-secondary/10 text-secondary"
-													: "text-destructive bg-red-100"
+												ticketStatusOf(chat) === "resolved"
+													? "bg-muted text-muted-foreground"
+													: "bg-secondary/10 text-secondary"
 											}`}
 										>
-											{chat.status.charAt(0).toUpperCase() +
-												chat.status.slice(1)}
+											{TICKET_STATUS_LABELS[ticketStatusOf(chat)]}
 										</span>
 										<Icon
 											icon="lucide:more-horizontal"
@@ -402,6 +573,14 @@ export default function TicketTab() {
 									</Button>
 								</div>
 							</div>
+
+							{selectedChat && (
+								<TicketDetails
+									chat={selectedChat}
+									canEdit={canEditSelected}
+									now={now}
+								/>
+							)}
 
 							<div
 								ref={scrollRef}

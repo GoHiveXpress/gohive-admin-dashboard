@@ -8,6 +8,10 @@ import {
 	type IGetAllChatsResponse,
 	type IGetChatHistoryResponse,
 	type ISendMessageResponse,
+	type ITicketReport,
+	type ITicketResponse,
+	type ITicketResolution,
+	type ITicketUpdate,
 } from "@/types/supportManagement";
 
 export const supportApi = {
@@ -43,6 +47,35 @@ export const supportApi = {
 
 	deleteQuickReply: async (id: string): Promise<any> => {
 		const response = await axiosInstance.delete(`/support-chat/admin/quick-replies/${id}`);
+		return response.data;
+	},
+
+	// Agent holding the chat, or a superadmin; recorded in the audit log
+	updateTicket: async ({
+		id,
+		...changes
+	}: ITicketUpdate & { id: string }): Promise<ITicketResponse> => {
+		const response = await axiosInstance.patch(`/support-chat/admin/tickets/${id}`, changes);
+		return response.data;
+	},
+
+	// Also closes the chat if it is still open; recorded in the audit log
+	resolveTicket: async ({
+		id,
+		...resolution
+	}: ITicketResolution & { id: string }): Promise<ITicketResponse> => {
+		const response = await axiosInstance.post(
+			`/support-chat/admin/tickets/${id}/resolve`,
+			resolution,
+		);
+		return response.data;
+	},
+
+	getTicketReport: async (params: {
+		from?: string;
+		to?: string;
+	}): Promise<{ success: boolean; data: ITicketReport }> => {
+		const response = await axiosInstance.get("/support-chat/admin/tickets/report", { params });
 		return response.data;
 	},
 

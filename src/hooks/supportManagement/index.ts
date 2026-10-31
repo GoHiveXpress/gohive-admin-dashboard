@@ -19,6 +19,7 @@ import {
 	type IGetAllChatsResponse,
 	type ISupportChat,
 	type ISupportUser,
+	type ITicketResponse,
 } from "@/types/supportManagement";
 
 const adminApiBaseUrl = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL ?? "http://localhost:5000/api";
@@ -137,6 +138,48 @@ export const useDeleteQuickReply = () => {
 		onError: (error: any) => {
 			toast.error(error.response?.data?.message ?? "Couldn't delete the quick reply");
 		},
+	});
+};
+
+/** Swaps the saved ticket into every cached chat list and refreshes the report. */
+const useTicketChange = <TVariables extends { id: string }>(
+	mutationFn: (variables: TVariables) => Promise<ITicketResponse>,
+	fallbackError: string,
+) => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	return useMutation({
+		mutationFn,
+		onSuccess: (res) => {
+			const saved = res.data;
+			const found = patchCachedChat(queryClient, saved._id, (chat) => ({
+				...chat,
+				...saved,
+				// The list keeps its own copy of the user (with avatars) and live fields
+				user: chat.user,
+				unreadCount: chat.unreadCount,
+				userOnline: chat.userOnline,
+			}));
+			if (!found) queryClient.invalidateQueries({ queryKey: ["support-chats"] });
+			queryClient.invalidateQueries({ queryKey: ["support-ticket-report"] });
+		},
+		onError: (error: any) => {
+			toast.error(error.response?.data?.message ?? fallbackError);
+		},
+	});
+};
+
+export const useUpdateTicket = () =>
+	useTicketChange(supportApi.updateTicket, "Couldn't update the ticket");
+
+export const useResolveTicket = () =>
+	useTicketChange(supportApi.resolveTicket, "Couldn't resolve the ticket");
+
+export const useTicketReport = (range: { from?: string; to?: string }) => {
+	return useQuery({
+		queryKey: ["support-ticket-report", range],
+		queryFn: () => supportApi.getTicketReport(range),
+		staleTime: 60_000,
 	});
 };
 
@@ -268,6 +311,11 @@ export const useSupportSocket = (chatId?: string) => {
 				waitingSince: activity.waitingSince,
 				lastUserMessageAt: activity.lastUserMessageAt ?? chat.lastUserMessageAt,
 				updatedAt: activity.updatedAt ?? chat.updatedAt,
+				ticketNumber: activity.ticketNumber ?? chat.ticketNumber,
+				category: activity.category ?? chat.category,
+				priority: activity.priority ?? chat.priority,
+				ticketStatus: activity.ticketStatus ?? chat.ticketStatus,
+				firstResponseAt: activity.firstResponseAt ?? chat.firstResponseAt,
 				unreadCount:
 					fromUser && changedId !== openChatId.current
 						? (chat.unreadCount ?? 0) + 1
