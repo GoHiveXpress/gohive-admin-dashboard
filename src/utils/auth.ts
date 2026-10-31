@@ -29,9 +29,10 @@ export async function getAuthToken(): Promise<string | null> {
 	return token;
 }
 
-// Primes the cache right after sign-in or a token refresh
-export function setAuthToken(token: string) {
-	if (typeof window !== "undefined") {
+// Primes the cache right after sign-in or a token refresh. A background
+// refresh is not activity, so it leaves the idle clock alone.
+export function setAuthToken(token: string, { markActive = true } = {}) {
+	if (markActive && typeof window !== "undefined") {
 		localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
 	}
 	cachedSessionToken = token;

@@ -11,6 +11,7 @@ import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ORDER_STATUS_OPTIONS, orderStatusLabel } from "@/lib/orderStatus";
+import { buildOrderTimeline, formatStepTime } from "@/lib/orderTimeline";
 import TablePagination from "@/components/Tables/Pagination";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -322,16 +323,10 @@ const OrderManagement = () => {
 											"N/A"
 										}
 										time={
-											activeOrder.createdAt
-												? new Date(
-														new Date(activeOrder.createdAt).getTime() +
-															2 * 60000,
-													).toLocaleTimeString([], {
-														hour: "2-digit",
-														minute: "2-digit",
-														hour12: true,
-													})
-												: "N/A"
+											formatStepTime(activeOrder.orderAcceptedAt) ??
+											(activeOrder.status === "rejected"
+												? "Rejected"
+												: "Not accepted yet")
 										}
 									/>
 									<TimelineActor
@@ -342,13 +337,12 @@ const OrderManagement = () => {
 											activeOrder.rider?._id?.slice(-6).toUpperCase() ?? "N/A"
 										}
 										time={
-											activeOrder.status === "pending" || !activeOrder.rider
-												? "Pending"
-												: new Date().toLocaleTimeString([], {
-														hour: "2-digit",
-														minute: "2-digit",
-														hour12: true,
-													})
+											activeOrder.rider
+												? (formatStepTime(
+														activeOrder.orderPickedUpAt ??
+															activeOrder.riderAssignedAt,
+													) ?? "Assigned")
+												: "Not assigned yet"
 										}
 										isLast
 									/>
@@ -356,27 +350,15 @@ const OrderManagement = () => {
 
 								{/* Status Steps */}
 								<div className="space-y-3">
-									<StatusCheck label="Order Placed" isChecked />
-									<StatusCheck
-										label="Order Accepted"
-										isChecked={[
-											"accepted",
-											"preparing",
-											"ready",
-											"picked_up",
-											"delivered",
-										].includes(activeOrder.status)}
-									/>
-									<StatusCheck
-										label="Picked Up"
-										isChecked={["picked_up", "delivered"].includes(
-											activeOrder.status,
-										)}
-									/>
-									<StatusCheck
-										label="Delivered"
-										isChecked={["delivered"].includes(activeOrder.status)}
-									/>
+									{buildOrderTimeline(activeOrder).map((step) => (
+										<StatusCheck
+											key={step.key}
+											label={step.label}
+											isChecked={step.state === "done"}
+											isFailed={step.state === "failed"}
+											time={formatStepTime(step.at)}
+										/>
+									))}
 								</div>
 							</>
 						)}

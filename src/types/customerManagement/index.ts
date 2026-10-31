@@ -52,6 +52,14 @@ export type Order = {
 		| "expired";
 	totalAmount: number;
 	createdAt: string;
+	updatedAt?: string;
+	orderAcceptedAt?: string;
+	orderReadyAt?: string;
+	riderAssignedAt?: string;
+	orderPickedUpAt?: string;
+	orderDeliveredAt?: string;
+	orderEndedAt?: string;
+	paymentFailedAt?: string;
 	items?: { quantity: number; name?: string }[];
 	estimatedTime?: string;
 	deliveryAddress?: {

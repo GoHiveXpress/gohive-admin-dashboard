@@ -9,6 +9,7 @@ export type RiderProfile = {
 	vehicleImage: string;
 	availabilityStatus: "online" | "offline" | "busy";
 	verificationStatus: "pending" | "approved" | "rejected";
+	rejectionReason?: string;
 	isApproved: boolean;
 	nin?: string;
 	averageRating?: number;

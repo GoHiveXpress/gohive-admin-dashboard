@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const AUTH_ROUTES = new Set(["/login", "/login-verify"]);
+// Invitees open their emailed link before they have an account.
+const PUBLIC_ROUTES = new Set(["/register-staff"]);
 const SESSION_COOKIE_NAMES = [
 	"next-auth.session-token",
 	"__Secure-next-auth.session-token",
@@ -20,6 +22,8 @@ function hasSessionCookie(req: NextRequest): boolean {
 export async function middleware(req: NextRequest) {
 	const { pathname, search } = req.nextUrl;
 	const sessionCookieExists = hasSessionCookie(req);
+
+	if (PUBLIC_ROUTES.has(pathname)) return NextResponse.next();
 
 	if (pathname === "/") {
 		return NextResponse.redirect(

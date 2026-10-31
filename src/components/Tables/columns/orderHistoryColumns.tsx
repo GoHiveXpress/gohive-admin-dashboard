@@ -10,6 +10,14 @@ export type OrderHistory = {
 	orderId: string;
 	status: string;
 	createdAt: string;
+	updatedAt?: string;
+	orderAcceptedAt?: string;
+	orderReadyAt?: string;
+	riderAssignedAt?: string;
+	orderPickedUpAt?: string;
+	orderDeliveredAt?: string;
+	orderEndedAt?: string;
+	paymentFailedAt?: string;
 	vendor: {
 		vendorProfile: {
 			businessName: string;

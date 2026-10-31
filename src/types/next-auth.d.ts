@@ -1,30 +1,32 @@
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth, { type DefaultSession } from "next-auth";
 
 declare module "next-auth" {
-  /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
-  interface Session {
-    user: {
-      /** The user's role. */
-      role?: string;
-      /** The backend JWT token. */
-      backendToken?: string;
-    } & DefaultSession["user"];
-  }
+	/**
+	 * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
+	 */
+	interface Session {
+		user: {
+			/** The user's role. */
+			role?: string;
+			/** The backend JWT token. */
+			backendToken?: string;
+		} & DefaultSession["user"];
+	}
 
-  interface User {
-    role?: string;
-    backendToken?: string;
-  }
+	interface User {
+		role?: string;
+		backendToken?: string;
+	}
 }
 
 declare module "next-auth/jwt" {
-  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
-  interface JWT {
-    /** The user's role. */
-    role?: string;
-    /** The backend JWT token. */
-    backendToken?: string;
-  }
+	/** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
+	interface JWT {
+		/** The user's role. */
+		role?: string;
+		/** The backend JWT token. */
+		backendToken?: string;
+		/** When the admin signed in (ms); sessions end 12h later. */
+		signedInAt?: number;
+	}
 }

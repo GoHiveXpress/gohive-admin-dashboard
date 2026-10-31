@@ -36,12 +36,15 @@ async function fetchAdminProfile(backendToken: string): Promise<AdminProfile | n
 	}
 }
 
+// Matches ADMIN_SESSION_SECONDS in gohive-backend/utils/authTokens.js
+const ADMIN_SESSION_SECONDS = 12 * 60 * 60;
+
 // eslint-disable-next-line import/prefer-default-export
 export const nextAuthOptions: NextAuthConfig = {
 	secret: nextAuthSecret,
-	// Rolling 48h session, matching the backend token: each visit extends it,
-	// so it only ends after 48h without opening the dashboard
-	session: { strategy: "jwt", maxAge: 48 * 60 * 60, updateAge: 60 * 60 },
+	// Sessions end 12h after sign-in, like the backend's admin tokens.
+	// SessionTimeout also signs out after 30 minutes without activity.
+	session: { strategy: "jwt", maxAge: ADMIN_SESSION_SECONDS, updateAge: 60 * 60 },
 	providers: [
 		CredentialsProvider({
 			name: "Credentials",
@@ -68,7 +71,12 @@ export const nextAuthOptions: NextAuthConfig = {
 				token.backendToken = u.backendToken;
 				// eslint-disable-next-line no-param-reassign
 				token.role = u.role;
+				// eslint-disable-next-line no-param-reassign
+				token.signedInAt = Date.now();
 			}
+			// Rolling the cookie must not stretch a session past 12h
+			const signedInAt = typeof token.signedInAt === "number" ? token.signedInAt : 0;
+			if (Date.now() - signedInAt > ADMIN_SESSION_SECONDS * 1000) return null;
 			// A refreshed backend token (SessionTimeout); only kept if it is valid
 			// and belongs to the same admin
 			if (trigger === "update") {

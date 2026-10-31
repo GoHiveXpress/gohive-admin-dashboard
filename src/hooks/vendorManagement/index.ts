@@ -26,8 +26,16 @@ export const useUpdateVendorStatus = () => {
 
 	return useMutation({
 		// FIX: Pass one object to the API function
-		mutationFn: ({ id, status }: { id: string; status: "pending" | "approved" | "rejected" }) =>
-			vendorApi.updateVendorStatus({ vendorId: id, status }),
+		mutationFn: ({
+			id,
+			status,
+			reason,
+		}: {
+			id: string;
+			status: "pending" | "approved" | "rejected";
+			// Required by the backend when rejecting; sent to the vendor
+			reason?: string;
+		}) => vendorApi.updateVendorStatus({ vendorId: id, status, reason }),
 
 		onSuccess: (data) => {
 			toast.success(data.message);

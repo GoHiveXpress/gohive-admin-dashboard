@@ -14,6 +14,7 @@ import { ROUTES } from "@/constants/routes";
 import { useVendor, useUpdateAccountStatus } from "@/hooks/userManagement";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmReasonModal from "@/components/_modals/ConfirmReasonModal";
 import PermissionGate from "@/components/PermissionGate";
 import { ACTION_RULES } from "@/lib/permissions";
 import KycVerificationTab from "./KycVerification";
@@ -33,16 +34,24 @@ const TAB_ITEMS: TabItem[] = [
 export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 	const [activeTab, setActiveTab] = useState("profile_management");
 	const updateStatus = useUpdateAccountStatus();
+	const [pendingStatus, setPendingStatus] = useState<"Active" | "Suspend" | null>(null);
 
 	const { data: vendorResponse, isLoading, refetch } = useVendor(vendorId);
 	const vendor = vendorResponse?.data;
 
-	const handleStatusToggle = async (newStatus: "Active" | "Suspend") => {
+	const handleStatusToggle = async (reason: string) => {
+		if (!pendingStatus) return;
+		const newStatus = pendingStatus;
 		try {
-			await updateStatus.mutateAsync({ userId: vendorId, status: newStatus });
+			await updateStatus.mutateAsync({
+				userId: vendorId,
+				status: newStatus,
+				reason: reason || undefined,
+			});
 			toast.success(
 				`Account ${newStatus === "Active" ? "reactivated" : "suspended"} successfully`,
 			);
+			setPendingStatus(null);
 			await refetch();
 		} catch {
 			// The hook already showed the error
@@ -129,7 +138,7 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 										<Button
 											size="sm"
 											className="bg-secondary hover:bg-secondary/80 h-7 rounded-full px-3 text-[10px]"
-											onClick={() => handleStatusToggle("Active")}
+											onClick={() => setPendingStatus("Active")}
 											disabled={updateStatus.isPending}
 										>
 											{updateStatus.isPending
@@ -142,7 +151,7 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 											variant="outline"
 											size="sm"
 											className="border-destructive/30 text-destructive hover:bg-destructive/5 h-7 rounded-full px-3 text-[10px]"
-											onClick={() => handleStatusToggle("Suspend")}
+											onClick={() => setPendingStatus("Suspend")}
 											disabled={updateStatus.isPending}
 										>
 											{updateStatus.isPending
@@ -190,6 +199,22 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 				{activeTab === "menu_management" && <MenuManagementTab vendorId={vendorId} />}
 				{activeTab === "kyc_verification" && <KycVerificationTab vendor={vendor} />}
 			</div>
+
+			<ConfirmReasonModal
+				isOpen={pendingStatus !== null}
+				onOpenChange={(open) => !open && setPendingStatus(null)}
+				onConfirm={handleStatusToggle}
+				isLoading={updateStatus.isPending}
+				tone={pendingStatus === "Suspend" ? "danger" : "success"}
+				reasonRequired={pendingStatus === "Suspend"}
+				title={pendingStatus === "Suspend" ? "Suspend vendor?" : "Reactivate vendor?"}
+				description={
+					pendingStatus === "Suspend"
+						? `${vendor.vendorProfile?.businessName || vendor.name} will be signed out and stop receiving orders until reactivated. The reason is saved in the audit log and sent to them.`
+						: `${vendor.vendorProfile?.businessName || vendor.name} will be able to sign in and receive orders again.`
+				}
+				confirmLabel={pendingStatus === "Suspend" ? "Suspend" : "Reactivate"}
+			/>
 		</div>
 	);
 }

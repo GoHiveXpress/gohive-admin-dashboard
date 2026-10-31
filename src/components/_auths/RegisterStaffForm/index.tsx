@@ -68,14 +68,7 @@ export default function RegisterStaffForm({ token, email }: RegisterStaffFormPro
 			password: values.password,
 			dob: values.dob,
 		};
-		console.log("🚀 [REGISTER_SUBMIT]:", payload);
 		register(payload);
-	}
-
-	// For debugging validation issues
-	const errors = form.formState.errors;
-	if (Object.keys(errors).length > 0) {
-		console.log("❌ [FORM_VALIDATION_ERRORS]:", errors);
 	}
 
 	return (
@@ -110,7 +103,7 @@ export default function RegisterStaffForm({ token, email }: RegisterStaffFormPro
 						Complete Your Admin Profile
 					</h1>
 					<p className="mt-1 text-sm text-gray-500">
-						You've been invited to join the GoHive Admin Team
+						You&apos;ve been invited to join the GoHive Admin Team
 					</p>
 				</div>
 
@@ -123,7 +116,11 @@ export default function RegisterStaffForm({ token, email }: RegisterStaffFormPro
 				</div>
 
 				<Form {...form}>
-					<form method="POST" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+					<form
+						method="POST"
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="space-y-5"
+					>
 						<FormField
 							control={form.control}
 							name="name"

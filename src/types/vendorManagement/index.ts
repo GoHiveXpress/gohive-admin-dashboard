@@ -19,6 +19,7 @@ export type VendorProfile = {
 	passportPhoto: string;
 	operatingHours: OperatingHours[];
 	verificationStatus: "pending" | "approved" | "rejected";
+	rejectionReason?: string;
 	availabilityStatus?: "online" | "offline";
 	isApproved: boolean;
 	averageRating?: number;

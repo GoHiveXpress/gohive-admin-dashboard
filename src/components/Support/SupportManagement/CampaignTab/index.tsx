@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
-import { ICreateCommunicationRequest, UserRole } from "@/types/communication";
+import {
+	type CommunicationType,
+	type ICreateCommunicationRequest,
+	type UserRole,
+} from "@/types/communication";
 import { useCreateCommunication, useTemplates } from "@/hooks/communication";
 import {
 	Select,
@@ -14,6 +18,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import ConfirmSendModal from "@/components/_modals/ConfirmSendModal";
 
 export default function CampaignTab() {
 	const {
@@ -33,13 +38,21 @@ export default function CampaignTab() {
 	const { mutate: sendComposerCampaign, isPending: isComposerPending } = useCreateCommunication();
 	const { mutate: sendQuickCampaign, isPending: isQuickPending } = useCreateCommunication();
 	const { data: templatesData } = useTemplates();
-	const templates = templatesData?.data || [];
+	const templates = templatesData?.data ?? [];
 
 	const [selectedQuickTemplate, setSelectedQuickTemplate] = useState<string>("");
 	const [quickRoles, setQuickRoles] = useState<UserRole[]>(["customer"]);
 	const [selectedImage, setSelectedImage] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
 	const [showLinkInput, setShowLinkInput] = useState(false);
+	// A send waits here until the admin confirms the recipient count
+	const [pendingSend, setPendingSend] = useState<{
+		source: "composer" | "quick";
+		formData: FormData;
+		type: CommunicationType;
+		roles: string[];
+		subject: string;
+	} | null>(null);
 
 	const onImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -60,12 +73,12 @@ export default function CampaignTab() {
 		if (data.ctaLink) formData.append("ctaLink", data.ctaLink);
 		if (selectedImage) formData.append("image", selectedImage);
 
-		sendComposerCampaign(formData, {
-			onSuccess: () => {
-				reset();
-				setSelectedImage(null);
-				setImagePreview(null);
-			},
+		setPendingSend({
+			source: "composer",
+			formData,
+			type: data.type,
+			roles: data.targetAudience,
+			subject: data.subject,
 		});
 	};
 
@@ -88,9 +101,34 @@ export default function CampaignTab() {
 		if (template.image) formData.append("image", template.image);
 		quickRoles.forEach((role) => formData.append("targetAudience", role));
 
-		sendQuickCampaign(formData, {
-			onSuccess: () => setSelectedQuickTemplate(""),
+		setPendingSend({
+			source: "quick",
+			formData,
+			type: "campaign-email",
+			roles: quickRoles,
+			subject: template.title,
 		});
+	};
+
+	const confirmSend = () => {
+		if (!pendingSend) return;
+		if (pendingSend.source === "composer") {
+			sendComposerCampaign(pendingSend.formData, {
+				onSuccess: () => {
+					setPendingSend(null);
+					reset();
+					setSelectedImage(null);
+					setImagePreview(null);
+				},
+			});
+		} else {
+			sendQuickCampaign(pendingSend.formData, {
+				onSuccess: () => {
+					setPendingSend(null);
+					setSelectedQuickTemplate("");
+				},
+			});
+		}
 	};
 
 	const toggleRole = (role: UserRole) => {
@@ -130,7 +168,9 @@ export default function CampaignTab() {
 							<label className="text-lg font-medium">Message</label>
 							<div className="relative">
 								<Textarea
-									{...register("content", { required: "Message content is required" })}
+									{...register("content", {
+										required: "Message content is required",
+									})}
 									placeholder="Type Message"
 									className={`min-h-[160px] resize-none bg-transparent p-4 ${
 										errors.content ? "border-destructive" : ""
@@ -138,15 +178,19 @@ export default function CampaignTab() {
 								/>
 								{imagePreview && (
 									<div className="absolute bottom-4 right-4">
-										<div className="relative h-20 w-20 overflow-hidden rounded-lg border">
-											<img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+										<div className="relative size-20 overflow-hidden rounded-lg border">
+											<img
+												src={imagePreview}
+												alt="Preview"
+												className="size-full object-cover"
+											/>
 											<button
 												type="button"
 												onClick={() => {
 													setSelectedImage(null);
 													setImagePreview(null);
 												}}
-												className="bg-destructive absolute right-0 top-0 flex h-5 w-5 items-center justify-center text-white"
+												className="bg-destructive absolute right-0 top-0 flex size-5 items-center justify-center text-white"
 											>
 												<Icon icon="lucide:x" className="size-3" />
 											</button>
@@ -166,15 +210,22 @@ export default function CampaignTab() {
 									<div key={role} className="flex items-center gap-2">
 										<Checkbox
 											id={`campaign-${role}`}
-											checked={(watch("targetAudience") || []).includes(role as UserRole)}
+											checked={(watch("targetAudience") || []).includes(
+												role as UserRole,
+											)}
 											onCheckedChange={(checked) => {
 												const current = watch("targetAudience") || [];
 												if (checked) {
-													setValue("targetAudience", [...current, role as UserRole]);
+													setValue("targetAudience", [
+														...current,
+														role as UserRole,
+													]);
 												} else {
 													setValue(
 														"targetAudience",
-														current.filter((r) => r !== (role as UserRole)),
+														current.filter(
+															(r) => r !== (role as UserRole),
+														),
 													);
 												}
 											}}
@@ -194,7 +245,7 @@ export default function CampaignTab() {
 						<div className="space-y-2">
 							<Select
 								value={watch("type")}
-								onValueChange={(val) => setValue("type", val as any)}
+								onValueChange={(val) => setValue("type", val as CommunicationType)}
 							>
 								<SelectTrigger className="border-border text-muted-foreground h-12 w-full bg-transparent">
 									<SelectValue placeholder="Campaign Type" />
@@ -212,6 +263,7 @@ export default function CampaignTab() {
 									<input
 										type="file"
 										id="campaign-image-upload"
+										aria-label="Attach an image"
 										className="hidden"
 										accept="image/*"
 										onChange={onImageSelect}
@@ -222,7 +274,10 @@ export default function CampaignTab() {
 										asChild
 										className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
 									>
-										<label htmlFor="campaign-image-upload" className="cursor-pointer">
+										<label
+											htmlFor="campaign-image-upload"
+											className="cursor-pointer"
+										>
 											<Icon icon="lucide:image" />
 										</label>
 									</Button>
@@ -230,7 +285,7 @@ export default function CampaignTab() {
 								<Button
 									type="button"
 									size="icon"
-									className={`${showLinkInput ? "bg-secondary" : "bg-primary"} text-white rounded-full`}
+									className={`${showLinkInput ? "bg-secondary" : "bg-primary"} rounded-full text-white`}
 									onClick={() => setShowLinkInput(!showLinkInput)}
 								>
 									<Icon icon="lucide:link" />
@@ -239,11 +294,11 @@ export default function CampaignTab() {
 
 							<div className="flex flex-1 items-center justify-center gap-4">
 								{showLinkInput && (
-									<div className="flex-1 max-w-[300px]">
+									<div className="max-w-[300px] flex-1">
 										<Input
 											{...register("ctaLink")}
 											placeholder="https://example.com"
-											className="h-10 bg-transparent border-primary/50 focus:border-primary"
+											className="border-primary/50 focus:border-primary h-10 bg-transparent"
 										/>
 									</div>
 								)}
@@ -321,7 +376,9 @@ export default function CampaignTab() {
 
 						<Button
 							onClick={handleQuickSend}
-							disabled={isQuickPending || !selectedQuickTemplate || quickRoles.length === 0}
+							disabled={
+								isQuickPending || !selectedQuickTemplate || quickRoles.length === 0
+							}
 							className="bg-secondary hover:bg-secondary/90 h-12 w-full text-base font-medium text-white shadow-lg transition-all active:scale-[0.98]"
 						>
 							{isQuickPending ? "Sending..." : "Send Notification"}
@@ -329,6 +386,16 @@ export default function CampaignTab() {
 					</div>
 				</div>
 			</div>
+
+			<ConfirmSendModal
+				isOpen={pendingSend !== null}
+				onOpenChange={(open) => !open && setPendingSend(null)}
+				onConfirm={confirmSend}
+				type={pendingSend?.type ?? "campaign-email"}
+				roles={pendingSend?.roles ?? []}
+				subject={pendingSend?.subject ?? ""}
+				isLoading={isComposerPending || isQuickPending}
+			/>
 		</div>
 	);
 }

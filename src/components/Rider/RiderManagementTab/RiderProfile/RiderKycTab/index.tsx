@@ -26,21 +26,36 @@ interface RiderKycTabProps {
 }
 
 export default function RiderKycTab({ rider }: RiderKycTabProps) {
-	// Initialize status from API data
-	const [status, setStatus] = useState<string>(
+	const savedStatus =
 		rider.riderProfile.verificationStatus ||
-			(rider.riderProfile.isApproved ? "approved" : "pending"),
-	);
-	const [comment, setComment] = useState("");
+		(rider.riderProfile.isApproved ? "approved" : "pending");
+	const savedReason = rider.riderProfile.rejectionReason ?? "";
+	const [status, setStatus] = useState<string>(savedStatus);
+	const [reason, setReason] = useState(savedReason);
+	const [reasonError, setReasonError] = useState<string | null>(null);
 
 	const { mutate: updateStatus, isPending } = useUpdateRiderStatus();
+	const isRejecting = status === "rejected";
 
 	const handleSave = () => {
+		const trimmed = reason.trim();
+		// The backend needs a reason to reject, and sends it to the rider
+		if (isRejecting && trimmed.length < 3) {
+			setReasonError("Tell the rider what to fix (at least 3 characters).");
+			return;
+		}
+		setReasonError(null);
 		updateStatus({
 			id: rider._id,
 			status: status as "pending" | "approved" | "rejected",
+			reason: isRejecting ? trimmed : undefined,
 		});
-		// Note: Comment logic would go here if API supported it
+	};
+
+	const handleCancel = () => {
+		setStatus(savedStatus);
+		setReason(savedReason);
+		setReasonError(null);
 	};
 
 	// Document Helpers
@@ -120,22 +135,48 @@ export default function RiderKycTab({ rider }: RiderKycTabProps) {
 						</Select>
 					</div>
 
-					{/* Comment Box */}
-					<div className="space-y-2">
-						<Label className="text-foreground ml-1 text-xs font-medium">Comment</Label>
-						<Textarea
-							placeholder="Input comment"
-							value={comment}
-							onChange={(e) => setComment(e.target.value)}
-							className="border-border focus-visible:ring-secondary min-h-[120px] resize-none rounded-2xl bg-white p-4"
-						/>
-					</div>
+					{/* Rejection reason: required, stored and sent to the rider */}
+					{isRejecting && (
+						<div className="space-y-2">
+							<Label
+								htmlFor="rider-rejection-reason"
+								className="text-foreground ml-1 text-xs font-medium"
+							>
+								Reason for rejection
+								<span className="text-muted-foreground font-normal">
+									{" "}
+									(sent to the rider)
+								</span>
+							</Label>
+							<Textarea
+								id="rider-rejection-reason"
+								placeholder="e.g. The driver's licence photo has expired. Please upload a current one."
+								value={reason}
+								maxLength={500}
+								onChange={(e) => {
+									setReason(e.target.value);
+									if (reasonError) setReasonError(null);
+								}}
+								aria-invalid={!!reasonError}
+								aria-describedby="rider-rejection-reason-error"
+								className="border-border focus-visible:ring-secondary min-h-[120px] resize-none rounded-2xl bg-white p-4"
+							/>
+							<p
+								id="rider-rejection-reason-error"
+								className="text-destructive ml-1 text-xs"
+							>
+								{reasonError}
+							</p>
+						</div>
+					)}
 
 					{/* Action Buttons */}
 					<PermissionGate rule={ACTION_RULES.updateRiderStatus}>
 						<div className="flex gap-4 pt-2">
 							<Button
 								variant="outline"
+								onClick={handleCancel}
+								disabled={isPending}
 								className="border-border text-foreground h-12 flex-1 rounded-full bg-[#F9FAFB] font-medium hover:bg-[#F3F4F6]"
 							>
 								Cancel

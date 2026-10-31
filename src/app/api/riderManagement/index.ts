@@ -22,7 +22,11 @@ export const riderApi = {
 			"Failed to fetch riders",
 		),
 
-	updateRiderStatus: (params: { riderId: string; status: "pending" | "approved" | "rejected" }) =>
+	updateRiderStatus: (params: {
+		riderId: string;
+		status: "pending" | "approved" | "rejected";
+		reason?: string;
+	}) =>
 		apiClient.put<{ success: boolean; message: string }>(
 			`${ADMIN_BASE}/update-rider-status`,
 			params,

@@ -50,10 +50,10 @@ export const userManagementApi = {
 			"Failed to update user role",
 		),
 
-	updateAccountStatus: (userId: string, status: string) =>
+	updateAccountStatus: (userId: string, status: string, reason?: string) =>
 		apiClient.put<GenericResponse>(
 			`${ADMIN_PATH}/update-account-status`,
-			{ userId, status },
+			{ userId, status, reason },
 			"Failed to update account status",
 		),
 

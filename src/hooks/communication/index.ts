@@ -1,8 +1,12 @@
 // src/hooks/communication/index.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { communicationApi } from "@/app/api/communication";
 import { useToast } from "@/hooks/useToast";
-import { ICreateTemplateRequest, ICreateCommunicationRequest } from "@/types/communication";
+import { type ICreateTemplateRequest } from "@/types/communication";
+
+const apiMessage = (error: Error) =>
+	isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined;
 
 export const useTemplates = () => {
 	return useQuery({
@@ -19,11 +23,13 @@ export const useCreateTemplate = () => {
 		onSuccess: (data) => {
 			if (data.success) {
 				toast.success("Template created successfully");
-				queryClient.invalidateQueries({ queryKey: ["notification-templates"] });
+				queryClient
+					.invalidateQueries({ queryKey: ["notification-templates"] })
+					.catch(() => undefined);
 			}
 		},
-		onError: (error: any) => {
-			toast.error(error.response?.data?.message || "Failed to create template");
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to create template");
 		},
 	});
 };
@@ -37,7 +43,9 @@ export const useUpdateTemplate = () => {
 		onSuccess: (data) => {
 			if (data.success) {
 				toast.success("Template updated successfully");
-				queryClient.invalidateQueries({ queryKey: ["notification-templates"] });
+				queryClient
+					.invalidateQueries({ queryKey: ["notification-templates"] })
+					.catch(() => undefined);
 			}
 		},
 	});
@@ -50,7 +58,9 @@ export const useDeleteTemplate = () => {
 		mutationFn: (id: string) => communicationApi.deleteTemplate(id),
 		onSuccess: () => {
 			toast.success("Template deleted successfully");
-			queryClient.invalidateQueries({ queryKey: ["notification-templates"] });
+			queryClient
+				.invalidateQueries({ queryKey: ["notification-templates"] })
+				.catch(() => undefined);
 		},
 	});
 };
@@ -62,6 +72,17 @@ export const useCommunications = (type?: string) => {
 	});
 };
 
+export const useAudienceCount = (type: string, roles: string[], enabled: boolean) => {
+	const sortedRoles = [...roles].sort();
+	return useQuery({
+		queryKey: ["communication-audience", type, sortedRoles],
+		queryFn: () => communicationApi.getAudienceCount(type, sortedRoles),
+		enabled: enabled && sortedRoles.length > 0,
+		// Counts move slowly; re-check each time the dialog opens
+		staleTime: 0,
+	});
+};
+
 export const useCreateCommunication = () => {
 	const queryClient = useQueryClient();
 	const toast = useToast();
@@ -70,11 +91,13 @@ export const useCreateCommunication = () => {
 		onSuccess: (data) => {
 			if (data.success) {
 				toast.success("Sent successfully");
-				queryClient.invalidateQueries({ queryKey: ["communications"] });
+				queryClient
+					.invalidateQueries({ queryKey: ["communications"] })
+					.catch(() => undefined);
 			}
 		},
-		onError: (error: any) => {
-			toast.error(error.response?.data?.message || "Failed to send");
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to send");
 		},
 	});
 };

@@ -70,8 +70,15 @@ export const useUpdateAccountStatus = () => {
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	return useMutation({
-		mutationFn: ({ userId, status }: { userId: string; status: string }) =>
-			userManagementApi.updateAccountStatus(userId, status),
+		mutationFn: ({
+			userId,
+			status,
+			reason,
+		}: {
+			userId: string;
+			status: string;
+			reason?: string;
+		}) => userManagementApi.updateAccountStatus(userId, status, reason),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["customers"] });
 			queryClient.invalidateQueries({ queryKey: ["vendors"] });

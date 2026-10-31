@@ -60,11 +60,11 @@ export default function ProfileSettingsTab() {
 			const admin = profileResponse.data;
 			const nameParts = admin.name.split(" ");
 			setFormData({
-				firstName: nameParts[0] || "",
+				firstName: nameParts[0] ?? "",
 				lastName: nameParts.slice(1).join(" ") || "",
 				email: admin.email || "",
 				phone: admin.phone || "",
-				profilePicture: admin.profilePicture || "",
+				profilePicture: admin.profilePicture ?? "",
 			});
 		}
 	}, [profileResponse]);
@@ -117,7 +117,7 @@ export default function ProfileSettingsTab() {
 							<img
 								src={
 									formData.profilePicture ||
-									"https://ui-avatars.com/api/?name=" + (admin?.name || "User")
+									`https://ui-avatars.com/api/?name=${admin?.name ?? "User"}`
 								}
 								alt="Profile"
 								className="size-full object-cover"
@@ -152,11 +152,11 @@ export default function ProfileSettingsTab() {
 						</label>
 					</div>
 					<div>
-						<h2 className="text-xl font-semibold">{admin?.name || "Admin User"}</h2>
+						<h2 className="text-xl font-semibold">{admin?.name ?? "Admin User"}</h2>
 						<div className="mt-1 flex items-center gap-2">
 							<span className="text-muted-foreground text-xs">Admin ID Number:</span>
 							<span className="border-border bg-muted/20 rounded border px-2 py-0.5 text-xs">
-								{admin?._id.slice(-8).toUpperCase() || "N/A"}
+								{admin?._id.slice(-8).toUpperCase() ?? "N/A"}
 							</span>
 						</div>
 					</div>
@@ -204,7 +204,7 @@ export default function ProfileSettingsTab() {
 						<label className="text-muted-foreground text-sm">Role</label>
 						<div className="relative">
 							<Input
-								value={admin?.role || "Staff"}
+								value={admin?.role ?? "Staff"}
 								disabled
 								className="border-border bg-muted/20 text-muted-foreground h-12 rounded-xl"
 							/>
@@ -303,13 +303,11 @@ export default function ProfileSettingsTab() {
 								</div>
 							</div>
 						)}
-						<Button
-							disabled
-							className="bg-secondary/10 text-secondary hover:bg-secondary/20 h-14 w-full justify-center gap-3 rounded-xl font-medium"
-						>
-							<Icon icon="lucide:shield-check" className="size-5" /> Two-factor Auth
-							(Coming Soon)
-						</Button>
+						{/* Admin sign-in already asks for an emailed code (login-verify) */}
+						<div className="bg-secondary/10 text-secondary flex min-h-14 w-full items-center justify-center gap-3 rounded-xl px-4 py-3 text-center text-sm font-medium">
+							<Icon icon="lucide:shield-check" className="size-5 shrink-0" />
+							Two-step sign-in is on: a code is emailed to you each time you sign in
+						</div>
 					</div>
 				</div>
 			</div>

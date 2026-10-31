@@ -31,6 +31,7 @@ export const vendorApi = {
 	updateVendorStatus: (params: {
 		vendorId: string;
 		status: "pending" | "approved" | "rejected";
+		reason?: string;
 	}) =>
 		apiClient.put<{ success: boolean; message: string }>(
 			`${ADMIN_BASE}/update-vendor-status`,

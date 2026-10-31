@@ -42,8 +42,16 @@ export const useUpdateRiderStatus = () => {
 
 	return useMutation({
 		// FIX: Pass one object to the API function
-		mutationFn: ({ id, status }: { id: string; status: "pending" | "approved" | "rejected" }) =>
-			riderApi.updateRiderStatus({ riderId: id, status }),
+		mutationFn: ({
+			id,
+			status,
+			reason,
+		}: {
+			id: string;
+			status: "pending" | "approved" | "rejected";
+			// Required by the backend when rejecting; sent to the rider
+			reason?: string;
+		}) => riderApi.updateRiderStatus({ riderId: id, status, reason }),
 
 		onSuccess: (data) => {
 			toast.success(data.message);

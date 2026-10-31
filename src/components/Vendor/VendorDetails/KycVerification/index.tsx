@@ -26,24 +26,36 @@ interface KycVerificationTabProps {
 }
 
 export default function KycVerificationTab({ vendor }: KycVerificationTabProps) {
-	const [status, setStatus] = useState<string>(
+	const savedStatus =
 		vendor.vendorProfile.verificationStatus ||
-			(vendor.vendorProfile.isApproved ? "approved" : "pending"),
-	);
+		(vendor.vendorProfile.isApproved ? "approved" : "pending");
+	const savedReason = vendor.vendorProfile.rejectionReason ?? "";
+	const [status, setStatus] = useState<string>(savedStatus);
+	const [reason, setReason] = useState(savedReason);
+	const [reasonError, setReasonError] = useState<string | null>(null);
 
-	const [comment, setComment] = useState("");
-
-	// UPDATED: Use the new hook
 	const { mutate: updateVendorStatus, isPending } = useUpdateVendorStatus();
+	const isRejecting = status === "rejected";
 
 	const handleSave = () => {
-		// UPDATED: Now handles all status types, not just approved
+		const trimmed = reason.trim();
+		// The backend needs a reason to reject, and sends it to the vendor
+		if (isRejecting && trimmed.length < 3) {
+			setReasonError("Tell the vendor what to fix (at least 3 characters).");
+			return;
+		}
+		setReasonError(null);
 		updateVendorStatus({
 			id: vendor._id,
 			status: status as "pending" | "approved" | "rejected",
+			reason: isRejecting ? trimmed : undefined,
 		});
+	};
 
-		// You can handle the comment submission here later if you add backend support for it
+	const handleCancel = () => {
+		setStatus(savedStatus);
+		setReason(savedReason);
+		setReasonError(null);
 	};
 
 	const hasNIN = !!vendor.vendorProfile.govtIdImage;
@@ -114,29 +126,54 @@ export default function KycVerificationTab({ vendor }: KycVerificationTabProps) 
 							</Select>
 						</div>
 
-						{/* Comment Box */}
-						<div className="space-y-3">
-							<Label className="text-foreground text-sm font-medium">Comment</Label>
-							<Textarea
-								placeholder="Input comment"
-								value={comment}
-								onChange={(e) => setComment(e.target.value)}
-								className="border-border min-h-[140px] resize-none rounded-xl bg-white p-4"
-							/>
-						</div>
+						{/* Rejection reason: required, stored and sent to the vendor */}
+						{isRejecting && (
+							<div className="space-y-3">
+								<Label
+									htmlFor="kyc-rejection-reason"
+									className="text-foreground text-sm font-medium"
+								>
+									Reason for rejection
+									<span className="text-muted-foreground font-normal">
+										{" "}
+										(sent to the vendor)
+									</span>
+								</Label>
+								<Textarea
+									id="kyc-rejection-reason"
+									placeholder="e.g. The CAC document is blurry. Please upload a clear photo."
+									value={reason}
+									maxLength={500}
+									onChange={(e) => {
+										setReason(e.target.value);
+										if (reasonError) setReasonError(null);
+									}}
+									aria-invalid={!!reasonError}
+									aria-describedby="kyc-rejection-reason-error"
+									className="border-border min-h-[140px] resize-none rounded-xl bg-white p-4"
+								/>
+								<p
+									id="kyc-rejection-reason-error"
+									className="text-destructive text-xs"
+								>
+									{reasonError}
+								</p>
+							</div>
+						)}
 
 						{/* Action Buttons */}
 						<PermissionGate rule={ACTION_RULES.updateVendorStatus}>
 							<div className="flex gap-4 pt-4">
 								<Button
 									variant="outline"
+									onClick={handleCancel}
+									disabled={isPending}
 									className="border-border text-foreground h-12 flex-1 rounded-full bg-[#F9FAFB] font-medium hover:bg-[#F3F4F6]"
 								>
 									Cancel
 								</Button>
 								<Button
 									onClick={handleSave}
-									// UPDATED: Removed `|| status !== "approved"` so you can click save when rejected/pending
 									disabled={isPending}
 									className="h-12 flex-1 rounded-full bg-[#419A44] font-medium text-white hover:bg-[#419A44]/90"
 								>

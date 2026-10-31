@@ -3,23 +3,18 @@
 
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useRouter } from "next/navigation";
-import {
-	useUpdateUserRole,
-	useUpdateAccountStatus,
-	useCustomer,
-	useVendor,
-	useRider,
-} from "@/hooks/userManagement";
+import { useUpdateAccountStatus, useCustomer, useVendor, useRider } from "@/hooks/userManagement";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ConfirmReasonModal from "@/components/_modals/ConfirmReasonModal";
 
 export type UserType = "customer" | "vendor" | "rider" | "admin";
 
@@ -37,8 +32,9 @@ export default function UserManagementActionModal({
 	userId,
 }: UserManagementActionModalProps) {
 	const router = useRouter();
-	const updateRole = useUpdateUserRole();
 	const updateStatus = useUpdateAccountStatus();
+	// Suspend / reactivate wait here for a confirmed reason
+	const [pendingStatus, setPendingStatus] = useState<"Suspend" | "Active" | null>(null);
 
 	// Fetch current user data to determine status
 	const { data: customerData, isLoading: loadingCustomer } = useCustomer(
@@ -57,31 +53,48 @@ export default function UserManagementActionModal({
 	const isLoading = loadingCustomer || loadingVendor || loadingRider;
 	const userData = customerData?.data ?? vendorData?.data ?? riderData?.data;
 	const currentStatus = userData?.accountStatus;
+	const displayName =
+		vendorData?.data?.vendorProfile?.businessName ?? userData?.name ?? "this user";
 
-	const handleAction = async (action: string) => {
+	const handleAction = (action: string) => {
+		if (action.includes("Suspend")) {
+			setPendingStatus("Suspend");
+			return;
+		}
+		if (action.includes("Reactivate")) {
+			setPendingStatus("Active");
+			return;
+		}
+		if (action.includes("Send message") || action.includes("View complaint")) {
+			router.push("/support");
+		} else if (action === "View store details") {
+			router.push(`/vendor-management/${userId}`);
+		} else if (action === "View route logs") {
+			router.push(`/rider-management/${userId}`);
+		} else if (action === "Manage in Role Management") {
+			// Admin roles and removal live in Settings, behind their own confirmation
+			router.push("/settings?tab=role");
+		}
+		onClose();
+	};
+
+	const confirmStatusChange = async (reason: string) => {
+		if (!pendingStatus) return;
 		try {
-			if (action.includes("Suspend")) {
-				await updateStatus.mutateAsync({ userId, status: "Suspend" });
-				toast.success("Account suspended successfully");
-			} else if (action.includes("Reactivate")) {
-				await updateStatus.mutateAsync({ userId, status: "Active" });
-				toast.success("Account reactivated successfully");
-			} else if (action.includes("Admin Role") || action.includes("Update role to Admin")) {
-				await updateRole.mutateAsync({ userId, newRole: "superadmin" });
-				toast.success("User promoted to Admin");
-			} else if (action === "Remove Admin") {
-				await updateRole.mutateAsync({ userId, newRole: "customer" });
-				toast.success("Admin role removed");
-			} else if (action.includes("Send message") || action.includes("View complaint")) {
-				router.push("/support");
-			} else if (action === "View store details") {
-				router.push(`/vendor-management/${userId}`);
-			} else if (action === "View route logs") {
-				router.push(`/rider-management/${userId}`);
-			}
+			await updateStatus.mutateAsync({
+				userId,
+				status: pendingStatus,
+				reason: reason || undefined,
+			});
+			toast.success(
+				pendingStatus === "Suspend"
+					? "Account suspended successfully"
+					: "Account reactivated successfully",
+			);
+			setPendingStatus(null);
 			onClose();
 		} catch {
-			// The hook already showed the error; keep the modal open so they can retry
+			// The hook already showed the error; keep the dialog open so they can retry
 		}
 	};
 
@@ -113,7 +126,6 @@ export default function UserManagementActionModal({
 						icon: "ph:file-search-bold",
 						hidden: false,
 					},
-					{ label: "Update role to Admin", icon: "ph:shield-user-bold", hidden: false },
 				];
 			case "vendor":
 				return [
@@ -160,9 +172,8 @@ export default function UserManagementActionModal({
 			case "admin":
 				return [
 					{
-						label: "Remove Admin",
-						icon: "ph:user-minus-bold",
-						type: "danger",
+						label: "Manage in Role Management",
+						icon: "ph:shield-user-bold",
 						hidden: false,
 					},
 				];
@@ -266,6 +277,22 @@ export default function UserManagementActionModal({
 					</AnimatePresence>
 				</div>
 			</DialogContent>
+
+			<ConfirmReasonModal
+				isOpen={pendingStatus !== null}
+				onOpenChange={(open) => !open && setPendingStatus(null)}
+				onConfirm={confirmStatusChange}
+				isLoading={updateStatus.isPending}
+				tone={pendingStatus === "Suspend" ? "danger" : "success"}
+				reasonRequired={pendingStatus === "Suspend"}
+				title={pendingStatus === "Suspend" ? "Suspend account?" : "Reactivate account?"}
+				description={
+					pendingStatus === "Suspend"
+						? `${displayName} will be signed out and can't use GoHive until reactivated. The reason is saved in the audit log and sent to them.`
+						: `${displayName} will be able to sign in and use GoHive again.`
+				}
+				confirmLabel={pendingStatus === "Suspend" ? "Suspend" : "Reactivate"}
+			/>
 		</Dialog>
 	);
 }
