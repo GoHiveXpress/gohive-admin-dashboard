@@ -11,15 +11,17 @@ import ActivitiesTab from "./ActivitiesTab";
 import AuditLogTab from "./AuditLogTab";
 import OthersSettingsTab from "./OthersSettingsTab";
 import AppConfigSettingsTab from "./AppConfigSettingsTab";
+import SessionsTab from "./SessionsTab";
 
 const ALL_TABS = [
 	{ id: "profile", label: "Profile", roles: ["superadmin", "staff"] },
 	{ id: "activities", label: "Activities", roles: ["superadmin", "staff"] },
+	{ id: "sessions", label: "Sessions", roles: ["superadmin", "staff"] },
 	{ id: "audit-log", label: "Audit Log", roles: ["superadmin"] },
 	{ id: "role", label: "Role Management", roles: ["superadmin"] },
 	{ id: "app-config", label: "Delivery Fee Settings", roles: ["superadmin"] },
 	{ id: "notification", label: "Notification Templates", roles: ["superadmin"] },
-	{ id: "others", label: "Others", roles: ["superadmin"] },
+	{ id: "others", label: "Webhooks", roles: ["superadmin"] },
 ];
 
 export default function SettingsMain() {
@@ -79,6 +81,7 @@ export default function SettingsMain() {
 			<div className="min-h-0 flex-1">
 				{activeTab === "profile" && <ProfileSettingsTab />}
 				{activeTab === "activities" && <ActivitiesTab />}
+				{activeTab === "sessions" && <SessionsTab />}
 				{activeTab === "audit-log" && userRole === "superadmin" && <AuditLogTab />}
 				{activeTab === "role" && userRole === "superadmin" && <RoleSettingsTab />}
 				{activeTab === "app-config" && userRole === "superadmin" && (

@@ -90,7 +90,11 @@ export const useCreateCommunication = () => {
 		mutationFn: (data: FormData) => communicationApi.createCommunication(data),
 		onSuccess: (data) => {
 			if (data.success) {
-				toast.success("Sent successfully");
+				toast.success(
+					data.data.status === "scheduled"
+						? "Scheduled. It goes out at the time you picked."
+						: "Sent successfully",
+				);
 				queryClient
 					.invalidateQueries({ queryKey: ["communications"] })
 					.catch(() => undefined);
@@ -98,6 +102,21 @@ export const useCreateCommunication = () => {
 		},
 		onError: (error: Error) => {
 			toast.error(apiMessage(error) ?? "Failed to send");
+		},
+	});
+};
+
+export const useCancelCommunication = () => {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	return useMutation({
+		mutationFn: (id: string) => communicationApi.cancelCommunication(id),
+		onSuccess: (data) => {
+			toast.success(data.message);
+			queryClient.invalidateQueries({ queryKey: ["communications"] }).catch(() => undefined);
+		},
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to cancel");
 		},
 	});
 };

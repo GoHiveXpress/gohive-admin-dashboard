@@ -61,6 +61,15 @@ export const communicationApi = {
 		}>(`/admin/communication/audience-count?${params.toString()}`);
 		return response.data;
 	},
+	// A scheduled send that hasn't gone out goes back to a draft
+	cancelCommunication: async (id: string) => {
+		const response = await axiosInstance.post<{
+			success: boolean;
+			message: string;
+			data: ICommunication;
+		}>(`/admin/communication/${id}/cancel`);
+		return response.data;
+	},
 	createCommunication: async (data: FormData) => {
 		const response = await axiosInstance.post<{ success: boolean; data: ICommunication }>(
 			"/admin/communication",

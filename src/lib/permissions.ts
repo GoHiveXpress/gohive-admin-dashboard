@@ -51,8 +51,14 @@ export const ACTION_RULES = {
 	manageVendorCategories: { superadminOnly: true },
 	download: { all: [P.DOWNLOAD] },
 	viewAuditLog: { superadminOnly: true },
-	// Wallet adjustment requests, promo codes and delivery surges
+	// Wallet adjustment requests, promo codes, delivery surges and vendor commission
 	manageMoney: { all: [P.FINANCE, P.EDIT] },
+	// Customer account tools: sign out, reset password, export, delete
+	manageCustomerAccount: { all: [P.CUSTOMERS, P.EDIT] },
+	exportCustomerData: { all: [P.CUSTOMERS, P.DOWNLOAD] },
+	deleteCustomer: { superadminOnly: true },
+	// Close or reopen a store, opening hours, hiding menu items
+	manageVendorStore: { all: [P.VENDORS, P.EDIT] },
 } satisfies Record<string, PermissionRule>;
 
 // Screen access, matched by path prefix. Routes not listed are open to any admin.

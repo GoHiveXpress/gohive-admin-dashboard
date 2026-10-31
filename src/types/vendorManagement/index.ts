@@ -24,6 +24,10 @@ export type VendorProfile = {
 	isApproved: boolean;
 	averageRating?: number;
 	totalRatings?: number;
+	// Set when an admin closes the store; until null means until reopened
+	adminClosure?: { at: string; until: string | null; reason: string } | null;
+	// GoHive's cut of the food total on new orders, in percent
+	commissionPercent?: number;
 };
 
 export type BankDetails = {
@@ -105,6 +109,9 @@ export type MenuItem = {
 	image?: string;
 	isAvailable: boolean;
 	quantity: number;
+	// Hidden from customers by an admin, whatever the vendor sets
+	hiddenByAdmin?: boolean;
+	hiddenReason?: string | null;
 };
 
 export type ExtraItem = {

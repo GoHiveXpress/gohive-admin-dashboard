@@ -32,6 +32,8 @@ interface ConfirmSendModalProps {
 	type: "broadcast" | "campaign-email" | "campaign-sms";
 	roles: string[];
 	subject: string;
+	// ISO time when it's scheduled rather than sent now
+	scheduledAt?: string;
 	isLoading?: boolean;
 }
 
@@ -43,8 +45,12 @@ export default function ConfirmSendModal({
 	type,
 	roles,
 	subject,
+	scheduledAt,
 	isLoading = false,
 }: ConfirmSendModalProps) {
+	const when = scheduledAt
+		? new Date(scheduledAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })
+		: null;
 	const expandedRoles = roles.includes("all") ? ["customer", "vendor", "rider"] : roles;
 	const {
 		data,
@@ -77,7 +83,10 @@ export default function ConfirmSendModal({
 			<>
 				<span className="text-foreground text-2xl font-bold">{total.toLocaleString()}</span>{" "}
 				<span className="text-muted-foreground">
-					{total === 1 ? "person" : "people"} will get this {channel}
+					{total === 1 ? "person" : "people"}{" "}
+					{when
+						? `would get this ${channel} if it went out now`
+						: `will get this ${channel}`}
 				</span>
 				<span className="text-muted-foreground mt-1 block text-xs">
 					{Object.entries(byRole)
@@ -90,6 +99,7 @@ export default function ConfirmSendModal({
 	}
 
 	const canSend = !isCounting && !isError && (total ?? 0) > 0;
+	const verb = when ? "Schedule" : "Send";
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !isLoading && onOpenChange(open)}>
@@ -100,7 +110,7 @@ export default function ConfirmSendModal({
 					</div>
 					<DialogHeader className="ml-4 p-0 text-left">
 						<DialogTitle className="text-lg font-bold text-[#17110A]">
-							Send now?
+							{when ? "Schedule it?" : "Send now?"}
 						</DialogTitle>
 					</DialogHeader>
 				</div>
@@ -111,7 +121,16 @@ export default function ConfirmSendModal({
 							<p className="text-muted-foreground">
 								&ldquo;
 								<span className="text-foreground font-medium">{subject}</span>
-								&rdquo; goes out straight away and can&apos;t be recalled.
+								&rdquo;{" "}
+								{when ? (
+									<>
+										goes out on{" "}
+										<span className="text-foreground font-medium">{when}</span>.
+										You can cancel it until then.
+									</>
+								) : (
+									<>goes out straight away and can&apos;t be recalled.</>
+								)}
 							</p>
 							<div className="rounded-xl bg-gray-50 p-4" aria-live="polite">
 								{summary}
@@ -139,8 +158,8 @@ export default function ConfirmSendModal({
 								<Icon icon="line-md:loading-twotone-loop" className="mr-2 size-5" />
 							)}
 							{total !== undefined && canSend
-								? `Send to ${total.toLocaleString()}`
-								: "Send"}
+								? `${verb} to ${total.toLocaleString()}`
+								: verb}
 						</Button>
 					</div>
 				</div>

@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,12 +13,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import CustomerProfileTab from "./CustomerProfileTabs";
 import CustomerOrderTab from "./CustomerOrderTabs";
 import CustomerFeedbackTab from "./CustomerFeedbackTabs";
+import CustomerActions from "./CustomerActions";
+import CustomerWalletTab from "./CustomerWalletTab";
+import CustomerNotesTab from "./CustomerNotesTab";
 
 const TABS: TabItem[] = [
 	{ id: "profile", label: "Profile" },
 	{ id: "orders", label: "Order History" },
 	{ id: "feedback", label: "Feedback" },
+	{ id: "wallet", label: "Wallet" },
+	{ id: "notes", label: "Notes" },
 ];
+
+const STATUS_LABELS: Record<string, string> = {
+	Active: "Active",
+	Inactive: "Inactive",
+	Suspend: "Suspended",
+	Deleted: "Deleted",
+};
 
 export default function SingleCustomerView({ id }: { id: string }) {
 	const [activeTab, setActiveTab] = useState("profile");
@@ -37,7 +47,7 @@ export default function SingleCustomerView({ id }: { id: string }) {
 		);
 	}
 
-	if (error || !customer) {
+	if (error ?? !customer) {
 		return (
 			<div className="mx-auto w-full max-w-5xl p-12 text-center">
 				<p className="text-destructive font-medium">
@@ -69,7 +79,7 @@ export default function SingleCustomerView({ id }: { id: string }) {
 			<div className="border-border/50 relative rounded-[20px] border bg-white p-6 shadow-sm">
 				<div className="mb-8 flex items-center gap-4">
 					<Avatar className="size-20 border-2 border-white shadow-sm">
-						<AvatarImage src={customer.profilePicture || ""} alt={customer.name} />
+						<AvatarImage src={customer.profilePicture ?? ""} alt={customer.name} />
 						<AvatarFallback className="text-foreground bg-[#E3D5C0] text-2xl font-medium">
 							{customer.name.charAt(0)}
 						</AvatarFallback>
@@ -90,7 +100,7 @@ export default function SingleCustomerView({ id }: { id: string }) {
 					</div>
 				</div>
 
-				<div className="flex items-center justify-between">
+				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div className="bg-muted/30 rounded-full p-1.5">
 						<CustomTabs
 							items={TABS}
@@ -100,10 +110,13 @@ export default function SingleCustomerView({ id }: { id: string }) {
 						/>
 					</div>
 
-					<Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 rounded-full border-none px-4 py-1.5 font-medium">
-						<div className="bg-secondary mr-2 size-2 rounded-full" />
-						{customer.accountStatus}
-					</Badge>
+					<div className="flex items-center gap-3">
+						<Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 rounded-full border-none px-4 py-1.5 font-medium">
+							<div className="bg-secondary mr-2 size-2 rounded-full" />
+							{STATUS_LABELS[customer.accountStatus] ?? customer.accountStatus}
+						</Badge>
+						<CustomerActions customer={customer} />
+					</div>
 				</div>
 			</div>
 
@@ -112,9 +125,9 @@ export default function SingleCustomerView({ id }: { id: string }) {
 				{activeTab === "profile" && <CustomerProfileTab customer={customer} />}
 				{activeTab === "orders" && <CustomerOrderTab id={id} />}
 				{activeTab === "feedback" && <CustomerFeedbackTab id={id} />}
+				{activeTab === "wallet" && <CustomerWalletTab id={id} />}
+				{activeTab === "notes" && <CustomerNotesTab id={id} />}
 			</div>
 		</div>
 	);
 }
-
-/* eslint-enable */

@@ -8,7 +8,7 @@ export type Customer = {
 	email: string;
 	phone: string;
 	profilePicture?: string;
-	accountStatus: "Active" | "Inactive" | "Suspend";
+	accountStatus: "Active" | "Inactive" | "Suspend" | "Deleted";
 	orderCount: number;
 	createdAt: string;
 	dob?: string;

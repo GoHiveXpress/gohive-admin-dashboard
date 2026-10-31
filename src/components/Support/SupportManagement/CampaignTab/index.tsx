@@ -19,6 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import ConfirmSendModal from "@/components/_modals/ConfirmSendModal";
+import {
+	ScheduleField,
+	ScheduledSendsList,
+} from "@/components/Support/SupportManagement/ScheduledSends";
+import { scheduleError } from "@/lib/accountTools";
 
 export default function CampaignTab() {
 	const {
@@ -45,6 +50,12 @@ export default function CampaignTab() {
 	const [selectedImage, setSelectedImage] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
 	const [showLinkInput, setShowLinkInput] = useState(false);
+	const [sendLater, setSendLater] = useState(false);
+	const [sendAt, setSendAt] = useState("");
+	const [sendAtTouched, setSendAtTouched] = useState(false);
+	const sendAtError = sendLater && sendAtTouched ? scheduleError(sendAt) : null;
+	let composerLabel = sendLater ? "Schedule" : "Send Now";
+	if (isComposerPending) composerLabel = "Sending...";
 	// A send waits here until the admin confirms the recipient count
 	const [pendingSend, setPendingSend] = useState<{
 		source: "composer" | "quick";
@@ -52,6 +63,7 @@ export default function CampaignTab() {
 		type: CommunicationType;
 		roles: string[];
 		subject: string;
+		scheduledAt?: string;
 	} | null>(null);
 
 	const onImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +77,11 @@ export default function CampaignTab() {
 	};
 
 	const onSubmit = (data: ICreateCommunicationRequest) => {
+		if (sendLater) {
+			setSendAtTouched(true);
+			if (scheduleError(sendAt)) return;
+		}
+		const scheduledAt = sendLater ? new Date(sendAt).toISOString() : undefined;
 		const formData = new FormData();
 		formData.append("subject", data.subject);
 		formData.append("content", data.content);
@@ -72,6 +89,10 @@ export default function CampaignTab() {
 		data.targetAudience.forEach((role) => formData.append("targetAudience", role));
 		if (data.ctaLink) formData.append("ctaLink", data.ctaLink);
 		if (selectedImage) formData.append("image", selectedImage);
+		if (scheduledAt) {
+			formData.append("status", "scheduled");
+			formData.append("scheduledAt", scheduledAt);
+		}
 
 		setPendingSend({
 			source: "composer",
@@ -79,6 +100,7 @@ export default function CampaignTab() {
 			type: data.type,
 			roles: data.targetAudience,
 			subject: data.subject,
+			scheduledAt,
 		});
 	};
 
@@ -119,6 +141,9 @@ export default function CampaignTab() {
 					reset();
 					setSelectedImage(null);
 					setImagePreview(null);
+					setSendLater(false);
+					setSendAt("");
+					setSendAtTouched(false);
 				},
 			});
 		} else {
@@ -258,6 +283,18 @@ export default function CampaignTab() {
 							</Select>
 						</div>
 
+						<ScheduleField
+							idPrefix="campaign-email"
+							enabled={sendLater}
+							onEnabledChange={setSendLater}
+							value={sendAt}
+							onValueChange={(value) => {
+								setSendAt(value);
+								setSendAtTouched(true);
+							}}
+							error={sendAtError}
+						/>
+
 						<div className="flex items-center gap-4 pt-4">
 							<div className="flex gap-2">
 								<div className="relative">
@@ -310,19 +347,14 @@ export default function CampaignTab() {
 									disabled={isComposerPending}
 									className="bg-secondary hover:bg-secondary/90 h-12 w-48 px-8 text-base text-white"
 								>
-									{isComposerPending ? "Sending..." : "Send Now"}
+									{composerLabel}
 								</Button>
-								{/* <Button
-									type="button"
-									variant="secondary"
-									className="bg-muted text-foreground hover:bg-muted/80 h-12 w-48 px-8 text-base"
-								>
-									Schedule Campaign
-								</Button> */}
 							</div>
 						</div>
 					</div>
 				</form>
+
+				<ScheduledSendsList type="campaign-email" />
 			</div>
 
 			{/* === RIGHT: Quick Notification === */}
@@ -397,6 +429,7 @@ export default function CampaignTab() {
 				type={pendingSend?.type ?? "campaign-email"}
 				roles={pendingSend?.roles ?? []}
 				subject={pendingSend?.subject ?? ""}
+				scheduledAt={pendingSend?.scheduledAt}
 				isLoading={isComposerPending || isQuickPending}
 			/>
 		</div>

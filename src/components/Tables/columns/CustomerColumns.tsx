@@ -13,7 +13,7 @@ export type CustomerData = {
 	name: string;
 	email: string;
 	phone: string;
-	accountStatus: "Active" | "Inactive" | "Suspend";
+	accountStatus: "Active" | "Inactive" | "Suspend" | "Deleted";
 	orderCount: number;
 };
 

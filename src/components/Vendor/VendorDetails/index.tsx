@@ -17,9 +17,11 @@ import { toast } from "sonner";
 import ConfirmReasonModal from "@/components/_modals/ConfirmReasonModal";
 import PermissionGate from "@/components/PermissionGate";
 import { ACTION_RULES } from "@/lib/permissions";
+import { closureLabel, isClosedNow } from "@/lib/accountTools";
 import KycVerificationTab from "./KycVerification";
 import MenuManagementTab from "./MenuManagement";
 import ProfileManagementTab from "./ProfileManagement";
+import StoreControlsTab from "./StoreControls";
 
 interface VendorDetailsProps {
 	vendorId: string;
@@ -29,6 +31,7 @@ const TAB_ITEMS: TabItem[] = [
 	{ id: "profile_management", label: "Profile Management" },
 	{ id: "menu_management", label: "Menu Management" },
 	{ id: "kyc_verification", label: "KYC Verification" },
+	{ id: "store_controls", label: "Store Controls" },
 ];
 
 export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
@@ -70,8 +73,34 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 		return <div className="p-6">Vendor not found</div>;
 	}
 
+	const closure = vendor.vendorProfile?.adminClosure;
+	const closedByAdmin = isClosedNow(closure);
+
 	return (
 		<div className="w-full space-y-6">
+			{closedByAdmin && closure && (
+				<div
+					role="status"
+					className="bg-destructive/5 border-destructive/20 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border px-5 py-3"
+				>
+					<div className="flex items-center gap-3">
+						<Icon icon="ph:storefront" className="text-destructive size-5" />
+						<div>
+							<p className="text-destructive text-sm font-semibold">
+								{closureLabel(closure)}
+							</p>
+							<p className="text-muted-foreground text-xs">{closure.reason}</p>
+						</div>
+					</div>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => setActiveTab("store_controls")}
+					>
+						Manage
+					</Button>
+				</div>
+			)}
 			{/* Header / Banner Card */}
 			<div className="border-border/50 relative overflow-hidden rounded-[20px] border bg-white shadow-sm">
 				{/* Banner Image */}
@@ -198,6 +227,7 @@ export default function VendorDetailsIndex({ vendorId }: VendorDetailsProps) {
 				)}
 				{activeTab === "menu_management" && <MenuManagementTab vendorId={vendorId} />}
 				{activeTab === "kyc_verification" && <KycVerificationTab vendor={vendor} />}
+				{activeTab === "store_controls" && <StoreControlsTab vendor={vendor} />}
 			</div>
 
 			<ConfirmReasonModal
