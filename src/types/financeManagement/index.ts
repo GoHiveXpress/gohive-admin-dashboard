@@ -133,3 +133,119 @@ export interface WalletReconciliationResponse {
 		truncated: boolean;
 	};
 }
+
+export type WalletAdjustmentStatus = "pending" | "approved" | "rejected" | "withdrawn" | "failed";
+
+export interface WalletAdjustment {
+	_id: string;
+	user: {
+		_id: string;
+		name?: string;
+		email?: string;
+		phone?: string;
+		role?: string;
+		vendorProfile?: { businessName?: string };
+	} | null;
+	type: "credit" | "debit";
+	amount: number;
+	reason: string;
+	order?: { _id: string; orderId: string } | null;
+	status: WalletAdjustmentStatus;
+	requestedBy: string;
+	requestedByName?: string;
+	decidedByName?: string;
+	decidedAt?: string;
+	decisionNote?: string;
+	failureReason?: string;
+	createdAt: string;
+	// Computed for the signed-in admin
+	canApprove: boolean;
+	isMine: boolean;
+}
+
+export interface WalletAdjustmentListResponse {
+	success: boolean;
+	data: WalletAdjustment[];
+	pendingCount: number;
+	maxAmount: number;
+}
+
+export interface WalletAdjustmentPayload {
+	// Email, phone or user id
+	account: string;
+	type: "credit" | "debit";
+	amount: number;
+	reason: string;
+	// GH- code or order id
+	order?: string;
+}
+
+export type PromoType = "percent" | "fixed" | "free_delivery";
+
+export interface PromoCode {
+	_id: string;
+	code: string;
+	description?: string;
+	type: PromoType;
+	value: number;
+	maxDiscount?: number;
+	minSubtotal?: number;
+	startsAt?: string;
+	endsAt?: string;
+	usageLimit?: number;
+	perCustomerLimit?: number;
+	firstOrderOnly: boolean;
+	states: string[];
+	active: boolean;
+	createdByName?: string;
+	createdAt: string;
+	// From orders that went through
+	uses: number;
+	discountGiven: number;
+}
+
+export interface PromoCodePayload {
+	code?: string;
+	type?: PromoType;
+	description?: string;
+	value?: number | "";
+	maxDiscount?: number | "";
+	minSubtotal?: number | "";
+	startsAt?: string;
+	endsAt?: string;
+	usageLimit?: number | "";
+	perCustomerLimit?: number | "";
+	firstOrderOnly?: boolean;
+	states?: string[];
+	active?: boolean;
+}
+
+export interface DeliverySurge {
+	_id: string;
+	state: string | null;
+	multiplier: number;
+	reason: string;
+	startsAt: string;
+	endsAt?: string;
+	endedAt?: string;
+	createdByName?: string;
+	createdAt: string;
+}
+
+export interface DeliverySurgeListResponse {
+	success: boolean;
+	data: { live: DeliverySurge[]; past: DeliverySurge[] };
+}
+
+export interface DeliverySurgePayload {
+	state?: string;
+	multiplier: number;
+	reason: string;
+	hours?: number;
+}
+
+export interface MoneyActionResponse<T> {
+	success: boolean;
+	message: string;
+	data: T;
+}

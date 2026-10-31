@@ -51,6 +51,8 @@ export const ACTION_RULES = {
 	manageVendorCategories: { superadminOnly: true },
 	download: { all: [P.DOWNLOAD] },
 	viewAuditLog: { superadminOnly: true },
+	// Wallet adjustment requests, promo codes and delivery surges
+	manageMoney: { all: [P.FINANCE, P.EDIT] },
 } satisfies Record<string, PermissionRule>;
 
 // Screen access, matched by path prefix. Routes not listed are open to any admin.

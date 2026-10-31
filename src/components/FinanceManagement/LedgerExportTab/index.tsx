@@ -23,6 +23,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 	wallet_topup: "Wallet top-ups",
 	refund: "Refunds",
 	referral_bonus: "Referral bonuses",
+	adjustment: "Manual adjustments",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -54,9 +55,9 @@ export default function LedgerExportTab() {
 				<h3 className="text-foreground text-lg font-semibold">Transaction ledger</h3>
 				<p className="text-muted-foreground mt-1 text-sm">
 					Download every transaction that matches these filters: order payments, vendor
-					and rider payouts, withdrawals, top-ups, refunds and referral bonuses. Days are
-					in Lagos time and both dates are included. Exports are limited to 50,000 rows
-					and are recorded in the audit log.
+					and rider payouts, withdrawals, top-ups, refunds, referral bonuses and manual
+					adjustments. Days are in Lagos time and both dates are included. Exports are
+					limited to 50,000 rows and are recorded in the audit log.
 				</p>
 			</div>
 

@@ -5,18 +5,23 @@
 import React, { useState } from "react";
 import CustomTabs, { type TabItem } from "@/components/Tabs";
 import { Icon } from "@iconify/react";
-import { useRefundRequests } from "@/hooks/financeManagement";
+import { useRefundRequests, useWalletAdjustments } from "@/hooks/financeManagement";
 import VendorPayoutTab from "./VendorPayoutTab";
 import RiderEarningTab from "./RiderEarningTab";
 import RefundLogTab from "./RefundLogTab";
 import RefundApprovalTab from "./RefundApprovalTab";
 import ReconciliationTab from "./ReconciliationTab";
 import LedgerExportTab from "./LedgerExportTab";
+import WalletAdjustmentTab from "./WalletAdjustmentTab";
+import PromoCodesTab from "./PromoCodesTab";
+import DeliverySurgeTab from "./DeliverySurgeTab";
 
 export default function FinanceManagement() {
 	const [activeTab, setActiveTab] = useState("vendor-payouts");
 	const { data: pendingRefunds } = useRefundRequests("pending");
 	const pendingCount = pendingRefunds?.pendingCount ?? 0;
+	const { data: pendingAdjustments } = useWalletAdjustments("pending");
+	const adjustmentCount = pendingAdjustments?.pendingCount ?? 0;
 
 	const MAIN_TABS: TabItem[] = [
 		{ id: "vendor-payouts", label: "Vendor Payouts" },
@@ -26,6 +31,14 @@ export default function FinanceManagement() {
 			id: "refund-approvals",
 			label: pendingCount ? `Refund Approvals (${pendingCount})` : "Refund Approvals",
 		},
+		{
+			id: "wallet-adjustments",
+			label: adjustmentCount
+				? `Wallet Adjustments (${adjustmentCount})`
+				: "Wallet Adjustments",
+		},
+		{ id: "promo-codes", label: "Promo Codes" },
+		{ id: "delivery-surge", label: "Delivery Surge" },
 		{ id: "reconciliation", label: "Reconciliation" },
 		{ id: "ledger-export", label: "Ledger Export" },
 	];
@@ -41,7 +54,7 @@ export default function FinanceManagement() {
 			</div> */}
 
 			{/* Main Tabs Navigation */}
-			<div className="bg-muted/30 w-fit rounded-full p-1">
+			<div className="bg-muted/30 w-fit max-w-full overflow-x-auto rounded-full p-1">
 				<CustomTabs
 					items={MAIN_TABS}
 					activeTab={activeTab}
@@ -56,6 +69,9 @@ export default function FinanceManagement() {
 				{activeTab === "rider-earnings" && <RiderEarningTab />}
 				{activeTab === "refund-logs" && <RefundLogTab />}
 				{activeTab === "refund-approvals" && <RefundApprovalTab />}
+				{activeTab === "wallet-adjustments" && <WalletAdjustmentTab />}
+				{activeTab === "promo-codes" && <PromoCodesTab />}
+				{activeTab === "delivery-surge" && <DeliverySurgeTab />}
 				{activeTab === "reconciliation" && <ReconciliationTab />}
 				{activeTab === "ledger-export" && <LedgerExportTab />}
 			</div>

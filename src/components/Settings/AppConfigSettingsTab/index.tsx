@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useFeeConfig, useUpdateFeeConfig } from "@/hooks/integrationSettings";
 import { useToast } from "@/hooks/useToast";
 import FeeHistory from "./FeeHistory";
+import ZoneOverrides from "./ZoneOverrides";
 
 type FeeFormState = {
 	serviceFeePercent: string;
@@ -216,6 +217,8 @@ export default function AppConfigSettingsTab() {
 					{updateFeeConfigMutation.isPending ? "Saving..." : "Apply Changes"}
 				</Button>
 			</div>
+
+			<ZoneOverrides feeConfig={feeConfig} />
 
 			<FeeHistory />
 		</div>
