@@ -27,6 +27,9 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import RefundPanel from "./RefundPanel";
+import OrderActionsPanel from "./OrderActionsPanel";
+import OrderContactPanel from "./OrderContactPanel";
+import OrderNotesPanel from "./OrderNotesPanel";
 
 const PAGE_SIZE = 50;
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
@@ -367,7 +370,10 @@ const OrderManagement = () => {
 
 					{/* === COLUMN 3: ACTION PANELS (Right) === */}
 					<div className="space-y-6 lg:col-span-4">
+						<OrderContactPanel order={activeOrder} />
+						<OrderActionsPanel order={activeOrder} />
 						<RefundPanel order={activeOrder ?? undefined} />
+						<OrderNotesPanel orderId={activeOrder?._id} />
 					</div>
 				</div>
 			</div>

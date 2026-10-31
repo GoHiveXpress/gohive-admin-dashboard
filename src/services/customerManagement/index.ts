@@ -8,6 +8,9 @@ import {
 	type SingleCustomerResponse,
 	type CustomerFeedbackResponse,
 	type SingleOrderResponse,
+	type OrderNote,
+	type OrderNotesResponse,
+	type OrderActionResponse,
 } from "@/types/customerManagement";
 
 const ADMIN_BASE = "/admin";
@@ -93,6 +96,40 @@ export const customerApi = {
 			`${ADMIN_BASE}/vendor-alert`,
 			{ orderId, message },
 			"Failed to alert vendor",
+		),
+
+	// Order intervention (gohive-backend controllers/admin/orderInterventionController.js)
+	cancelOrder: (id: string, body: { reason: string; refund: boolean }) =>
+		apiClient.post<OrderActionResponse<{ orderId: string; status: string; refunded: boolean }>>(
+			`${ADMIN_BASE}/order/${id}/cancel`,
+			body,
+			"Failed to cancel order",
+		),
+
+	// riderId null takes the rider off the order.
+	changeOrderRider: (id: string, body: { riderId: string | null; reason?: string }) =>
+		apiClient.post<
+			OrderActionResponse<{ orderId: string; rider: { _id: string; name: string } | null }>
+		>(`${ADMIN_BASE}/order/${id}/rider`, body, "Failed to change rider"),
+
+	overrideOrderStatus: (id: string, body: { status: string; reason: string }) =>
+		apiClient.post<OrderActionResponse<{ orderId: string; status: string }>>(
+			`${ADMIN_BASE}/order/${id}/status`,
+			body,
+			"Failed to update order status",
+		),
+
+	getOrderNotes: (id: string) =>
+		apiClient.get<OrderNotesResponse>(
+			`${ADMIN_BASE}/order/${id}/notes`,
+			"Failed to fetch notes",
+		),
+
+	addOrderNote: (id: string, text: string) =>
+		apiClient.post<OrderActionResponse<OrderNote>>(
+			`${ADMIN_BASE}/order/${id}/notes`,
+			{ text },
+			"Failed to add note",
 		),
 };
 

@@ -1,5 +1,5 @@
 // src/hooks/customerManagement/index.ts
-import { useQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { customerApi } from "@/services/customerManagement";
 import { useOpsLiveUpdates } from "@/hooks/useOps";
 
@@ -110,5 +110,56 @@ export const useAlertVendor = () => {
 	return useMutation({
 		mutationFn: ({ orderId, message }: { orderId: string; message?: string }) =>
 			customerApi.alertVendor(orderId, message),
+	});
+};
+
+// Order intervention. Each change refreshes the order lists, the open order and
+// the status counts; toasts are left to the panel that started it.
+const useOrderChange = <V, R>(mutationFn: (vars: V) => Promise<R>) => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn,
+		onSuccess: async () => {
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+				queryClient.invalidateQueries({ queryKey: ["admin_order"] }),
+				queryClient.invalidateQueries({ queryKey: ["admin_order_stats"] }),
+			]);
+		},
+	});
+};
+
+export const useCancelOrder = () =>
+	useOrderChange(({ id, reason, refund }: { id: string; reason: string; refund: boolean }) =>
+		customerApi.cancelOrder(id, { reason, refund }),
+	);
+
+export const useChangeOrderRider = () =>
+	useOrderChange(
+		({ id, riderId, reason }: { id: string; riderId: string | null; reason?: string }) =>
+			customerApi.changeOrderRider(id, { riderId, reason }),
+	);
+
+export const useOverrideOrderStatus = () =>
+	useOrderChange(({ id, status, reason }: { id: string; status: string; reason: string }) =>
+		customerApi.overrideOrderStatus(id, { status, reason }),
+	);
+
+export const useOrderNotes = (id?: string) => {
+	return useQuery({
+		queryKey: ["admin_order_notes", id],
+		queryFn: () => customerApi.getOrderNotes(id ?? ""),
+		enabled: Boolean(id),
+	});
+};
+
+export const useAddOrderNote = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id, text }: { id: string; text: string }) =>
+			customerApi.addOrderNote(id, text),
+		onSuccess: async (_data, { id }) => {
+			await queryClient.invalidateQueries({ queryKey: ["admin_order_notes", id] });
+		},
 	});
 };

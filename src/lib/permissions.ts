@@ -43,6 +43,11 @@ export const ACTION_RULES = {
 	alertVendor: { all: [P.VENDORS, P.MESSAGING] },
 	manageVendorStaff: { all: [P.VENDORS, P.EDIT] },
 	processRefund: { superadminOnly: true },
+	// Order intervention. Refunding while cancelling is superadmin-only too.
+	cancelOrder: { any: [P.CUSTOMERS, P.VENDORS, P.RIDERS, P.SUPPORT], all: [P.EDIT] },
+	changeOrderRider: { all: [P.RIDERS, P.EDIT] },
+	overrideOrderStatus: { superadminOnly: true },
+	addOrderNote: { any: [P.CUSTOMERS, P.VENDORS, P.RIDERS, P.SUPPORT] },
 	manageVendorCategories: { superadminOnly: true },
 	download: { all: [P.DOWNLOAD] },
 	viewAuditLog: { superadminOnly: true },

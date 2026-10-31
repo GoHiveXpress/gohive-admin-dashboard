@@ -29,6 +29,8 @@ export type Order = {
 	vendor: {
 		_id?: string;
 		name?: string;
+		email?: string;
+		phone?: string;
 		vendorProfile: {
 			businessName: string;
 		};
@@ -36,6 +38,7 @@ export type Order = {
 	rider?: {
 		_id?: string;
 		name: string;
+		email?: string;
 		phone: string;
 	};
 	status:
@@ -51,6 +54,8 @@ export type Order = {
 		| "cancelled"
 		| "expired";
 	totalAmount: number;
+	paymentStatus?: "pending" | "completed" | "failed";
+	paymentMethod?: string;
 	createdAt: string;
 	updatedAt?: string;
 	orderAcceptedAt?: string;
@@ -65,6 +70,26 @@ export type Order = {
 	deliveryAddress?: {
 		address: string;
 	};
+};
+
+// Internal staff note on an order (GET/POST /admin/order/:id/notes).
+export type OrderNote = {
+	_id: string;
+	text: string;
+	authorName?: string;
+	author?: string;
+	createdAt: string;
+};
+
+export type OrderNotesResponse = {
+	success: boolean;
+	data: OrderNote[];
+};
+
+export type OrderActionResponse<T = Record<string, unknown>> = {
+	success: boolean;
+	message: string;
+	data: T;
 };
 
 export type OrderStats = {
