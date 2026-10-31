@@ -3,6 +3,7 @@
 import React from "react";
 import { Icon } from "@iconify/react";
 import { useCustomerAnalytics } from "@/hooks/analytics";
+import { type AnalyticsParams } from "@/services/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	LineChart,
@@ -14,26 +15,14 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-
 interface CustomerRetentionReportProps {
-	filters: any;
-	onFilterChange: (key: string, value: string) => void;
+	filters: AnalyticsParams;
 }
 
-export default function CustomerRetentionReport({
-	filters,
-	onFilterChange,
-}: CustomerRetentionReportProps) {
+export default function CustomerRetentionReport({ filters }: CustomerRetentionReportProps) {
 	const { data: analyticsResponse, isLoading } = useCustomerAnalytics(filters);
-	const retentionData = analyticsResponse?.data?.retentionData || [];
-	const metrics = analyticsResponse?.data?.metrics || {
+	const retentionData = analyticsResponse?.data?.retentionData ?? [];
+	const metrics = analyticsResponse?.data?.metrics ?? {
 		churnRate: 0,
 		returnRate: 0,
 		repeatOrderRate: 0,
@@ -112,23 +101,6 @@ export default function CustomerRetentionReport({
 				<div className="col-span-12 lg:col-span-10">
 					<div className="mb-6 flex flex-wrap items-center justify-between">
 						<h3 className="text-xl font-medium">Active customers per day</h3>
-						<div className="flex items-center gap-3">
-							<Select
-								value={filters.range}
-								onValueChange={(val) => onFilterChange("range", val)}
-							>
-								<SelectTrigger className="h-9 w-[110px] text-sm">
-									<SelectValue placeholder="Time" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="today">Today</SelectItem>
-									<SelectItem value="weekly">Weekly</SelectItem>
-									<SelectItem value="monthly">Monthly</SelectItem>
-									<SelectItem value="yearly">Yearly</SelectItem>
-									<SelectItem value="all_time">All time</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
 					</div>
 
 					<div className="h-[300px] w-full">

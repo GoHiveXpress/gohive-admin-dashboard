@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ORDER_STATUS_OPTIONS } from "@/lib/orderStatus";
+import ServerExportButton from "@/components/_atoms/ServerExportButton";
 
 const PAGE_SIZE = 20;
 
@@ -273,6 +274,18 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 						</DropdownMenuCheckboxItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
+
+				{!customerId && (
+					<ServerExportButton
+						dataset="orders"
+						className="border-border h-10 rounded-lg bg-white sm:ml-auto"
+						params={{
+							search: debouncedSearch || undefined,
+							status: status === "all" ? undefined : status,
+							range: dateFilter === "all-time" ? undefined : dateFilter,
+						}}
+					/>
+				)}
 			</div>
 
 			{/* Google Map Tracker for Orders */}

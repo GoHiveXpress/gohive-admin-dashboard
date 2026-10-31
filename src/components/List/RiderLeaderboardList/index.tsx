@@ -23,9 +23,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { type RiderLeaderboardData } from "@/types/analytics";
+import { type AnalyticsParams } from "@/services/analytics";
 
 interface RiderLeaderboardListProps {
-	filters: any;
+	filters: AnalyticsParams;
 	onFilterChange: (key: string, value: string) => void;
 }
 
@@ -34,7 +35,79 @@ export default function RiderLeaderboardList({
 	onFilterChange,
 }: RiderLeaderboardListProps) {
 	const { data: leaderboardResponse, isLoading } = useRiderLeaderboard(filters);
-	const leaderboardData = leaderboardResponse?.data! || [];
+	const leaderboardData = leaderboardResponse?.data ?? [];
+
+	let rows: React.ReactNode;
+	if (isLoading) {
+		rows = [1, 2, 3].map((i) => (
+			<TableRow key={i}>
+				<TableCell colSpan={10}>
+					<Skeleton className="h-12 w-full" />
+				</TableCell>
+			</TableRow>
+		));
+	} else if (leaderboardData.length > 0) {
+		rows = leaderboardData.map((rider: RiderLeaderboardData) => (
+			<TableRow
+				key={rider.id || rider.riderId}
+				className="border-border hover:bg-muted/50 border-b"
+			>
+				<TableCell className="font-medium">
+					{rider.rank === 1 ? (
+						<span className="flex items-center gap-1.5">
+							<Icon icon="ph:trophy-fill" className="size-4 text-[#F58A20]" />
+							{rider.rank}
+						</span>
+					) : (
+						rider.rank
+					)}
+				</TableCell>
+				<TableCell className="font-medium">
+					{rider.riderName}
+					<div className="text-muted-foreground text-[10px]">ID: {rider.riderId}</div>
+				</TableCell>
+				<TableCell className="text-muted-foreground whitespace-nowrap">
+					{rider.location}
+				</TableCell>
+				<TableCell className="font-bold">{rider.compositeScore}%</TableCell>
+				<TableCell className="font-medium">{rider.tripCount}</TableCell>
+				<TableCell>
+					<div className="flex items-center gap-1">
+						<Icon icon="ph:star-fill" className="size-4 text-[#FACC15]" />
+						{rider.avgRating}
+					</div>
+				</TableCell>
+				<TableCell className="text-muted-foreground">{rider.estDeliveryTime}</TableCell>
+				<TableCell className="font-bold">{rider.totalEarnings}</TableCell>
+				<TableCell>
+					<div className="flex items-center gap-1">
+						<span className="size-2 rounded-full bg-[#22C55E]" />
+						<span className="text-xs font-medium text-[#22C55E]">{rider.trend}</span>
+					</div>
+				</TableCell>
+				<TableCell>
+					<Button
+						asChild
+						variant="ghost"
+						size="icon"
+						className="text-muted-foreground size-8"
+					>
+						<Link href={`/rider-management/${rider.id}`} aria-label="View profile">
+							<Icon icon="lucide:arrow-up-right" className="size-4" />
+						</Link>
+					</Button>
+				</TableCell>
+			</TableRow>
+		));
+	} else {
+		rows = (
+			<TableRow>
+				<TableCell colSpan={10} className="h-24 text-center">
+					No results found. Try adjusting your filters.
+				</TableCell>
+			</TableRow>
+		);
+	}
 
 	return (
 		<div className="border-border mt-6 rounded-[20px] border bg-white p-6 shadow-sm">
@@ -45,7 +118,7 @@ export default function RiderLeaderboardList({
 				</div>
 				<div className="flex flex-wrap items-center gap-3">
 					<Select
-						value={filters.location || "all"}
+						value={filters.location?.length ? filters.location : "all"}
 						onValueChange={(val) =>
 							onFilterChange("location", val === "all" ? "" : val)
 						}
@@ -62,23 +135,7 @@ export default function RiderLeaderboardList({
 					</Select>
 
 					<Select
-						value={filters.range}
-						onValueChange={(val) => onFilterChange("range", val)}
-					>
-						<SelectTrigger className="h-9 w-[120px] text-sm">
-							<SelectValue placeholder="Timeframe" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="today">Today</SelectItem>
-							<SelectItem value="weekly">Weekly</SelectItem>
-							<SelectItem value="monthly">Monthly</SelectItem>
-							<SelectItem value="yearly">Yearly</SelectItem>
-							<SelectItem value="all_time">All time</SelectItem>
-						</SelectContent>
-					</Select>
-
-					<Select
-						value={filters.category || "all"}
+						value={filters.category?.length ? filters.category : "all"}
 						onValueChange={(val) =>
 							onFilterChange("category", val === "all" ? "" : val)
 						}
@@ -96,7 +153,7 @@ export default function RiderLeaderboardList({
 					</Select>
 
 					<Select
-						value={filters.rating || "any"}
+						value={filters.rating?.length ? filters.rating : "any"}
 						onValueChange={(val) => onFilterChange("rating", val === "any" ? "" : val)}
 					>
 						<SelectTrigger className="h-9 w-[150px] text-sm">
@@ -144,98 +201,7 @@ export default function RiderLeaderboardList({
 							<TableHead className="w-[50px]" />
 						</TableRow>
 					</TableHeader>
-					<TableBody>
-						{isLoading ? (
-							[1, 2, 3].map((i) => (
-								<TableRow key={i}>
-									<TableCell colSpan={10}>
-										<Skeleton className="h-12 w-full" />
-									</TableCell>
-								</TableRow>
-							))
-						) : leaderboardData.length > 0 ? (
-							leaderboardData.map((rider: RiderLeaderboardData) => (
-								<TableRow
-									key={rider.id || rider.riderId}
-									className="border-border hover:bg-muted/50 border-b"
-								>
-									<TableCell className="font-medium">
-										{rider.rank === 1 ? (
-											<span className="flex items-center gap-1.5">
-												<Icon
-													icon="ph:trophy-fill"
-													className="size-4 text-[#F58A20]"
-												/>
-												{rider.rank}
-											</span>
-										) : (
-											rider.rank
-										)}
-									</TableCell>
-									<TableCell className="font-medium">
-										{rider.riderName}
-										<div className="text-muted-foreground text-[10px]">
-											ID: {rider.riderId}
-										</div>
-									</TableCell>
-									<TableCell className="text-muted-foreground whitespace-nowrap">
-										{rider.location}
-									</TableCell>
-									<TableCell className="font-bold">
-										{rider.compositeScore}%
-									</TableCell>
-									<TableCell className="font-medium">{rider.tripCount}</TableCell>
-									<TableCell>
-										<div className="flex items-center gap-1">
-											<Icon
-												icon="ph:star-fill"
-												className="size-4 text-[#FACC15]"
-											/>
-											{rider.avgRating}
-										</div>
-									</TableCell>
-									<TableCell className="text-muted-foreground">
-										{rider.estDeliveryTime}
-									</TableCell>
-									<TableCell className="font-bold">
-										{rider.totalEarnings}
-									</TableCell>
-									<TableCell>
-										<div className="flex items-center gap-1">
-											<span className="size-2 rounded-full bg-[#22C55E]" />
-											<span className="text-xs font-medium text-[#22C55E]">
-												{rider.trend}
-											</span>
-										</div>
-									</TableCell>
-									<TableCell>
-										<Button
-											asChild
-											variant="ghost"
-											size="icon"
-											className="text-muted-foreground size-8"
-										>
-											<Link
-												href={`/rider-management/${rider.id}`}
-												aria-label="View profile"
-											>
-												<Icon
-													icon="lucide:arrow-up-right"
-													className="size-4"
-												/>
-											</Link>
-										</Button>
-									</TableCell>
-								</TableRow>
-							))
-						) : (
-							<TableRow>
-								<TableCell colSpan={10} className="h-24 text-center">
-									No results found. Try adjusting your filters.
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
+					<TableBody>{rows}</TableBody>
 				</Table>
 			</div>
 

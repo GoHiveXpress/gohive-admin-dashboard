@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { useCustomerAnalytics } from "@/hooks/analytics";
+import { type AnalyticsParams } from "@/services/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	AreaChart,
@@ -12,27 +13,15 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-
 const COLORS = ["#F58A20", "#10B981", "#3B82F6", "#8B5CF6", "#EF4444", "#F59E0B"];
 
 interface CustomerOrderVolumeReportProps {
-	filters: any;
-	onFilterChange: (key: string, value: string) => void;
+	filters: AnalyticsParams;
 }
 
-export default function CustomerOrderVolumeReport({
-	filters,
-	onFilterChange,
-}: CustomerOrderVolumeReportProps) {
+export default function CustomerOrderVolumeReport({ filters }: CustomerOrderVolumeReportProps) {
 	const { data: analyticsResponse, isLoading } = useCustomerAnalytics(filters);
-	const volumeData = analyticsResponse?.data?.volumeData || [];
+	const volumeData = analyticsResponse?.data?.volumeData ?? [];
 	// One series per vendor business type found in the data
 	const categories = useMemo(() => {
 		const keys = new Set<string>();
@@ -71,21 +60,6 @@ export default function CustomerOrderVolumeReport({
 						</div>
 					))}
 				</div>
-			</div>
-
-			<div className="mb-6 flex items-center gap-3">
-				<Select value={filters.range} onValueChange={(val) => onFilterChange("range", val)}>
-					<SelectTrigger className="border-border h-9 w-[120px] bg-transparent text-sm">
-						<SelectValue placeholder="Date" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="today">Today</SelectItem>
-						<SelectItem value="weekly">Weekly</SelectItem>
-						<SelectItem value="monthly">Monthly</SelectItem>
-						<SelectItem value="yearly">Yearly</SelectItem>
-						<SelectItem value="all_time">All time</SelectItem>
-					</SelectContent>
-				</Select>
 			</div>
 
 			<div className="relative min-h-[250px] w-full flex-1">

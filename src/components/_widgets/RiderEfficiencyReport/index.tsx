@@ -3,14 +3,8 @@
 import React from "react";
 import { Icon } from "@iconify/react";
 import { useRiderAnalytics } from "@/hooks/analytics";
+import { type AnalyticsParams } from "@/services/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 
 const StatsItem = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
 	<div className="flex flex-col">
@@ -23,14 +17,10 @@ const StatsItem = ({ label, value, sub }: { label: string; value: string; sub?: 
 );
 
 interface RiderEfficiencyReportProps {
-	filters: any;
-	onFilterChange: (key: string, value: string) => void;
+	filters: AnalyticsParams;
 }
 
-export default function RiderEfficiencyReport({
-	filters,
-	onFilterChange,
-}: RiderEfficiencyReportProps) {
+export default function RiderEfficiencyReport({ filters }: RiderEfficiencyReportProps) {
 	const { data: analyticsResponse, isLoading } = useRiderAnalytics(filters);
 	const metrics = analyticsResponse?.data?.metrics;
 	const comparison = analyticsResponse?.data?.comparison;
@@ -55,23 +45,6 @@ export default function RiderEfficiencyReport({
 					<Icon icon="ph:circle-fill" className="text-primary size-4" />
 					<h3 className="text-xl font-medium">Rider Efficiency</h3>
 				</div>
-				<div className="flex items-center gap-3">
-					<Select
-						value={filters.range}
-						onValueChange={(val) => onFilterChange("range", val)}
-					>
-						<SelectTrigger className="h-9 w-[110px] text-sm">
-							<SelectValue placeholder="Date" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="today">Today</SelectItem>
-							<SelectItem value="weekly">Weekly</SelectItem>
-							<SelectItem value="monthly">Monthly</SelectItem>
-							<SelectItem value="yearly">Yearly</SelectItem>
-							<SelectItem value="all_time">All time</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
 			</div>
 
 			<div className="grid grid-cols-2 gap-8">
@@ -82,7 +55,7 @@ export default function RiderEfficiencyReport({
 						</h4>
 						<div className="flex items-baseline gap-2">
 							<p className="text-foreground text-4xl font-bold">
-								{metrics?.avgDeliveryTime || 0}
+								{metrics?.avgDeliveryTime ?? 0}
 							</p>
 							<span className="text-foreground text-lg">mins</span>
 							{comparison && (
@@ -101,7 +74,7 @@ export default function RiderEfficiencyReport({
 						</h4>
 						<div className="flex items-baseline gap-2">
 							<p className="text-foreground text-4xl font-bold">
-								{metrics?.completionRate || 0}%
+								{metrics?.completionRate ?? 0}%
 							</p>
 							{comparison && (
 								<span
@@ -120,7 +93,7 @@ export default function RiderEfficiencyReport({
 							Acceptance Rate
 						</h4>
 						<p className="text-foreground text-4xl font-bold">
-							{metrics?.acceptanceRate || 0}%
+							{metrics?.acceptanceRate ?? 0}%
 						</p>
 					</div>
 					<div>
@@ -128,7 +101,7 @@ export default function RiderEfficiencyReport({
 							On Time Deliveries
 						</h4>
 						<p className="text-foreground text-4xl font-bold">
-							{metrics?.onTimeDeliveries || 0}%
+							{metrics?.onTimeDeliveries ?? 0}%
 						</p>
 					</div>
 				</div>

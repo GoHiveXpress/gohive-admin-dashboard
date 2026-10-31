@@ -1,14 +1,8 @@
 import React from "react";
 import { Icon } from "@iconify/react";
 import { useVendorAnalytics } from "@/hooks/analytics";
+import { type AnalyticsParams } from "@/services/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 
 interface StatsCardProps {
 	label: string;
@@ -46,14 +40,10 @@ const StatsCard = ({ label, value, sub, icon, trend, isNegative }: StatsCardProp
 );
 
 interface VendorPerformanceReportProps {
-	filters: any;
-	onFilterChange: (key: string, value: string) => void;
+	filters: AnalyticsParams;
 }
 
-export default function VendorPerformanceReport({
-	filters,
-	onFilterChange,
-}: VendorPerformanceReportProps) {
+export default function VendorPerformanceReport({ filters }: VendorPerformanceReportProps) {
 	const { data: analyticsResponse, isLoading } = useVendorAnalytics(filters);
 	const metrics = analyticsResponse?.data?.metrics;
 	const comparison = analyticsResponse?.data?.comparison;
@@ -75,30 +65,12 @@ export default function VendorPerformanceReport({
 					<Icon icon="ph:circle-fill" className="text-primary size-4" />
 					<h3 className="text-xl font-medium">Vendor Performance</h3>
 				</div>
-
-				<div className="flex items-center gap-3">
-					<Select
-						value={filters.range}
-						onValueChange={(val) => onFilterChange("range", val)}
-					>
-						<SelectTrigger className="border-border h-9 w-[120px] bg-white text-sm">
-							<SelectValue placeholder="Timeframe" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="today">Today</SelectItem>
-							<SelectItem value="weekly">Weekly</SelectItem>
-							<SelectItem value="monthly">Monthly</SelectItem>
-							<SelectItem value="yearly">Yearly</SelectItem>
-							<SelectItem value="all_time">All time</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
 			</div>
 
 			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
 				<StatsCard
 					label="Avg. Prep Time"
-					value={String(metrics?.avgPrepTime || 0)}
+					value={String(metrics?.avgPrepTime ?? 0)}
 					sub="mins"
 					icon="lucide:clock"
 					trend={comparison ? `${Math.abs(comparison.avgPrepTime)}m` : undefined}
@@ -106,7 +78,7 @@ export default function VendorPerformanceReport({
 				/>
 				<StatsCard
 					label="Order Completion"
-					value={`${metrics?.completionRate || 0}%`}
+					value={`${metrics?.completionRate ?? 0}%`}
 					icon="lucide:check-circle"
 					trend={
 						comparison ? `${Math.abs(Number(comparison.completionRate))}%` : undefined
@@ -115,7 +87,7 @@ export default function VendorPerformanceReport({
 				/>
 				<StatsCard
 					label="Cancellation Rate"
-					value={`${metrics?.cancellationRate || 0}%`}
+					value={`${metrics?.cancellationRate ?? 0}%`}
 					icon="lucide:x-circle"
 					trend={
 						comparison ? `${Math.abs(Number(comparison.cancellationRate))}%` : undefined
@@ -124,7 +96,7 @@ export default function VendorPerformanceReport({
 				/>
 				<StatsCard
 					label="Rating Score"
-					value={`${metrics?.customerRating || 0}%`}
+					value={`${metrics?.customerRating ?? 0}%`}
 					icon="lucide:star"
 					trend={
 						comparison ? `${Math.abs(Number(comparison.customerRating))}%` : undefined
