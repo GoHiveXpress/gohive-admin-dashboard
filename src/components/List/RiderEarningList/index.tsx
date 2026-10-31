@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Icon } from "@iconify/react";
 import { DataTable } from "@/components/Tables";
 import { getColumns } from "@/components/Tables/columns/columnFactory";
-import {
-	riderEarningColumnsConfig,
-} from "@/components/Tables/columns/RiderEarningColumns";
+import { riderEarningColumnsConfig } from "@/components/Tables/columns/RiderEarningColumns";
 import { useRiderEarnings } from "@/hooks/financeManagement";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,7 +38,7 @@ export default function RiderEarningList({ range = "today" }: RiderEarningListPr
 		date: date ? format(date, "yyyy-MM-dd") : undefined,
 	});
 
-	const earningData = earningResponse?.data || [];
+	const earningData = earningResponse?.data ?? [];
 
 	const exportColumns = [
 		{ header: "Rider Name", key: "name" },
@@ -73,11 +71,12 @@ export default function RiderEarningList({ range = "today" }: RiderEarningListPr
 				<Popover>
 					<PopoverTrigger asChild>
 						<Button
+							aria-label="Filter"
 							variant="outline"
 							size="icon"
 							className={cn(
 								"border-border size-10 bg-transparent transition-colors",
-								date && "border-primary bg-primary/5 text-primary"
+								date && "border-primary bg-primary/5 text-primary",
 							)}
 						>
 							<Icon icon="lucide:sliders-horizontal" className="size-4" />
@@ -95,9 +94,9 @@ export default function RiderEarningList({ range = "today" }: RiderEarningListPr
 						/>
 						{date && (
 							<div className="border-border border-t p-2">
-								<Button 
-									variant="ghost" 
-									size="sm" 
+								<Button
+									variant="ghost"
+									size="sm"
 									className="w-full text-xs"
 									onClick={() => setDate(undefined)}
 								>
@@ -108,7 +107,7 @@ export default function RiderEarningList({ range = "today" }: RiderEarningListPr
 					</PopoverContent>
 				</Popover>
 
-				<Button 
+				<Button
 					onClick={() => {
 						setSearchQuery("");
 						setDate(undefined);
@@ -128,18 +127,24 @@ export default function RiderEarningList({ range = "today" }: RiderEarningListPr
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
-						<DropdownMenuItem onClick={() => setSortBy("latest")}>Latest</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setSortBy("earnings")}>Earnings</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setSortBy("payout")}>Payout</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setSortBy("latest")}>
+							Latest
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setSortBy("earnings")}>
+							Earnings
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setSortBy("payout")}>
+							Payout
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
 
 			{/* Table */}
 			<div className="-mx-6">
-				<DataTable 
-					columns={getColumns(riderEarningColumnsConfig)} 
-					data={earningData} 
+				<DataTable
+					columns={getColumns(riderEarningColumnsConfig)}
+					data={earningData}
 					isLoading={isLoading}
 				/>
 			</div>
@@ -147,12 +152,12 @@ export default function RiderEarningList({ range = "today" }: RiderEarningListPr
 			{/* Footer */}
 			<div className="border-border mt-8 border-t pt-6">
 				<div className="text-foreground mb-4 flex items-center gap-2 text-sm font-semibold">
-					<Icon icon="lucide:download" className="size-4 text-secondary" />
+					<Icon icon="lucide:download" className="text-secondary size-4" />
 					Download Report
 				</div>
-				<TableExport 
-					data={earningData} 
-					columns={exportColumns} 
+				<TableExport
+					data={earningData}
+					columns={exportColumns}
 					filename={`Rider_Earnings_${range}_${date ? format(date, "yyyy-MM-dd") : "Full"}`}
 					title={`Rider Earning Report - ${range.toUpperCase()}`}
 				/>

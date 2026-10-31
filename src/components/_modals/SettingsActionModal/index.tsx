@@ -122,6 +122,7 @@ export default function SettingsActionModal({
 					<h2 className="text-foreground text-xl font-medium">Permissions matrix</h2>
 					<DialogClose asChild>
 						<Button
+							aria-label="Close"
 							variant="ghost"
 							size="icon"
 							className="bg-muted/20 hover:bg-muted/40 size-9 rounded-full"

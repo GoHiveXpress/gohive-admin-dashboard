@@ -1,12 +1,11 @@
 "use client";
 
-/* eslint-disable no-nested-ternary */
+/* eslint-disable no-nested-ternary, import/prefer-default-export */
 
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
+import { type RiderLeaderboardData } from "@/types/analytics";
 import { type BaseColumnSchema } from "../types";
-
-import { RiderLeaderboardData } from "@/types/analytics";
 
 export const riderLeaderboardColumns: BaseColumnSchema<RiderLeaderboardData>[] = [
 	{
@@ -104,7 +103,7 @@ export const riderLeaderboardColumns: BaseColumnSchema<RiderLeaderboardData>[] =
 		key: "action",
 		header: "",
 		render: () => (
-			<Button variant="ghost" size="icon" className="size-8">
+			<Button aria-label="More actions" variant="ghost" size="icon" className="size-8">
 				<Icon icon="ph:dots-three-vertical-bold" className="text-muted-foreground size-5" />
 			</Button>
 		),

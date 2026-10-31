@@ -1,100 +1,38 @@
 // src/constants/SidebarMenuItems.tsx
-import { LayoutDashboard, Store, ClipboardList, HelpCircle, LogOut } from "lucide-react";
-import { Icon } from "@iconify/react";
+import {
+	BarChart3,
+	Bike,
+	ClipboardList,
+	LayoutDashboard,
+	LogOut,
+	MessageSquare,
+	Settings,
+	ShieldCheck,
+	Store,
+	UsersRound,
+	Wallet,
+} from "lucide-react";
 import { ROUTES } from "@/constants/routes";
-
-const CustomerIcon = ({ className }: { className?: string }) => (
-	<Icon icon="lineicons:emoji-smile-tongue" className={className} />
-);
-
-const BikeIcon = ({ className }: { className?: string }) => (
-	<Icon icon="mingcute:ebike-line" className={className} />
-);
-
-const MessageSquareIcon = ({ className }: { className?: string }) => (
-	<Icon icon="icon-park-outline:message" className={className} />
-);
-
-const FinanceStatsIcon = ({ className }: { className?: string }) => (
-	<Icon icon="material-symbols:finance-mode" className={className} />
-);
-
-const BarChart3Icon = ({ className }: { className?: string }) => (
-	<Icon icon="material-symbols:finance-sharp" className={className} />
-);
-
-const UsersIcon = ({ className }: { className?: string }) => (
-	<Icon icon="fa7-solid:users" className={className} />
-);
-
-const SettingsIcon = ({ className }: { className?: string }) => (
-	<Icon icon="streamline-plump:cog" className={className} />
-);
+import { PAGE_TITLES } from "@/constants/pageMeta";
 
 export const MENU_ITEMS = [
-	{
-		label: "Dashboard",
-		icon: LayoutDashboard,
-		href: ROUTES.DASHBOARD, // Updated
-		variant: "default",
-	},
-	{
-		label: "Customer Management",
-		icon: CustomerIcon,
-		href: ROUTES.CUSTOMERS, // Updated
-	},
-	{
-		label: "Vendor Management",
-		icon: Store,
-		href: ROUTES.VENDORS, // Updated
-	},
-	{
-		label: "Rider Management",
-		icon: BikeIcon,
-		href: ROUTES.RIDERS, // Updated
-	},
-	{
-		label: "Order Lifecycle Management",
-		icon: ClipboardList,
-		href: ROUTES.ORDERS, // Updated
-	},
-	{
-		label: "Support & Communication",
-		icon: MessageSquareIcon,
-		href: ROUTES.SUPPORT, // Updated
-	},
-	{
-		label: "Finance & Settlements",
-		icon: FinanceStatsIcon,
-		href: ROUTES.FINANCE, // Updated
-	},
-	{
-		label: "Analytics & Reports",
-		icon: BarChart3Icon,
-		href: ROUTES.ANALYTICS, // Updated
-	},
-	{
-		label: "User Management",
-		icon: UsersIcon,
-		href: ROUTES.USERS, // Updated
-	},
+	{ label: PAGE_TITLES[ROUTES.DASHBOARD], icon: LayoutDashboard, href: ROUTES.DASHBOARD },
+	{ label: PAGE_TITLES[ROUTES.CUSTOMERS], icon: UsersRound, href: ROUTES.CUSTOMERS },
+	{ label: PAGE_TITLES[ROUTES.VENDORS], icon: Store, href: ROUTES.VENDORS },
+	{ label: PAGE_TITLES[ROUTES.RIDERS], icon: Bike, href: ROUTES.RIDERS },
+	{ label: PAGE_TITLES[ROUTES.ORDERS], icon: ClipboardList, href: ROUTES.ORDERS },
+	{ label: PAGE_TITLES[ROUTES.SUPPORT], icon: MessageSquare, href: ROUTES.SUPPORT },
+	{ label: PAGE_TITLES[ROUTES.FINANCE], icon: Wallet, href: ROUTES.FINANCE },
+	{ label: PAGE_TITLES[ROUTES.ANALYTICS], icon: BarChart3, href: ROUTES.ANALYTICS },
+	{ label: PAGE_TITLES[ROUTES.USERS], icon: ShieldCheck, href: ROUTES.USERS },
 ];
 
 export const BOTTOM_MENU_ITEMS = [
-	{
-		label: "Settings",
-		icon: SettingsIcon,
-		href: ROUTES.SETTINGS, // Updated
-	},
-	{
-		label: "Help",
-		icon: HelpCircle,
-		href: ROUTES.HELP, // Updated
-	},
+	{ label: PAGE_TITLES[ROUTES.SETTINGS], icon: Settings, href: ROUTES.SETTINGS },
 ];
 
 export const LOGOUT_ITEM = {
-	label: "Logout",
+	label: "Sign out",
 	icon: LogOut,
-	href: ROUTES.LOGOUT, // Updated
+	href: ROUTES.LOGOUT,
 };

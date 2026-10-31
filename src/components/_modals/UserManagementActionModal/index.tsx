@@ -202,6 +202,7 @@ export default function UserManagementActionModal({
 					</motion.div>
 					<DialogClose asChild>
 						<Button
+							aria-label="Close"
 							variant="ghost"
 							size="icon"
 							className="bg-muted/30 hover:bg-muted/50 size-10 rounded-full transition-colors"

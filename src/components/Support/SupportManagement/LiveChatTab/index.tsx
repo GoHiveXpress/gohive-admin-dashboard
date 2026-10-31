@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element, @typescript-eslint/no-floating-promises, @typescript-eslint/prefer-nullish-coalescing, jsx-a11y/alt-text, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, no-nested-ternary */
+/* eslint-disable @next/next/no-img-element, @typescript-eslint/no-floating-promises, @typescript-eslint/prefer-nullish-coalescing, jsx-a11y/alt-text, no-nested-ternary */
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
@@ -452,10 +452,12 @@ export default function LiveChatTab() {
 						</div>
 					) : (
 						filteredChats.map((chat) => (
-							<div
+							<button
+								type="button"
 								key={chat._id}
 								onClick={() => setSelectedChatId(chat._id)}
-								className={`flex cursor-pointer items-center gap-3 rounded-lg p-3 transition ${
+								aria-current={selectedChatId === chat._id ? "true" : undefined}
+								className={`focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 ${
 									selectedChatId === chat._id
 										? "bg-muted/50 border-primary border-l-4"
 										: "hover:bg-muted/30 border-l-4 border-transparent"
@@ -519,7 +521,7 @@ export default function LiveChatTab() {
 										</span>
 									</div>
 								</div>
-							</div>
+							</button>
 						))
 					)}
 					{hasNextPage && (
@@ -819,16 +821,21 @@ export default function LiveChatTab() {
 										{selectedChat.user.email || "No email"}
 									</span>
 									{selectedChat.user.email && (
-										<Icon
-											icon="lucide:copy"
+										<button
+											type="button"
+											aria-label="Copy email"
 											onClick={() => {
-												navigator.clipboard.writeText(
-													selectedChat.user.email,
-												);
-												toast.success("Email copied");
+												navigator.clipboard
+													.writeText(selectedChat.user.email)
+													.then(() => toast.success("Email copied"))
+													.catch(() =>
+														toast.error("Could not copy email"),
+													);
 											}}
-											className="text-muted-foreground hover:text-foreground size-3.5 cursor-pointer"
-										/>
+											className="text-muted-foreground hover:text-foreground"
+										>
+											<Icon icon="lucide:copy" className="size-3.5" />
+										</button>
 									)}
 								</div>
 								<div className="flex items-center gap-3">

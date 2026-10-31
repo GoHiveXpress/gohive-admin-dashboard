@@ -162,6 +162,7 @@ const OrderManagement = () => {
 				<Popover>
 					<PopoverTrigger asChild>
 						<Button
+							aria-label="Pick a date"
 							variant="outline"
 							size="icon"
 							className={cn(

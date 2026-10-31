@@ -13,7 +13,7 @@ import { type ReactNode } from "react";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-	title: "Gohive Admin",
+	title: { template: "%s · GoHive Admin", default: "GoHive Admin" },
 	description: "Admin dashboard",
 };
 

@@ -7,9 +7,7 @@ import UsersManagement from "@/components/UsersManagement";
 
 export default function UserManagementClient() {
 	return (
-		<RouteWrapper
-			middleSlot={<h1 className="text-foreground text-2xl font-semibold">User Management</h1>}
-		>
+		<RouteWrapper>
 			<UsersManagement />
 		</RouteWrapper>
 	);

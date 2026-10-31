@@ -23,10 +23,14 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
 		render: (row) => (
 			<div className="flex items-center gap-3">
 				{row.profilePicture ? (
-					<img src={row.profilePicture} alt={row.name} className="size-8 rounded-full object-cover shadow-sm" />
+					<img
+						src={row.profilePicture}
+						alt={row.name}
+						className="size-8 rounded-full object-cover shadow-sm"
+					/>
 				) : (
-					<div className="flex size-8 items-center justify-center rounded-full bg-secondary/10">
-						<Icon icon="ph:user" className="size-4 text-secondary" />
+					<div className="bg-secondary/10 flex size-8 items-center justify-center rounded-full">
+						<Icon icon="ph:user" className="text-secondary size-4" />
 					</div>
 				)}
 				<div className="flex flex-col">
@@ -54,12 +58,12 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
 				<Badge
 					variant="outline"
 					className={`rounded-full border-none px-3 py-1 font-medium ${
-						isOnline
-							? "bg-[#E8F5E9] text-[#22C55E]"
-							: "bg-[#F4F4F5] text-[#71717A]"
+						isOnline ? "bg-[#E8F5E9] text-[#22C55E]" : "bg-[#F4F4F5] text-[#71717A]"
 					}`}
 				>
-					<div className={`mr-2 size-2 rounded-full ${isOnline ? "bg-[#22C55E]" : "bg-[#71717A]"}`} />
+					<div
+						className={`mr-2 size-2 rounded-full ${isOnline ? "bg-[#22C55E]" : "bg-[#71717A]"}`}
+					/>
 					{row.status}
 				</Badge>
 			);
@@ -75,7 +79,9 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
 			else if (status === "rejected") bg = "bg-red-500";
 
 			return (
-				<Badge className={`${bg} hover:${bg} rounded-[6px] border-none px-4 py-1 font-medium text-white shadow-none`}>
+				<Badge
+					className={`${bg} hover:${bg} rounded-[6px] border-none px-4 py-1 font-medium text-white shadow-none`}
+				>
 					<div className="mr-2 size-2 rounded-full bg-white" />
 					{row.kyc}
 				</Badge>
@@ -98,6 +104,7 @@ export const riderColumnsConfig: BaseColumnSchema<RiderData>[] = [
 		render: (row) => (
 			<Link href={`/rider-management/${row.id}`}>
 				<Button
+					aria-label="View details"
 					variant="ghost"
 					size="icon"
 					className="text-foreground hover:bg-muted size-8"

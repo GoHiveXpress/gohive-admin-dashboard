@@ -186,6 +186,7 @@ export default function CampaignTab() {
 											/>
 											<button
 												type="button"
+												aria-label="Remove image"
 												onClick={() => {
 													setSelectedImage(null);
 													setImagePreview(null);
@@ -269,6 +270,7 @@ export default function CampaignTab() {
 										onChange={onImageSelect}
 									/>
 									<Button
+										aria-label="Attach image"
 										type="button"
 										size="icon"
 										asChild
@@ -283,6 +285,7 @@ export default function CampaignTab() {
 									</Button>
 								</div>
 								<Button
+									aria-label="Add link"
 									type="button"
 									size="icon"
 									className={`${showLinkInput ? "bg-secondary" : "bg-primary"} rounded-full text-white`}

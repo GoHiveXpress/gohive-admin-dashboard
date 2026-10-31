@@ -161,6 +161,7 @@ export default function OrderHistoryList({ customerId }: { customerId?: string }
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button
+							aria-label="Filter"
 							variant="outline"
 							size="icon"
 							className="border-border relative size-10 shrink-0 rounded-lg bg-white p-0"

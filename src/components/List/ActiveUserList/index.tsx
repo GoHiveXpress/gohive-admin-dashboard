@@ -192,6 +192,7 @@ export default function ActiveUserList() {
 				{/* Back Button with Centralized Routing */}
 				<Link href={ROUTES.DASHBOARD}>
 					<Button
+						aria-label="Go back"
 						variant="ghost"
 						size="icon"
 						className="hover:bg-muted border-border rounded-full border bg-white shadow-sm"

@@ -56,15 +56,20 @@ export const getWebhookSettingsColumns = (
 		render: (row) => (
 			<div className="flex items-center gap-1">
 				<Button
+					aria-label={row.status === "Active" ? "Pause" : "Resume"}
 					variant="ghost"
 					size="icon"
 					onClick={() => onToggleStatus(row)}
 					className="size-8"
 					title={row.status === "Active" ? "Deactivate webhook" : "Activate webhook"}
 				>
-					<Icon icon={row.status === "Active" ? "lucide:pause" : "lucide:play"} className="size-4" />
+					<Icon
+						icon={row.status === "Active" ? "lucide:pause" : "lucide:play"}
+						className="size-4"
+					/>
 				</Button>
 				<Button
+					aria-label="Delete"
 					variant="ghost"
 					size="icon"
 					onClick={() => onDelete(row)}

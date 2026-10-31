@@ -59,7 +59,7 @@ export default function Sidebar({ className }: { className?: string }) {
 		// If it's the logout item, render a Button with onClick handler
 		if (isLogout) {
 			return (
-				<button onClick={handleLogout} className={commonClasses}>
+				<button type="button" onClick={handleLogout} className={commonClasses}>
 					<item.icon className={cn("h-5 w-5", "text-destructive")} />
 					<span>{item.label}</span>
 				</button>
@@ -68,7 +68,11 @@ export default function Sidebar({ className }: { className?: string }) {
 
 		// Otherwise, render a standard Next.js Link
 		return (
-			<Link href={item.href} className={commonClasses}>
+			<Link
+				href={item.href}
+				className={commonClasses}
+				aria-current={isActive ? "page" : undefined}
+			>
 				<item.icon
 					className={cn("h-5 w-5", isActive ? "text-primary" : "text-currentColor")}
 				/>

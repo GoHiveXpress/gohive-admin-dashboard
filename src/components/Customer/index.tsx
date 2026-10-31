@@ -55,6 +55,7 @@ export default function SingleCustomerView({ id }: { id: string }) {
 				<h1 className="text-foreground text-2xl font-bold">Profile</h1>
 				<Link href={ROUTES.CUSTOMERS}>
 					<Button
+						aria-label="Go back"
 						variant="ghost"
 						size="icon"
 						className="bg-muted/50 hover:bg-muted rounded-full"

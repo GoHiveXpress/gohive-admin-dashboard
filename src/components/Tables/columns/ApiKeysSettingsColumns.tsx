@@ -28,7 +28,9 @@ export const getApiKeysSettingsColumns = (
 		key: "apiKey",
 		header: "API Key",
 		render: (row) => (
-			<span className="cursor-pointer text-sm text-[#3B82F6] hover:underline">{row.apiKey}</span>
+			<span className="cursor-pointer text-sm text-[#3B82F6] hover:underline">
+				{row.apiKey}
+			</span>
 		),
 	},
 	{
@@ -56,15 +58,20 @@ export const getApiKeysSettingsColumns = (
 		render: (row) => (
 			<div className="flex items-center gap-1">
 				<Button
+					aria-label={row.status === "Active" ? "Pause" : "Resume"}
 					variant="ghost"
 					size="icon"
 					onClick={() => onToggleStatus(row)}
 					className="size-8"
 					title={row.status === "Active" ? "Deactivate key" : "Activate key"}
 				>
-					<Icon icon={row.status === "Active" ? "lucide:pause" : "lucide:play"} className="size-4" />
+					<Icon
+						icon={row.status === "Active" ? "lucide:pause" : "lucide:play"}
+						className="size-4"
+					/>
 				</Button>
 				<Button
+					aria-label="Delete"
 					variant="ghost"
 					size="icon"
 					onClick={() => onDelete(row)}

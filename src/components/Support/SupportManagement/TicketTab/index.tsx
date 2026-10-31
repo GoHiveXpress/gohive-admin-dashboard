@@ -189,6 +189,7 @@ export default function TicketTab() {
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button
+							aria-label="Filter"
 							variant="outline"
 							size="icon"
 							className="border-border relative size-10 shrink-0 rounded-lg"

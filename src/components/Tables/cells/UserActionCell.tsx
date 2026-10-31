@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
@@ -20,6 +18,7 @@ export default function UserActionCell({ userType, rowId }: UserActionCellProps)
 	return (
 		<>
 			<Button
+				aria-label="More actions"
 				variant="ghost"
 				size="icon"
 				className="size-8"
@@ -37,5 +36,3 @@ export default function UserActionCell({ userType, rowId }: UserActionCellProps)
 		</>
 	);
 }
-
-/* eslint-enable */

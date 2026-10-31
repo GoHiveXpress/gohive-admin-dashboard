@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 // src/components/Vendor/OrderOversighTabs/index.tsx
 
 "use client";
@@ -43,6 +44,7 @@ export default function OrderOversightTabs() {
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button
+							aria-label="Filter"
 							variant="outline"
 							size="icon"
 							className="border-border relative size-12 shrink-0 rounded-lg bg-white p-0"
@@ -53,21 +55,81 @@ export default function OrderOversightTabs() {
 							)}
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="w-56 z-50 bg-white">
+					<DropdownMenuContent align="start" className="z-50 w-56 bg-white">
 						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 						<DropdownMenuSeparator />
-						<DropdownMenuCheckboxItem checked={status === "all"} onCheckedChange={() => setStatus("all")}>All Orders</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "pending"} onCheckedChange={() => setStatus("pending")}>Pending</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "placed"} onCheckedChange={() => setStatus("placed")}>Placed</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "accepted"} onCheckedChange={() => setStatus("accepted")}>Accepted</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "preparing"} onCheckedChange={() => setStatus("preparing")}>Preparing</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "ready"} onCheckedChange={() => setStatus("ready")}>Ready</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "picked_up"} onCheckedChange={() => setStatus("picked_up")}>Picked Up</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "delivered"} onCheckedChange={() => setStatus("delivered")}>Delivered</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "payment_failed"} onCheckedChange={() => setStatus("payment_failed")}>Payment Failed</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "rejected"} onCheckedChange={() => setStatus("rejected")}>Rejected</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "cancelled"} onCheckedChange={() => setStatus("cancelled")}>Cancelled</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={status === "expired"} onCheckedChange={() => setStatus("expired")}>Expired</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "all"}
+							onCheckedChange={() => setStatus("all")}
+						>
+							All Orders
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "pending"}
+							onCheckedChange={() => setStatus("pending")}
+						>
+							Pending
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "placed"}
+							onCheckedChange={() => setStatus("placed")}
+						>
+							Placed
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "accepted"}
+							onCheckedChange={() => setStatus("accepted")}
+						>
+							Accepted
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "preparing"}
+							onCheckedChange={() => setStatus("preparing")}
+						>
+							Preparing
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "ready"}
+							onCheckedChange={() => setStatus("ready")}
+						>
+							Ready
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "picked_up"}
+							onCheckedChange={() => setStatus("picked_up")}
+						>
+							Picked Up
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "delivered"}
+							onCheckedChange={() => setStatus("delivered")}
+						>
+							Delivered
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "payment_failed"}
+							onCheckedChange={() => setStatus("payment_failed")}
+						>
+							Payment Failed
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "rejected"}
+							onCheckedChange={() => setStatus("rejected")}
+						>
+							Rejected
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "cancelled"}
+							onCheckedChange={() => setStatus("cancelled")}
+						>
+							Cancelled
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={status === "expired"}
+							onCheckedChange={() => setStatus("expired")}
+						>
+							Expired
+						</DropdownMenuCheckboxItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 
@@ -81,7 +143,7 @@ export default function OrderOversightTabs() {
 						"h-12 rounded-lg px-6 font-medium transition-colors",
 						status === "all" && dateFilter === "all"
 							? "bg-primary text-primary-foreground hover:bg-primary/90"
-							: "border-border bg-white text-foreground hover:bg-muted/80"
+							: "border-border bg-white text-foreground hover:bg-muted/80",
 					)}
 				>
 					All
@@ -90,24 +152,59 @@ export default function OrderOversightTabs() {
 				{/* Date Filter */}
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<Button variant="outline" className="border-border h-12 min-w-[130px] justify-between rounded-lg bg-white px-6 font-medium">
-							{dateFilter === "all" ? "Date" : dateFilter === "today" ? "Today" : dateFilter === "week" ? "Last 7 Days" : "Last 30 Days"}
+						<Button
+							variant="outline"
+							className="border-border h-12 min-w-[130px] justify-between rounded-lg bg-white px-6 font-medium"
+						>
+							{dateFilter === "all"
+								? "Date"
+								: dateFilter === "today"
+									? "Today"
+									: dateFilter === "week"
+										? "Last 7 Days"
+										: "Last 30 Days"}
 							<Icon icon="ph:caret-down" className="ml-2" />
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" className="w-48 z-50 bg-white">
+					<DropdownMenuContent align="start" className="z-50 w-48 bg-white">
 						<DropdownMenuLabel>Filter by Date</DropdownMenuLabel>
 						<DropdownMenuSeparator />
-						<DropdownMenuCheckboxItem checked={dateFilter === "all"} onCheckedChange={() => setDateFilter("all")}>All Time</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={dateFilter === "today"} onCheckedChange={() => setDateFilter("today")}>Today</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={dateFilter === "week"} onCheckedChange={() => setDateFilter("week")}>Last 7 Days</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem checked={dateFilter === "month"} onCheckedChange={() => setDateFilter("month")}>Last 30 Days</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "all"}
+							onCheckedChange={() => setDateFilter("all")}
+						>
+							All Time
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "today"}
+							onCheckedChange={() => setDateFilter("today")}
+						>
+							Today
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "week"}
+							onCheckedChange={() => setDateFilter("week")}
+						>
+							Last 7 Days
+						</DropdownMenuCheckboxItem>
+						<DropdownMenuCheckboxItem
+							checked={dateFilter === "month"}
+							onCheckedChange={() => setDateFilter("month")}
+						>
+							Last 30 Days
+						</DropdownMenuCheckboxItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
 
 			{/* Live Orders Section */}
-			<LiveOrderVendorCards searchQuery={searchQuery} status={status} dateFilter={dateFilter} />
+			<LiveOrderVendorCards
+				searchQuery={searchQuery}
+				status={status}
+				dateFilter={dateFilter}
+			/>
 		</div>
 	);
 }
+
+/* eslint-enable */

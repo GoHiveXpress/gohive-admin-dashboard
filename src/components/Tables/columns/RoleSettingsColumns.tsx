@@ -270,6 +270,7 @@ const ActionCell = ({
 				}}
 			/>
 			<Button
+				aria-label="Delete"
 				variant="ghost"
 				size="icon"
 				className="size-9 rounded-full bg-red-50 hover:bg-red-100"

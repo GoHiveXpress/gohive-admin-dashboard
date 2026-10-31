@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 // src/components/Vendor/VendorDetails/MenuManagement/index.tsx
 
 "use client";
@@ -7,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { Input } from "@/components/ui/input";
 
-import MenuItemList from "./MenuItem";
-import AddExtraList from "./AddExtra";
 import CustomTabs from "@/components/Tabs";
 import {
 	DropdownMenu,
@@ -19,6 +18,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import AddExtraList from "./AddExtra";
+import MenuItemList from "./MenuItem";
 
 const MENU_SUB_TABS = [
 	{ id: "Menu Items", label: "Menu Items" },
@@ -49,6 +50,7 @@ export default function MenuManagementTab({ vendorId }: { vendorId: string }) {
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
+								aria-label="Filter"
 								variant="outline"
 								size="icon"
 								className="border-border relative size-10 shrink-0 rounded-lg"
@@ -59,7 +61,7 @@ export default function MenuManagementTab({ vendorId }: { vendorId: string }) {
 								)}
 							</Button>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent align="start" className="w-48 bg-white z-50">
+						<DropdownMenuContent align="start" className="z-50 w-48 bg-white">
 							<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							<DropdownMenuCheckboxItem
@@ -90,17 +92,23 @@ export default function MenuManagementTab({ vendorId }: { vendorId: string }) {
 							"h-10 rounded-lg px-6 font-medium transition-colors",
 							filterStatus === "all"
 								? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
-								: "bg-muted text-foreground hover:bg-muted/80"
+								: "bg-muted text-foreground hover:bg-muted/80",
 						)}
 					>
 						All
 					</Button>
 					<Button
 						variant={sortMode !== null ? "default" : "outline"}
-						onClick={() => setSortMode((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
+						onClick={() =>
+							setSortMode((prev) =>
+								prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+							)
+						}
 						className={cn(
 							"h-10 rounded-lg px-6 font-medium",
-							sortMode !== null ? "bg-[#123614] text-white hover:bg-[#123614]/90" : "border-border"
+							sortMode !== null
+								? "bg-[#123614] text-white hover:bg-[#123614]/90"
+								: "border-border",
 						)}
 					>
 						A-Z {sortMode === "asc" ? "↓" : sortMode === "desc" ? "↑" : ""}
@@ -148,3 +156,5 @@ export default function MenuManagementTab({ vendorId }: { vendorId: string }) {
 		</div>
 	);
 }
+
+/* eslint-enable */

@@ -106,6 +106,7 @@ export const getCustomerOrderManagementColumns = (
 		header: "Action",
 		render: (row) => (
 			<Button
+				aria-label="View details"
 				variant="ghost"
 				size="icon"
 				onClick={() => onView(row)}

@@ -65,6 +65,7 @@ export default function RiderProfileIndex({ riderId }: RiderProfileProps) {
 			<div className="border-border/50 relative min-h-[600px] rounded-[32px] border bg-white p-8 shadow-sm">
 				<Link href={ROUTES.RIDERS}>
 					<Button
+						aria-label="Go back"
 						variant="ghost"
 						size="icon"
 						className="hover:bg-muted absolute right-6 top-6 rounded-full"

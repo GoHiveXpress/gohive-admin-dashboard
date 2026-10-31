@@ -98,7 +98,12 @@ export const vendorColumnsConfig: BaseColumnSchema<VendorData>[] = [
 		header: "",
 		render: (row) => (
 			<Link href={`/vendor-management/${row.id}`}>
-				<Button variant="ghost" size="icon" className="text-foreground size-8">
+				<Button
+					aria-label="View details"
+					variant="ghost"
+					size="icon"
+					className="text-foreground size-8"
+				>
 					<Icon icon="ph:eye" width="20" />
 				</Button>
 			</Link>

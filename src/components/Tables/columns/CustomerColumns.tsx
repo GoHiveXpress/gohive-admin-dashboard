@@ -94,6 +94,7 @@ export const customerColumnsConfig: BaseColumnSchema<CustomerData>[] = [
 		render: (row) => (
 			<Link href={ROUTES.CUSTOMER_DETAILS(row._id)}>
 				<Button
+					aria-label="View details"
 					variant="ghost"
 					size="icon"
 					className="text-muted-foreground hover:text-primary hover:bg-muted size-8"
