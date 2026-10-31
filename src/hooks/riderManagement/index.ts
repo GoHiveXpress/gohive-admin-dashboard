@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
-import { riderApi } from "@/app/api/riderManagement";
+import { riderApi } from "@/services/riderManagement";
 import { type RiderListFilters } from "@/types/riderManagement";
 
 // The one rider list hook. Every rider list shares the ["riders", ...] cache,

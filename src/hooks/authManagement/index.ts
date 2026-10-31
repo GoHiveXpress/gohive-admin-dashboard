@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
-import { authApi } from "@/app/api/authManagement";
+import { authApi } from "@/services/authManagement";
 import { type LoginRequest } from "@/types/authManagement";
 
 // --- LOGIN HOOK ---

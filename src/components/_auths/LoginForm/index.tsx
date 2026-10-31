@@ -118,16 +118,18 @@ export default function LoginForm() {
 									<FormLabel className="ml-1 text-sm font-semibold text-[#17110A]">
 										Email
 									</FormLabel>
-									<FormControl>
-										<div className="group relative">
-											<Mail className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-400 transition-colors duration-200 group-focus-within:text-[#17110A]" />
+									<div className="group relative">
+										<Mail className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-400 transition-colors duration-200 group-focus-within:text-[#17110A]" />
+										<FormControl>
 											<Input
+												inputMode="email"
+												autoComplete="username"
 												placeholder="victor@gohiveadmin.info"
 												className="h-[52px] rounded-xl border border-[#E2E8F0] !bg-white pl-12 text-[15px] shadow-sm placeholder:text-gray-400 focus-visible:border-[#FDB900] focus-visible:ring-[#FDB900]"
 												{...field}
 											/>
-										</div>
-									</FormControl>
+										</FormControl>
+									</div>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -141,29 +143,33 @@ export default function LoginForm() {
 									<FormLabel className="ml-1 text-sm font-semibold text-[#17110A]">
 										Password
 									</FormLabel>
-									<FormControl>
-										<div className="group relative">
-											<Lock className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-400 transition-colors duration-200 group-focus-within:text-[#17110A]" />
+									<div className="group relative">
+										<Lock className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-400 transition-colors duration-200 group-focus-within:text-[#17110A]" />
+										<FormControl>
 											<Input
 												type={showPassword ? "text" : "password"}
+												autoComplete="current-password"
 												placeholder="••••••••"
 												className="h-[52px] rounded-xl border border-[#E2E8F0] !bg-white px-12 text-[15px] shadow-sm placeholder:text-gray-400 focus-visible:border-[#FDB900] focus-visible:ring-[#FDB900]"
 												{...field}
 											/>
-											<button
-												type="button"
-												onClick={() => setShowPassword(!showPassword)}
-												className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 transition-colors hover:text-[#17110A] focus:outline-none"
-												tabIndex={-1}
-											>
-												{showPassword ? (
-													<Eye className="size-5" />
-												) : (
-													<EyeOff className="size-5" />
-												)}
-											</button>
-										</div>
-									</FormControl>
+										</FormControl>
+										<button
+											type="button"
+											aria-label={
+												showPassword ? "Hide password" : "Show password"
+											}
+											onClick={() => setShowPassword(!showPassword)}
+											className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 transition-colors hover:text-[#17110A] focus:outline-none"
+											tabIndex={-1}
+										>
+											{showPassword ? (
+												<Eye className="size-5" />
+											) : (
+												<EyeOff className="size-5" />
+											)}
+										</button>
+									</div>
 									<FormMessage />
 								</FormItem>
 							)}

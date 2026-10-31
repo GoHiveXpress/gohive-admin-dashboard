@@ -1,15 +1,15 @@
 // src/hooks/analytics/index.ts
 import { useQuery } from "@tanstack/react-query";
-import { analyticsApi } from "@/app/api/analytics";
+import { type AnalyticsParams, analyticsApi } from "@/services/analytics";
 
-export const useCustomerAnalytics = (params?: any) => {
+export const useCustomerAnalytics = (params?: AnalyticsParams) => {
 	return useQuery({
 		queryKey: ["customerAnalytics", params],
 		queryFn: () => analyticsApi.getCustomerAnalytics(params),
 	});
 };
 
-export const useVendorAnalytics = (params?: any) => {
+export const useVendorAnalytics = (params?: AnalyticsParams) => {
 	return useQuery({
 		queryKey: ["vendorAnalytics", params],
 		queryFn: () => analyticsApi.getVendorAnalytics(params),
@@ -17,7 +17,7 @@ export const useVendorAnalytics = (params?: any) => {
 };
 
 export const useVendorLeaderboard = (
-	params: any = { range: "all_time" },
+	params: AnalyticsParams = { range: "all_time" },
 	enabled = true,
 ) => {
 	return useQuery({
@@ -27,14 +27,14 @@ export const useVendorLeaderboard = (
 	});
 };
 
-export const useRiderAnalytics = (params?: any) => {
+export const useRiderAnalytics = (params?: AnalyticsParams) => {
 	return useQuery({
 		queryKey: ["riderAnalytics", params],
 		queryFn: () => analyticsApi.getRiderAnalytics(params),
 	});
 };
 
-export const useRiderLeaderboard = (params?: any) => {
+export const useRiderLeaderboard = (params?: AnalyticsParams) => {
 	return useQuery({
 		queryKey: ["riderLeaderboard", params],
 		queryFn: () => analyticsApi.getRiderLeaderboard(params),

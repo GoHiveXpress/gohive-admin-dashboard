@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { userManagementApi } from "@/app/api/userManagement";
+import { userManagementApi } from "@/services/userManagement";
 import { useToast } from "@/hooks/useToast";
 import {
 	type RegisterStaffRequest,

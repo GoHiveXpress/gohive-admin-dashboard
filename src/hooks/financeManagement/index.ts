@@ -1,6 +1,6 @@
 // src/hooks/financeManagement/index.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { financeApi } from "@/app/api/financeManagement";
+import { financeApi } from "@/services/financeManagement";
 import { type RefundRequestStatus } from "@/types/financeManagement";
 
 export const REFUND_REQUESTS_KEY = ["refundRequests"];

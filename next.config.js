@@ -4,11 +4,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable no-shadow */
 
+import { withSentryConfig } from "@sentry/nextjs/config";
 import redirects from "./public/redirects.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
 	reactStrictMode: true,
+
+	// Next 14 needs this flag to run src/instrumentation.ts (Sentry server setup)
+	experimental: {
+		instrumentationHook: true,
+	},
 
 	// Lint still runs in the pre-commit hook on the files you change. Older files
 	// have not been cleaned up yet, so a full lint would fail the build; flip this
@@ -53,4 +59,13 @@ const config = {
 	},
 };
 
-export default config;
+// Source maps upload only when SENTRY_AUTH_TOKEN, SENTRY_ORG and SENTRY_PROJECT are
+// set in the build environment; without them the build still works.
+export default withSentryConfig(config, {
+	org: process.env.SENTRY_ORG,
+	project: process.env.SENTRY_PROJECT,
+	authToken: process.env.SENTRY_AUTH_TOKEN,
+	silent: !process.env.CI,
+	sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+	telemetry: false,
+});

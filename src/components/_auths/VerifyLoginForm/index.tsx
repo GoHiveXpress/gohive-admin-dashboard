@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react"; // Import NextAuth signIn
 import { toast } from "sonner";
 import { useResendOtp } from "@/hooks/authManagement";
-import { authApi } from "@/app/api/authManagement";
+import { authApi } from "@/services/authManagement";
 import { setAuthToken } from "@/utils/auth";
 
 import { Button } from "@/components/ui/button";

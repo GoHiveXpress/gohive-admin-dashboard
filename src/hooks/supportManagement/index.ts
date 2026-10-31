@@ -8,7 +8,7 @@ import {
 	useMutation,
 	useQueryClient,
 } from "@tanstack/react-query";
-import { supportApi } from "@/app/api/supportManagement";
+import { supportApi } from "@/services/supportManagement";
 import { useToast } from "@/hooks/useToast";
 import { io, type Socket } from "socket.io-client";
 import { useEffect, useRef, useState } from "react";

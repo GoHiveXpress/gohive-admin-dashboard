@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { io, type Socket } from "socket.io-client";
-import { opsApi } from "@/app/api/ops";
+import { opsApi } from "@/services/ops";
 import { getAuthToken } from "@/utils/auth";
 import { type OpsMapResponse, type RiderLocationEvent } from "@/types/ops";
 

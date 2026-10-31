@@ -1,6 +1,6 @@
 // src/hooks/customerManagement/index.ts
 import { useQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
-import { customerApi } from "@/app/api/customerManagement";
+import { customerApi } from "@/services/customerManagement";
 import { useOpsLiveUpdates } from "@/hooks/useOps";
 
 // The customer list hooks. They share the ["customers", ...] cache with the

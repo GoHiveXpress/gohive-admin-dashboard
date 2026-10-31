@@ -1,7 +1,11 @@
 // src/hooks/useVendorCategories.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { vendorCategoryApi } from "@/app/api/vendorCategories";
+import { isAxiosError } from "axios";
+import { vendorCategoryApi } from "@/services/vendorCategories";
 import { useToast } from "@/hooks/useToast";
+
+const apiMessage = (error: Error) =>
+	isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined;
 
 export const useVendorCategories = () => {
 	return useQuery({
@@ -16,14 +20,14 @@ export const useCreateVendorCategory = () => {
 
 	return useMutation({
 		mutationFn: (formData: FormData) => vendorCategoryApi.createCategory(formData),
-		onSuccess: (data) => {
+		onSuccess: async (data) => {
 			if (data.success) {
 				toast.success("Category created successfully");
-				queryClient.invalidateQueries({ queryKey: ["vendor-categories"] });
+				await queryClient.invalidateQueries({ queryKey: ["vendor-categories"] });
 			}
 		},
-		onError: (error: any) => {
-			toast.error(error.response?.data?.message || "Failed to create category");
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to create category");
 		},
 	});
 };
@@ -41,16 +45,19 @@ export const useUpdateVendorCategory = () => {
 	const toast = useToast();
 
 	return useMutation({
-		mutationFn: ({ id, formData }: { id: string; formData: FormData }) => vendorCategoryApi.updateCategory({ id, formData }),
-		onSuccess: (data) => {
+		mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
+			vendorCategoryApi.updateCategory({ id, formData }),
+		onSuccess: async (data) => {
 			if (data.success) {
 				toast.success("Category updated successfully");
-				queryClient.invalidateQueries({ queryKey: ["vendor-categories"] });
-				queryClient.invalidateQueries({ queryKey: ["vendor-category", data.data._id] });
+				await Promise.all([
+					queryClient.invalidateQueries({ queryKey: ["vendor-categories"] }),
+					queryClient.invalidateQueries({ queryKey: ["vendor-category", data.data._id] }),
+				]);
 			}
 		},
-		onError: (error: any) => {
-			toast.error(error.response?.data?.message || "Failed to update category");
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to update category");
 		},
 	});
 };
@@ -61,14 +68,14 @@ export const useDeleteVendorCategory = () => {
 
 	return useMutation({
 		mutationFn: (id: string) => vendorCategoryApi.deleteCategory(id),
-		onSuccess: (data) => {
+		onSuccess: async (data) => {
 			if (data.success) {
 				toast.success("Category deleted successfully");
-				queryClient.invalidateQueries({ queryKey: ["vendor-categories"] });
+				await queryClient.invalidateQueries({ queryKey: ["vendor-categories"] });
 			}
 		},
-		onError: (error: any) => {
-			toast.error(error.response?.data?.message || "Failed to delete category");
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to delete category");
 		},
 	});
 };

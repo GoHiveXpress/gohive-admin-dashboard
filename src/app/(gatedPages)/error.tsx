@@ -6,6 +6,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 
@@ -17,7 +18,7 @@ export default function GatedPageError({
 	reset: () => void;
 }) {
 	useEffect(() => {
-		console.error(error);
+		Sentry.captureException(error);
 	}, [error]);
 
 	return (

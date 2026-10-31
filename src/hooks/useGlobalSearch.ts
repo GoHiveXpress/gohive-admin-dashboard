@@ -1,6 +1,6 @@
 // src/hooks/useGlobalSearch.ts
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { searchApi } from "@/app/api/search";
+import { searchApi } from "@/services/search";
 import { useDebounce } from "@/hooks/useDebounce";
 
 export const MIN_SEARCH_LENGTH = 2;

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
-import { integrationSettingsApi } from "@/app/api/integrationSettings";
+import { integrationSettingsApi } from "@/services/integrationSettings";
 import { type UpdateFeeConfigPayload } from "@/types/integrationSettings";
 
 export const useApiKeys = () => {

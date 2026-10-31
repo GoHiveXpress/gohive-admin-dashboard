@@ -32,6 +32,8 @@ export type RiderUser = {
 	profilePicture: string;
 	accountStatus: "Active" | "Inactive" | "Suspend";
 	riderProfile: RiderProfile;
+	// GeoJSON point, [lng, lat]; [0, 0] until the rider app reports a position
+	location?: { type?: "Point"; coordinates?: number[] };
 	bankDetails?: BankDetails;
 	createdAt: string;
 };

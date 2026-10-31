@@ -21,7 +21,7 @@ import {
 	type ISupportUser,
 } from "@/types/supportManagement";
 import { toast } from "sonner";
-import { supportApi } from "@/app/api/supportManagement";
+import { supportApi } from "@/services/supportManagement";
 import ChatMessageContent from "../ChatMessageContent";
 import QuickReplies from "./QuickReplies";
 import ChatContext from "./ChatContext";

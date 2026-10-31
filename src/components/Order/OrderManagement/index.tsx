@@ -367,40 +367,6 @@ const OrderManagement = () => {
 
 					{/* === COLUMN 3: ACTION PANELS (Right) === */}
 					<div className="space-y-6 lg:col-span-4">
-						{/* Panel 1: Dispute Resolution - HIDDEN/COMMENTED OUT BY REQUEST */}
-						{/*
-						<div className="bg-card border-border rounded-xl border p-6 shadow-sm">
-							<PanelHeader title="Dispute Resolution Panel" />
-
-							<div className="space-y-4">
-								<div className="space-y-1.5">
-									<label className="text-foreground text-sm font-medium">
-										Reason
-									</label>
-									<div className="relative">
-										<div className="border-input ring-offset-background text-muted-foreground flex w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm">
-											Incorrect item received
-										</div>
-									</div>
-								</div>
-
-								<div className="space-y-1.5">
-									<label className="text-foreground text-sm font-medium">
-										Notes
-									</label>
-									<Textarea
-										placeholder="Add notes"
-										className="min-h-[100px] resize-none bg-transparent"
-									/>
-								</div>
-
-								<Button className="bg-secondary hover:bg-secondary/90 h-11 w-full text-base font-medium text-white">
-									Resolve
-								</Button>
-							</div>
-						</div>
-						*/}
-
 						<RefundPanel order={activeOrder ?? undefined} />
 					</div>
 				</div>

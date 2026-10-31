@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
-import { vendorApi } from "@/app/api/vendorManagement";
+import { vendorApi } from "@/services/vendorManagement";
 import { type VendorListFilters } from "@/types/vendorManagement";
 
 // The one vendor list hook. Every vendor list shares the ["vendors", ...] cache,

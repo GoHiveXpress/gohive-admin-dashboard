@@ -1,8 +1,8 @@
 "use client";
 
-// Untyped screen written before the lint rules; only its data source changed here.
+// Older screen; these rules are still off until it is cleaned up.
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-nullish-coalescing, react/no-array-index-key */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing, react/no-array-index-key */
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,9 @@ import { Icon } from "@iconify/react";
 import { Loader2 } from "lucide-react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { useRecentOrders } from "@/hooks/customerManagement";
+import { type Order } from "@/types/customerManagement";
 import { useRiderOverview } from "@/hooks/riderManagement";
+import { type MapPosition, riderPosition } from "../riderPosition";
 
 const containerStyle = {
 	width: "100%",
@@ -22,7 +24,7 @@ export default function AllOrders() {
 	const { data: orderResponse, isLoading: isLoadingOrders } = useRecentOrders();
 	const { riders, online, offline, isLoading: isLoadingRiders } = useRiderOverview();
 
-	const orders = orderResponse?.data || [];
+	const orders = useMemo(() => orderResponse?.data ?? [], [orderResponse]);
 
 	const { isLoaded: isMapLoaded } = useJsApiLoader({
 		id: "google-map-script",
@@ -32,13 +34,13 @@ export default function AllOrders() {
 	// Compute Order Metrics
 	const { pending, enRoute, completed, rejected } = useMemo(() => {
 		const result = {
-			pending: [] as any[],
-			enRoute: [] as any[],
-			completed: [] as any[],
-			rejected: [] as any[],
+			pending: [] as Order[],
+			enRoute: [] as Order[],
+			completed: [] as Order[],
+			rejected: [] as Order[],
 		};
 
-		orders.forEach((o: any) => {
+		orders.forEach((o) => {
 			if (["pending", "placed", "accepted"].includes(o.status)) {
 				result.pending.push(o);
 			} else if (["preparing", "ready", "picked_up"].includes(o.status)) {
@@ -67,14 +69,8 @@ export default function AllOrders() {
 	const targetOrder = pending[0] || enRoute[0] || null;
 	const vendorLocation = { lat: 6.5244, lng: 3.3792 };
 
-	const activeRider = riders.find(
-		(r: any) =>
-			["online", "busy"].includes(r.riderProfile?.availabilityStatus) &&
-			r.location?.coordinates?.length === 2,
-	) as any;
-	const mapCenter = activeRider
-		? { lat: activeRider.location.coordinates[1], lng: activeRider.location.coordinates[0] }
-		: vendorLocation;
+	const mapCenter =
+		riders.map(riderPosition).find((p): p is MapPosition => p !== null) ?? vendorLocation;
 
 	if (isLoadingOrders || isLoadingRiders) {
 		return (
@@ -129,7 +125,7 @@ export default function AllOrders() {
 
 					{/* Order Cards List */}
 					<div className="custom-scrollbar max-h-[400px] flex-1 space-y-3 overflow-y-auto pr-1">
-						{rejected.map((o: any) => (
+						{rejected.map((o) => (
 							<div
 								key={o._id}
 								className="space-y-3 rounded-2xl border border-[#FECDD3] bg-[#FFF1F2] p-4"
@@ -145,7 +141,7 @@ export default function AllOrders() {
 									/>
 								</div>
 								<div className="text-foreground/80 space-y-1 text-xs font-medium">
-									{o.items?.slice(0, 2).map((item: any, i: number) => (
+									{o.items?.slice(0, 2).map((item, i) => (
 										<p key={i}>
 											{item.quantity} X {item.name}
 										</p>
@@ -154,7 +150,7 @@ export default function AllOrders() {
 							</div>
 						))}
 
-						{pending.slice(0, 5).map((o: any) => (
+						{pending.slice(0, 5).map((o) => (
 							<div
 								key={o._id}
 								className="space-y-3 rounded-2xl border border-[#FEF08A] bg-[#FEFCE8] p-4"
@@ -166,7 +162,7 @@ export default function AllOrders() {
 									</div>
 								</div>
 								<div className="text-foreground/80 space-y-1 text-xs font-medium">
-									{o.items?.slice(0, 2).map((item: any, i: number) => (
+									{o.items?.slice(0, 2).map((item, i) => (
 										<p key={i}>
 											{item.quantity} X {item.name}
 										</p>
@@ -175,7 +171,7 @@ export default function AllOrders() {
 							</div>
 						))}
 
-						{enRoute.slice(0, 5).map((o: any) => (
+						{enRoute.slice(0, 5).map((o) => (
 							<div
 								key={o._id}
 								className="space-y-3 rounded-2xl border border-[#FFEDD5] bg-[#FFF7ED] p-4"
@@ -224,7 +220,7 @@ export default function AllOrders() {
 				<div className="flex flex-1 flex-col overflow-hidden">
 					<h4 className="mb-4 text-base font-medium">Active Riders List</h4>
 					<div className="custom-scrollbar flex-1 space-y-3 overflow-y-auto pr-1">
-						{riders.map((rider: any) => (
+						{riders.map((rider) => (
 							<div
 								key={rider._id}
 								className="border-border/50 hover:bg-muted/30 flex items-center justify-between rounded-xl border p-3 transition-colors"
@@ -287,30 +283,25 @@ export default function AllOrders() {
 								],
 							}}
 						>
-							{riders
-								.filter(
-									(r: any) =>
-										["online", "busy"].includes(
-											r.riderProfile?.availabilityStatus,
-										) && r.location?.coordinates?.length === 2,
-								)
-								.map((rider: any) => (
-									<Marker
-										key={rider._id}
-										position={{
-											lat: rider.location.coordinates[1],
-											lng: rider.location.coordinates[0],
-										}}
-										icon={{
-											path: google.maps.SymbolPath.CIRCLE,
-											scale: 8,
-											fillColor: "#22C55E",
-											fillOpacity: 1,
-											strokeWeight: 2,
-											strokeColor: "#FFFFFF",
-										}}
-									/>
-								))}
+							{riders.map((rider) => {
+								const position = riderPosition(rider);
+								return (
+									position && (
+										<Marker
+											key={rider._id}
+											position={position}
+											icon={{
+												path: google.maps.SymbolPath.CIRCLE,
+												scale: 8,
+												fillColor: "#22C55E",
+												fillOpacity: 1,
+												strokeWeight: 2,
+												strokeColor: "#FFFFFF",
+											}}
+										/>
+									)
+								);
+							})}
 						</GoogleMap>
 					)}
 				</div>

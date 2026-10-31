@@ -1,6 +1,6 @@
 // src/hooks/useAuditLogs.ts
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { auditLogApi } from "@/app/api/auditLogs";
+import { auditLogApi } from "@/services/auditLogs";
 import { type AuditLogFilters } from "@/types/auditLog";
 
 // eslint-disable-next-line import/prefer-default-export

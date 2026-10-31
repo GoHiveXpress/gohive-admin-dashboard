@@ -1,7 +1,7 @@
 // src/hooks/communication/index.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import { communicationApi } from "@/app/api/communication";
+import { communicationApi } from "@/services/communication";
 import { useToast } from "@/hooks/useToast";
 import { type ICreateTemplateRequest } from "@/types/communication";
 
