@@ -22,6 +22,8 @@ import {
 } from "@/types/supportManagement";
 import { toast } from "sonner";
 import { supportApi } from "@/services/supportManagement";
+// Same ticket code the customer, rider and vendor apps show
+import { ticketCode } from "@/lib/supportTickets";
 import ChatMessageContent from "../ChatMessageContent";
 import QuickReplies from "./QuickReplies";
 import ChatContext from "./ChatContext";
@@ -500,6 +502,10 @@ export default function LiveChatTab() {
 										<span
 											className={`truncate text-xs ${chat.unreadCount ? "text-foreground" : "text-muted-foreground"}`}
 										>
+											<span className="text-muted-foreground font-mono">
+												{ticketCode(chat)}
+											</span>
+											{" · "}
 											{chat.lastMessage || "No messages yet"}
 										</span>
 										<span className="flex shrink-0 items-center gap-1">
@@ -548,6 +554,11 @@ export default function LiveChatTab() {
 								<div>
 									<h3 className="text-lg font-semibold">Live Support Chat</h3>
 									<div className="text-muted-foreground flex items-center gap-2 text-xs">
+										{selectedChat && (
+											<span className="text-foreground font-mono font-medium">
+												Ticket {ticketCode(selectedChat)}
+											</span>
+										)}
 										<span>{selectedChat?.user.name}</span>
 										<span
 											className={`size-1.5 rounded-full ${selectedChat?.userOnline ? "bg-secondary" : "bg-gray-300"}`}
@@ -807,6 +818,12 @@ export default function LiveChatTab() {
 									</span>
 									<span className="border-border rounded-full border px-2 py-0.5 text-xs">
 										{formatUserId(selectedChat)}
+									</span>
+								</div>
+								<div className="mt-1 flex items-center gap-2">
+									<span className="text-muted-foreground text-xs">Ticket:</span>
+									<span className="border-border rounded-full border px-2 py-0.5 font-mono text-xs">
+										{ticketCode(selectedChat)}
 									</span>
 								</div>
 							</div>

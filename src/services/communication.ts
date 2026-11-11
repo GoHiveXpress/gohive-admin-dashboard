@@ -25,10 +25,14 @@ export const communicationApi = {
 		});
 		return response.data;
 	},
-	updateTemplate: async (id: string, data: ICreateTemplateRequest) => {
+	// FormData so the picture can be replaced (image) or removed (removeImage)
+	updateTemplate: async (id: string, data: FormData | ICreateTemplateRequest) => {
 		const response = await axiosInstance.put<{ success: boolean; data: INotificationTemplate }>(
 			`/admin/templates/${id}`,
 			data,
+			data instanceof FormData
+				? { headers: { "Content-Type": "multipart/form-data" } }
+				: undefined,
 		);
 		return response.data;
 	},

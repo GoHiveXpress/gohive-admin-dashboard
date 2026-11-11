@@ -291,8 +291,23 @@ export const useSupportSocket = (chatId?: string) => {
 			},
 		});
 
-		s.on("connect", () => setIsConnected(true));
-		s.on("disconnect", () => setIsConnected(false));
+		let wasDisconnected = false;
+		s.on("connect", () => {
+			setIsConnected(true);
+			// Anything sent while the socket was down never arrived; load it now
+			if (wasDisconnected) {
+				queryClient.invalidateQueries({ queryKey: ["support-chats"] });
+				if (openChatId.current) {
+					queryClient.invalidateQueries({
+						queryKey: ["support-chat-history", openChatId.current],
+					});
+				}
+			}
+		});
+		s.on("disconnect", () => {
+			wasDisconnected = true;
+			setIsConnected(false);
+		});
 		s.on("connect_error", (err) => {
 			console.warn("Support socket connection failed:", err.message);
 		});

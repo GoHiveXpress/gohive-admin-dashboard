@@ -24,6 +24,8 @@ import {
 	ScheduledSendsList,
 } from "@/components/Support/SupportManagement/ScheduledSends";
 import { scheduleError } from "@/lib/accountTools";
+import TemplateManagerModal from "@/components/_modals/TemplateManagerModal";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function CampaignTab() {
 	const {
@@ -46,6 +48,9 @@ export default function CampaignTab() {
 	const templates = templatesData?.data ?? [];
 
 	const [selectedQuickTemplate, setSelectedQuickTemplate] = useState<string>("");
+	const [showTemplates, setShowTemplates] = useState(false);
+	// The backend only lets super admins add, edit or delete templates
+	const { isSuperAdmin } = usePermissions();
 	const [quickRoles, setQuickRoles] = useState<UserRole[]>(["customer"]);
 	const [selectedImage, setSelectedImage] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -365,12 +370,40 @@ export default function CampaignTab() {
 							<div className="border-primary size-4 rounded-full border-[3px]" />
 							<h3 className="text-xl font-semibold">Quick Notification</h3>
 						</div>
-						<Icon icon="lucide:more-vertical" className="cursor-pointer" />
+						{isSuperAdmin && (
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								onClick={() => setShowTemplates(true)}
+							>
+								<Icon icon="lucide:settings-2" className="mr-1" />
+								Manage
+							</Button>
+						)}
 					</div>
 
 					<div className="space-y-6">
 						<div className="space-y-2">
-							<label className="text-base font-medium">Template</label>
+							<div className="flex items-center justify-between">
+								<label className="text-base font-medium">Template</label>
+								{isSuperAdmin && (
+									<button
+										type="button"
+										onClick={() => setShowTemplates(true)}
+										className="text-secondary text-sm font-medium hover:underline"
+									>
+										+ New template
+									</button>
+								)}
+							</div>
+							{templates.length === 0 && (
+								<p className="text-muted-foreground text-sm">
+									{isSuperAdmin
+										? "No templates yet. Add one to send it here."
+										: "No templates yet. A super admin can add them."}
+								</p>
+							)}
 							<Select
 								value={selectedQuickTemplate}
 								onValueChange={setSelectedQuickTemplate}
@@ -421,6 +454,12 @@ export default function CampaignTab() {
 					</div>
 				</div>
 			</div>
+
+			<TemplateManagerModal
+				isOpen={showTemplates}
+				onOpenChange={setShowTemplates}
+				onCreated={(t) => setSelectedQuickTemplate(t._id)}
+			/>
 
 			<ConfirmSendModal
 				isOpen={pendingSend !== null}

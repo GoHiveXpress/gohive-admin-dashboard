@@ -9,6 +9,7 @@ import {
 	useNotifications,
 	useMarkAllAsRead,
 	useDeleteAllNotifications,
+	useLiveNotifications,
 } from "@/hooks/useNotifications";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ import NotificationItem from "./NotificationItem";
 
 export default function NotificationPopover() {
 	const { data, isLoading } = useNotifications();
+	// The bell is in the navbar on every page, so this keeps it live everywhere
+	useLiveNotifications();
 	const { mutate: markAllAsRead } = useMarkAllAsRead();
 	const { mutate: deleteAll } = useDeleteAllNotifications();
 

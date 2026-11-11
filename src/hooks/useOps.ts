@@ -32,7 +32,7 @@ const LIVE_QUERY_KEYS = [
 let sharedSocket: Socket | null = null;
 let socketUsers = 0;
 
-const acquireSocket = (): Socket => {
+export const acquireSocket = (): Socket => {
 	socketUsers += 1;
 	sharedSocket ??= io(SOCKET_URL, {
 		transports: ["websocket", "polling"],
@@ -47,7 +47,7 @@ const acquireSocket = (): Socket => {
 	return sharedSocket;
 };
 
-const releaseSocket = () => {
+export const releaseSocket = () => {
 	socketUsers -= 1;
 	if (socketUsers > 0 || !sharedSocket) return;
 	sharedSocket.disconnect();

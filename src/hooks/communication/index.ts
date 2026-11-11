@@ -38,7 +38,7 @@ export const useUpdateTemplate = () => {
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	return useMutation({
-		mutationFn: ({ id, data }: { id: string; data: ICreateTemplateRequest }) =>
+		mutationFn: ({ id, data }: { id: string; data: FormData | ICreateTemplateRequest }) =>
 			communicationApi.updateTemplate(id, data),
 		onSuccess: (data) => {
 			if (data.success) {
@@ -47,6 +47,9 @@ export const useUpdateTemplate = () => {
 					.invalidateQueries({ queryKey: ["notification-templates"] })
 					.catch(() => undefined);
 			}
+		},
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to update template");
 		},
 	});
 };
@@ -61,6 +64,9 @@ export const useDeleteTemplate = () => {
 			queryClient
 				.invalidateQueries({ queryKey: ["notification-templates"] })
 				.catch(() => undefined);
+		},
+		onError: (error: Error) => {
+			toast.error(apiMessage(error) ?? "Failed to delete template");
 		},
 	});
 };
