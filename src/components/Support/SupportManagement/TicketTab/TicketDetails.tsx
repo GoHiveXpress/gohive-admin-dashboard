@@ -94,6 +94,8 @@ export default function TicketDetails({ chat, canEdit, now }: TicketDetailsProps
 
 	const status = ticketStatusOf(chat);
 	const resolved = status === "resolved";
+	// Ended chats close their ticket with no outcome; agents can add one afterwards
+	const needsOutcome = !chat.resolution;
 	const timer = responseTimer(chat, now);
 	const busy = isUpdating || isResolving;
 	const trimmedCode = orderCode.trim().toUpperCase();
@@ -265,14 +267,15 @@ export default function TicketDetails({ chat, canEdit, now }: TicketDetailsProps
 						Open {chat.order.orderId}
 					</Link>
 				)}
-				{canEdit && !resolved && (
+				{canEdit && needsOutcome && (
 					<Button
 						size="sm"
 						className="ml-auto"
+						variant={resolved ? "outline" : "default"}
 						disabled={busy}
 						onClick={() => setResolving(true)}
 					>
-						Resolve ticket
+						{resolved ? "Add outcome" : "Resolve ticket"}
 					</Button>
 				)}
 			</div>
@@ -287,11 +290,18 @@ export default function TicketDetails({ chat, canEdit, now }: TicketDetailsProps
 					</span>
 				</p>
 			)}
+			{resolved && !chat.resolution && (
+				<p className="text-muted-foreground">
+					Chat ended {when(chat.resolvedAt ?? chat.closedAt)}. No outcome recorded yet.
+				</p>
+			)}
 
 			<Dialog open={resolving} onOpenChange={(open) => !busy && setResolving(open)}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Resolve {ticketCode(chat)}?</DialogTitle>
+						<DialogTitle>
+							{resolved ? "Add outcome to" : "Resolve"} {ticketCode(chat)}?
+						</DialogTitle>
 						<DialogDescription>
 							{chat.status === "active"
 								? "The chat is closed and the user is told. The outcome goes into the ticket report."
@@ -343,7 +353,7 @@ export default function TicketDetails({ chat, canEdit, now }: TicketDetailsProps
 							onClick={confirmResolve}
 						>
 							{isResolving && <Loader2 className="mr-2 size-4 animate-spin" />}
-							Resolve
+							{resolved ? "Save outcome" : "Resolve"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

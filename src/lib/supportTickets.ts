@@ -63,8 +63,10 @@ export const ticketCode = (chat: Pick<ISupportChat, "_id" | "ticketNumber">) =>
 		: `#${chat._id.slice(-6).toUpperCase()}`;
 
 /** Older chats have no ticket status or priority yet: they count as open and normal. */
-export const ticketStatusOf = (chat: Pick<ISupportChat, "ticketStatus">): TicketStatus =>
-	chat.ticketStatus ?? "open";
+/** An ended chat's ticket counts as resolved, even from before the backend set it */
+export const ticketStatusOf = (
+	chat: Pick<ISupportChat, "ticketStatus"> & Partial<Pick<ISupportChat, "status">>,
+): TicketStatus => (chat.status === "closed" ? "resolved" : (chat.ticketStatus ?? "open"));
 
 export const priorityOf = (chat: Pick<ISupportChat, "priority">): TicketPriority =>
 	chat.priority ?? "normal";
