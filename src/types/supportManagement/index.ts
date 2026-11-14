@@ -160,7 +160,8 @@ export interface ITicketReport {
 		medianResolutionMs: number | null;
 	}>;
 	byPriority: Array<{ priority: TicketPriority; count: number }>;
-	byResolution: Array<{ resolution: TicketResolution; count: number }>;
+	// "chat_ended": the chat was ended (or timed out) without the Resolve step
+	byResolution: Array<{ resolution: TicketResolution | "chat_ended"; count: number }>;
 	agents: Array<{
 		agentId: string;
 		name: string;

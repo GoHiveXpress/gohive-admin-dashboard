@@ -64,7 +64,7 @@ export default function TicketReportTab() {
 				<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 					<Stat label="Tickets opened" value={String(totals.opened)} />
 					<Stat
-						label="Resolved"
+						label="Resolved / closed"
 						value={String(totals.resolved)}
 						hint={
 							totals.opened
@@ -78,7 +78,7 @@ export default function TicketReportTab() {
 						hint={`Average ${formatDuration(report.firstResponse.averageMs)} · ${totals.neverAnswered} never answered`}
 					/>
 					<Stat
-						label="Time to resolve (median)"
+						label="Time to close (median)"
 						value={formatDuration(report.resolution.medianMs)}
 						hint={`Average ${formatDuration(report.resolution.averageMs)}`}
 					/>
@@ -122,7 +122,11 @@ export default function TicketReportTab() {
 							<ul className="space-y-1 text-sm">
 								{report.byResolution.map((row) => (
 									<li key={row.resolution} className="flex justify-between">
-										<span>{TICKET_RESOLUTION_LABELS[row.resolution]}</span>
+										<span>
+											{row.resolution === "chat_ended"
+												? "Chat ended (not resolved)"
+												: TICKET_RESOLUTION_LABELS[row.resolution]}
+										</span>
 										<span className="text-muted-foreground">{row.count}</span>
 									</li>
 								))}
