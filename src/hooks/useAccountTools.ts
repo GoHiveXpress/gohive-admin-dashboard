@@ -8,6 +8,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/useToast";
 import { accountToolsApi } from "@/services/accountTools";
+import { type VendorLocationPayload } from "@/types/accountTools";
 import { type OperatingHours } from "@/types/vendorManagement";
 import { setAuthToken } from "@/utils/auth";
 
@@ -118,6 +119,13 @@ export const useUpdateVendorHours = (id: string) =>
 		(hours: OperatingHours[]) => accountToolsApi.updateVendorHours(id, hours),
 		() => VENDOR_KEYS,
 		"Opening hours saved",
+	);
+
+export const useUpdateVendorLocation = (id: string) =>
+	useToastingMutation(
+		(payload: VendorLocationPayload) => accountToolsApi.updateVendorLocation(id, payload),
+		() => VENDOR_KEYS,
+		"Store location saved",
 	);
 
 export const useUpdateVendorCommission = (id: string) =>

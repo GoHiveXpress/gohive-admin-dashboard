@@ -11,6 +11,7 @@ import {
 	type SignOutOthersResponse,
 	type VendorClosure,
 	type VendorHoursResponse,
+	type VendorLocationPayload,
 } from "@/types/accountTools";
 import { type OperatingHours } from "@/types/vendorManagement";
 
@@ -90,6 +91,13 @@ export const accountToolsApi = {
 			`${ADMIN_BASE}/vendor/${id}/hours`,
 			{ operatingHours },
 			"Failed to save opening hours",
+		),
+
+	updateVendorLocation: (id: string, payload: VendorLocationPayload) =>
+		apiClient.put<ActionResponse, VendorLocationPayload>(
+			`${ADMIN_BASE}/vendor/${id}/location`,
+			payload,
+			"Failed to save the store location",
 		),
 
 	updateVendorCommission: (id: string, commissionPercent: number) =>

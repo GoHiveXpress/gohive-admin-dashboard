@@ -61,6 +61,8 @@ export type Order = {
 	orderAcceptedAt?: string;
 	orderReadyAt?: string;
 	riderAssignedAt?: string;
+	riderAtVendorAt?: string;
+	orderArrivedAt?: string;
 	orderPickedUpAt?: string;
 	orderDeliveredAt?: string;
 	orderEndedAt?: string;

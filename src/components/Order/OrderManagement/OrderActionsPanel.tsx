@@ -17,6 +17,7 @@ import {
 import {
 	useCancelOrder,
 	useChangeOrderRider,
+	useMarkRiderArrived,
 	useOverrideOrderStatus,
 } from "@/hooks/customerManagement";
 import { useRiders } from "@/hooks/riderManagement";
@@ -35,7 +36,17 @@ import { REFUND_APPROVAL_THRESHOLD } from "./RefundPanel";
 const naira = (value: number) => `₦${value.toLocaleString()}`;
 const RIDER_CHOICES = 100;
 
-type Pending = "cancel" | "assign" | "remove" | "status" | null;
+type Pending = "cancel" | "assign" | "remove" | "status" | "arrived" | null;
+
+// Where the rider can be marked as arrived when the app's location check keeps
+// refusing them (a wrong store pin, weak GPS)
+const arrivalStage = (order: Order): "store" | "customer" | null => {
+	if (!order.rider) return null;
+	if (["accepted", "preparing", "ready"].includes(order.status) && !order.riderAtVendorAt)
+		return "store";
+	if (order.status === "picked_up" && !order.orderArrivedAt) return "customer";
+	return null;
+};
 
 /**
  * Support stepping into a live order: cancel it (superadmins can refund in the
@@ -56,6 +67,7 @@ export default function OrderActionsPanel({ order }: { order?: Order | null }) {
 	const cancelOrder = useCancelOrder();
 	const changeRider = useChangeOrderRider();
 	const overrideStatus = useOverrideOrderStatus();
+	const markArrived = useMarkRiderArrived();
 
 	const showRiders = Boolean(order && mayChangeRider && canAssignRider(order));
 	const { data: ridersResponse, isLoading: ridersLoading } = useRiders(
@@ -80,8 +92,9 @@ export default function OrderActionsPanel({ order }: { order?: Order | null }) {
 	const targets = mayOverride ? overrideTargets(order) : [];
 	const showCancel = mayCancel && canCancel(order);
 	const showRemove = mayChangeRider && canRemoveRider(order);
+	const stage = mayChangeRider ? arrivalStage(order) : null;
 
-	if (!showCancel && !showRiders && targets.length === 0) {
+	if (!showCancel && !showRiders && !stage && targets.length === 0) {
 		return (
 			<div className="bg-card border-border rounded-xl border p-6 shadow-sm">
 				<PanelHeader title="Order Actions" />
@@ -115,6 +128,11 @@ export default function OrderActionsPanel({ order }: { order?: Order | null }) {
 					riderId: pending === "assign" ? riderId : null,
 					reason: reason || undefined,
 				},
+				{ onSuccess: (res) => done(res.message), onError: failed },
+			);
+		} else if (pending === "arrived" && stage) {
+			markArrived.mutate(
+				{ id: order._id, stage, reason },
 				{ onSuccess: (res) => done(res.message), onError: failed },
 			);
 		} else if (pending === "status") {
@@ -151,6 +169,19 @@ export default function OrderActionsPanel({ order }: { order?: Order | null }) {
 			reasonRequired: false,
 			tone: "danger" as const,
 		},
+		arrived: {
+			title:
+				stage === "customer"
+					? "Mark the rider as at the customer?"
+					: "Mark the rider as at the store?",
+			description:
+				stage === "customer"
+					? "Use this when the rider is with the customer but the app says they're too far away. The customer is told the rider has arrived."
+					: "Use this when the rider is at the store but the app says they're too far away (often a wrong store pin: fix it under the vendor's Store controls). The vendor is told the rider has arrived.",
+			confirmLabel: "Mark as arrived",
+			reasonRequired: true,
+			tone: "success" as const,
+		},
 		status: {
 			title: `Mark as ${orderStatusLabel(targetStatus).toLowerCase()}?`,
 			description:
@@ -163,7 +194,11 @@ export default function OrderActionsPanel({ order }: { order?: Order | null }) {
 		},
 	};
 	const current = pending ? modal[pending] : null;
-	const busy = cancelOrder.isPending || changeRider.isPending || overrideStatus.isPending;
+	const busy =
+		cancelOrder.isPending ||
+		changeRider.isPending ||
+		overrideStatus.isPending ||
+		markArrived.isPending;
 
 	return (
 		<div className="bg-card border-border space-y-6 rounded-xl border p-6 shadow-sm">
@@ -208,6 +243,24 @@ export default function OrderActionsPanel({ order }: { order?: Order | null }) {
 							</Button>
 						)}
 					</div>
+				</section>
+			)}
+
+			{stage && (
+				<section className="space-y-2">
+					<Label>Rider stuck on &quot;I have arrived&quot;?</Label>
+					<p className="text-muted-foreground text-xs">
+						{order.rider?.name ?? "The rider"} hasn&apos;t checked in at the{" "}
+						{stage === "store" ? "store" : "customer"} yet.
+					</p>
+					<Button
+						size="sm"
+						variant="outline"
+						disabled={busy}
+						onClick={() => setPending("arrived")}
+					>
+						{stage === "store" ? "Mark as at the store" : "Mark as at the customer"}
+					</Button>
 				</section>
 			)}
 

@@ -112,6 +112,13 @@ export const customerApi = {
 			OrderActionResponse<{ orderId: string; rider: { _id: string; name: string } | null }>
 		>(`${ADMIN_BASE}/order/${id}/rider`, body, "Failed to change rider"),
 
+	markRiderArrived: (id: string, body: { stage: "store" | "customer"; reason: string }) =>
+		apiClient.post<OrderActionResponse<{ orderId: string }>>(
+			`${ADMIN_BASE}/order/${id}/rider-arrived`,
+			body,
+			"Failed to mark the rider as arrived",
+		),
+
 	overrideOrderStatus: (id: string, body: { status: string; reason: string }) =>
 		apiClient.post<OrderActionResponse<{ orderId: string; status: string }>>(
 			`${ADMIN_BASE}/order/${id}/status`,

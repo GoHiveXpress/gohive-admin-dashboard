@@ -140,6 +140,12 @@ export const useChangeOrderRider = () =>
 			customerApi.changeOrderRider(id, { riderId, reason }),
 	);
 
+export const useMarkRiderArrived = () =>
+	useOrderChange(
+		({ id, stage, reason }: { id: string; stage: "store" | "customer"; reason: string }) =>
+			customerApi.markRiderArrived(id, { stage, reason }),
+	);
+
 export const useOverrideOrderStatus = () =>
 	useOrderChange(({ id, status, reason }: { id: string; status: string; reason: string }) =>
 		customerApi.overrideOrderStatus(id, { status, reason }),

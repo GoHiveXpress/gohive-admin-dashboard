@@ -1,6 +1,6 @@
 // src/components/Vendor/VendorDetails/StoreControls/index.tsx
-// Admin controls for a vendor's store: close it for a while, set its opening
-// hours, and set GoHive's commission on its orders.
+// Admin controls for a vendor's store: close it for a while, fix its map pin,
+// set its opening hours, and set GoHive's commission on its orders.
 
 "use client";
 
@@ -33,6 +33,7 @@ import {
 } from "@/lib/accountTools";
 import { ACTION_RULES } from "@/lib/permissions";
 import { type OperatingHours, type VendorUser } from "@/types/vendorManagement";
+import StoreLocationSection from "./StoreLocationSection";
 
 const Section = ({
 	title,
@@ -315,6 +316,7 @@ export default function StoreControlsTab({ vendor }: { vendor: VendorUser }) {
 				</p>
 			)}
 			<ClosureSection vendor={vendor} canEdit={canEdit} />
+			<StoreLocationSection vendor={vendor} canEdit={canEdit} />
 			<HoursSection vendor={vendor} canEdit={canEdit} />
 			{canSetCommission && <CommissionSection vendor={vendor} />}
 		</div>

@@ -84,3 +84,12 @@ export interface SignOutOthersResponse extends AdminSessionsResponse {
 	// A fresh token for this browser; the old one stopped working
 	token: string | null;
 }
+
+// PUT /admin/vendor/:id/location. No branchId means the main store.
+export type VendorLocationPayload = {
+	latitude: number;
+	longitude: number;
+	address?: string;
+	branchId?: string;
+	reason: string;
+};

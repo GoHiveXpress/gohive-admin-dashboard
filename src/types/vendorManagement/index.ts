@@ -9,6 +9,17 @@ export type OperatingHours = {
 	isOpen: boolean;
 };
 
+// GeoJSON order: [longitude, latitude]; [0, 0] means no pin was set
+export type GeoPoint = { type?: "Point"; coordinates?: number[]; address?: string };
+
+export type VendorBranch = {
+	_id: string;
+	name?: string;
+	address?: string;
+	state?: string;
+	location?: GeoPoint;
+};
+
 export type VendorProfile = {
 	businessName: string;
 	businessType: string;
@@ -28,6 +39,7 @@ export type VendorProfile = {
 	adminClosure?: { at: string; until: string | null; reason: string } | null;
 	// GoHive's cut of the food total on new orders, in percent
 	commissionPercent?: number;
+	branches?: VendorBranch[];
 };
 
 export type BankDetails = {
@@ -46,6 +58,7 @@ export type VendorUser = {
 	profilePicture: string;
 	accountStatus: "Active" | "Inactive" | "Suspend";
 	vendorProfile: VendorProfile;
+	location?: GeoPoint;
 	bankDetails?: BankDetails;
 	createdAt: string;
 };
