@@ -549,17 +549,24 @@ export default function LiveChatTab() {
 					<>
 						{/* Header */}
 						<div className="border-border flex shrink-0 items-center justify-between border-b p-4">
-							<div className="flex items-center gap-2">
-								<div className="border-primary size-4 rounded-full border-[3px]" />
-								<div>
-									<h3 className="text-lg font-semibold">Live Support Chat</h3>
-									<div className="text-muted-foreground flex items-center gap-2 text-xs">
+							<div className="flex min-w-0 items-center gap-2">
+								<div className="border-primary size-4 shrink-0 rounded-full border-[3px]" />
+								<div className="min-w-0">
+									<h3
+										className="truncate text-lg font-semibold"
+										title={selectedChat?.user.name}
+									>
+										{selectedChat?.user.name || "Live Support Chat"}
+									</h3>
+									<div className="text-muted-foreground flex items-center gap-1.5 whitespace-nowrap text-xs">
 										{selectedChat && (
-											<span className="text-foreground font-mono font-medium">
-												Ticket {ticketCode(selectedChat)}
-											</span>
+											<>
+												<span className="text-foreground font-mono font-medium">
+													{ticketCode(selectedChat)}
+												</span>
+												<span>·</span>
+											</>
 										)}
-										<span>{selectedChat?.user.name}</span>
 										<span
 											className={`size-1.5 rounded-full ${selectedChat?.userOnline ? "bg-secondary" : "bg-gray-300"}`}
 										/>
@@ -567,24 +574,46 @@ export default function LiveChatTab() {
 											{selectedChat?.userOnline ? "Online" : "Offline"}
 										</span>
 										{selectedChat && isWaitingForAgent(selectedChat) && (
-											<span className="flex items-center gap-1.5 rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-700">
-												<Icon icon="lucide:clock" className="size-3" />
-												{waitingLabel(selectedChat, now)} for an agent
-											</span>
+											<>
+												<span>·</span>
+												<span className="flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700">
+													<Icon icon="lucide:clock" className="size-3" />
+													Waiting {waitingLabel(selectedChat, now)}
+												</span>
+											</>
 										)}
 										{selectedChat?.admin && (
-											<span className="text-secondary bg-secondary/10 flex items-center gap-1.5 rounded px-2 py-0.5 font-medium">
-												<Icon icon="lucide:user-check" className="size-3" />
-												{isMine
-													? "You're handling this chat"
-													: `Handled by ${chatAdminName(selectedChat)}`}
-											</span>
+											<>
+												<span>·</span>
+												<span
+													className="text-secondary bg-secondary/10 flex min-w-0 items-center gap-1 rounded px-1.5 py-0.5 font-medium"
+													title={
+														isMine
+															? "You're handling this chat"
+															: `Handled by ${chatAdminName(selectedChat)}`
+													}
+												>
+													<Icon
+														icon="lucide:user-check"
+														className="size-3 shrink-0"
+													/>
+													<span className="truncate">
+														{isMine
+															? "Yours"
+															: `Agent: ${chatAdminName(selectedChat)}`}
+													</span>
+												</span>
+											</>
 										)}
 									</div>
 								</div>
 							</div>
-							<div className="flex items-center gap-2">
-								{isClosed ? null : !selectedChat?.admin ? (
+							<div className="flex shrink-0 items-center gap-2">
+								{isClosed ? (
+									<span className="text-muted-foreground rounded bg-gray-100 px-2 py-1 text-xs font-medium">
+										Ended
+									</span>
+								) : !selectedChat?.admin ? (
 									<Button
 										size="sm"
 										className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
@@ -618,20 +647,22 @@ export default function LiveChatTab() {
 										{isMine ? "Joined" : "Taken"}
 									</Button>
 								)}
-								<Button
-									variant="outline"
-									size="sm"
-									className={`text-xs ${!canReply ? "cursor-not-allowed opacity-50" : "text-destructive border-destructive/20 hover:bg-destructive/5"}`}
-									onClick={handleClose}
-									disabled={!canReply}
-									title={
-										!canReply && !isClosed
-											? "Only the agent handling this chat can end it"
-											: undefined
-									}
-								>
-									{isClosed ? "Session Ended" : "End Session"}
-								</Button>
+								{!isClosed && (
+									<Button
+										variant="outline"
+										size="sm"
+										className={`text-xs ${!canReply ? "cursor-not-allowed opacity-50" : "text-destructive border-destructive/20 hover:bg-destructive/5"}`}
+										onClick={handleClose}
+										disabled={!canReply}
+										title={
+											!canReply
+												? "Only the agent handling this chat can end it"
+												: undefined
+										}
+									>
+										End Session
+									</Button>
+								)}
 							</div>
 						</div>
 
