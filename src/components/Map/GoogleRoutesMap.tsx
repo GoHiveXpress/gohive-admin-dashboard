@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { GoogleMap, useJsApiLoader, DirectionsRenderer, Marker } from "@react-google-maps/api";
 import { Icon } from "@iconify/react";
+import { CITIES_BOUNDS, SERVICE_AREA_MAP_OPTIONS, SERVICE_CENTER } from "@/constants/serviceArea";
 
 const containerStyle = {
 	width: "100%",
@@ -10,10 +11,7 @@ const containerStyle = {
 	borderRadius: "20px",
 };
 
-const defaultCenter = {
-	lat: 6.5244,
-	lng: 3.3792, // Default to Lagos, Nigeria
-};
+const ACTIVE_STATUSES = ["placed", "accepted", "preparing", "ready", "picked_up"];
 
 type Coordinates = {
 	lat: number;
@@ -29,12 +27,48 @@ type RoutePair = {
 };
 
 interface GoogleRoutesMapProps {
-	orders: any[]; // Array of order objects from the backend
+	// Order objects from the backend; read defensively, shapes vary by endpoint.
+	orders: readonly unknown[];
 }
 
+const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+	value && typeof value === "object" ? (value as Record<string, unknown>) : undefined;
+
+const toNumber = (value: unknown): number | undefined => {
+	const n = typeof value === "string" ? Number(value) : value;
+	return typeof n === "number" && Number.isFinite(n) && n !== 0 ? n : undefined;
+};
+
+const toText = (value: unknown): string => (typeof value === "string" ? value : "");
+
+// Reads [lng, lat] coordinates, or lat/lng fields, from an address-like object.
+const readPoint = (...sources: unknown[]): Coordinates | null => {
+	const points = sources.map((source) => {
+		const record = asRecord(source);
+		if (!record) return null;
+		const coords = Array.isArray(record.coordinates) ? (record.coordinates as unknown[]) : [];
+		const lat = toNumber(coords[1]) ?? toNumber(record.lat);
+		const lng = toNumber(coords[0]) ?? toNumber(record.lng);
+		return lat !== undefined && lng !== undefined ? { lat, lng } : null;
+	});
+	return points.find((point) => point !== null) ?? null;
+};
+
+// Pickup (vendor) and delivery (customer) points of an order, if it has both.
+const extractCoordinates = (value: unknown): RoutePair | null => {
+	const order = asRecord(value);
+	if (!order) return null;
+	const vendorProfile = asRecord(asRecord(order.vendor)?.vendorProfile);
+	const pickup = readPoint(vendorProfile?.storeLocation, order.pickupAddress);
+	const delivery = readPoint(order.deliveryAddress);
+	const id = toText(order._id) || toText(order.orderId);
+	if (!pickup || !delivery || !id) return null;
+	return { id, pickup, delivery, status: toText(order.status) };
+};
+
 export default function GoogleRoutesMap({ orders = [] }: GoogleRoutesMapProps) {
-	const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-	
+	const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
 	const { isLoaded, loadError } = useJsApiLoader({
 		id: "google-map-script",
 		googleMapsApiKey: apiKey,
@@ -47,79 +81,67 @@ export default function GoogleRoutesMap({ orders = [] }: GoogleRoutesMapProps) {
 	}, [loadError]);
 
 	// Array to store fetched directions responses
-	const [directionsResponses, setDirectionsResponses] = useState<(google.maps.DirectionsResult | null)[]>([]);
+	const [directionsResponses, setDirectionsResponses] = useState<
+		{ id: string; result: google.maps.DirectionsResult }[]
+	>([]);
 	const [activePairs, setActivePairs] = useState<RoutePair[]>([]);
 
-	// Helper to extract coordinates safely from the dynamic order structure
-	const extractCoordinates = (order: any): RoutePair | null => {
-		try {
-			// Adapt these paths based on the exact DB schema representation for admin
-			const pickupLat = order?.vendor?.vendorProfile?.storeLocation?.coordinates?.[1] || order?.pickupAddress?.lat;
-			const pickupLng = order?.vendor?.vendorProfile?.storeLocation?.coordinates?.[0] || order?.pickupAddress?.lng;
-			
-			const deliveryLat = order?.deliveryAddress?.coordinates?.[1] || order?.deliveryAddress?.lat;
-			const deliveryLng = order?.deliveryAddress?.coordinates?.[0] || order?.deliveryAddress?.lng;
-
-			if (pickupLat && pickupLng && deliveryLat && deliveryLng) {
-				return {
-					id: order._id || order.orderId || Math.random().toString(),
-					pickup: { lat: Number(pickupLat), lng: Number(pickupLng) },
-					delivery: { lat: Number(deliveryLat), lng: Number(deliveryLng) },
-					status: order.status || "",
-				};
-			}
-			return null;
-		} catch (e) {
-			return null;
-		}
-	};
-
 	useEffect(() => {
-		if (!isLoaded || !orders || orders.length === 0) return;
+		if (!isLoaded) return undefined;
 
-		const routePairs = orders
-			.map(extractCoordinates)
-			.filter(Boolean) as RoutePair[];
-			
+		const routePairs = (orders ?? []).map(extractCoordinates).filter(Boolean) as RoutePair[];
+
 		// Show orders that are currently in progress
-		const currentActivePairs = routePairs.filter(p => 
-            ["placed", "accepted", "preparing", "ready", "picked_up"].includes(p.status.toLowerCase())
-        ).slice(0, 10);
+		const currentActivePairs = routePairs
+			.filter((p) => ACTIVE_STATUSES.includes(p.status.toLowerCase()))
+			.slice(0, 10);
 
 		if (currentActivePairs.length === 0) {
-            setDirectionsResponses([]);
-            setActivePairs([]);
-            return;
-        }
+			setDirectionsResponses([]);
+			setActivePairs([]);
+			return undefined;
+		}
 
-        setActivePairs(currentActivePairs);
+		setActivePairs(currentActivePairs);
 
 		const directionsService = new window.google.maps.DirectionsService();
 
 		const fetches = currentActivePairs.map((pair) => {
-			return new Promise<google.maps.DirectionsResult | null>((resolve) => {
-				directionsService.route(
-					{
-						origin: pair.pickup,
-						destination: pair.delivery,
-						travelMode: window.google.maps.TravelMode.DRIVING,
-					},
-					(result, status) => {
-						if (status === window.google.maps.DirectionsStatus.OK) {
-							resolve(result);
-						} else {
-							console.error(`Error fetching directions for order ${pair.id}: ${status}`);
-							resolve(null);
-						}
-					}
-				);
-			});
+			return new Promise<{ id: string; result: google.maps.DirectionsResult } | null>(
+				(resolve) => {
+					directionsService
+						.route(
+							{
+								origin: pair.pickup,
+								destination: pair.delivery,
+								travelMode: window.google.maps.TravelMode.DRIVING,
+							},
+							(result, status) => {
+								if (status === window.google.maps.DirectionsStatus.OK) {
+									resolve(result ? { id: pair.id, result } : null);
+								} else {
+									console.error(
+										`Error fetching directions for order ${pair.id}: ${status}`,
+									);
+									resolve(null);
+								}
+							},
+						)
+						// The callback already resolves; a rejection here means no route.
+						.catch(() => resolve(null));
+				},
+			);
 		});
 
-		Promise.all(fetches).then((results) => {
-			setDirectionsResponses(results.filter(Boolean));
-		});
-
+		let cancelled = false;
+		Promise.all(fetches)
+			.then((results) => {
+				if (!cancelled) setDirectionsResponses(results.filter((r) => r !== null));
+			})
+			.catch(() => undefined);
+		return () => {
+			cancelled = true;
+		};
 	}, [isLoaded, orders]);
 
 	if (loadError) {
@@ -132,39 +154,47 @@ export default function GoogleRoutesMap({ orders = [] }: GoogleRoutesMapProps) {
 
 	if (!isLoaded) {
 		return (
-			<div className="border-border/20 text-muted-foreground/30 flex h-full w-full items-center justify-center rounded-[20px] border bg-[#F5F5F0]">
+			<div className="border-border/20 text-muted-foreground/30 flex size-full items-center justify-center rounded-[20px] border bg-[#F5F5F0]">
 				<Icon icon="line-md:loading-twotone-loop" className="size-8" />
 			</div>
 		);
 	}
 
 	return (
-		<div className="h-full w-full overflow-hidden rounded-[20px] border border-border/20 bg-[#F5F5F0]">
+		<div className="border-border/20 relative size-full overflow-hidden rounded-[20px] border bg-[#F5F5F0]">
+			{activePairs.length === 0 && (
+				<div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center">
+					<span className="rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm">
+						No orders in progress right now
+					</span>
+				</div>
+			)}
 			<GoogleMap
 				mapContainerStyle={containerStyle}
-				center={defaultCenter}
-				zoom={11}
+				center={SERVICE_CENTER}
+				zoom={13}
+				onLoad={(map) => map.fitBounds(CITIES_BOUNDS, 8)}
 				options={{
 					zoomControl: true,
 					streetViewControl: false,
 					mapTypeControl: false,
 					fullscreenControl: false,
+					...SERVICE_AREA_MAP_OPTIONS,
 				}}
 			>
-				{directionsResponses.map((response, index) => {
-					if (!response) return null;
-                    // Provide alternate colors to differentiate routes
-                    const strokeColor = index % 2 === 0 ? "#FDB900" : "#2196F3"; 
+				{directionsResponses.map(({ id, result }, index) => {
+					// Alternate colors to tell routes apart
+					const strokeColor = index % 2 === 0 ? "#FDB900" : "#2196F3";
 					return (
 						<DirectionsRenderer
-							key={index}
-							directions={response}
+							key={id}
+							directions={result}
 							options={{
 								suppressMarkers: false,
 								polylineOptions: {
 									strokeOpacity: 0.8,
 									strokeWeight: 4,
-                                    strokeColor: strokeColor,
+									strokeColor,
 								},
 							}}
 						/>
